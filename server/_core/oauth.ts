@@ -4,42 +4,101 @@ import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
-function getQueryParam(req: Request, key: string): string | undefined {
-  const value = req.query[key];
-  return typeof value === "string" ? value : undefined;
-}
 
 export function registerOAuthRoutes(app: Express) {
-  // Local login form for development
+  // Simple login form for all environments
   app.get("/api/local-login", (req: Request, res: Response) => {
     res.send(`
       <!DOCTYPE html>
-      <html>
+      <html lang="ar" dir="rtl">
       <head>
-        <title>Local Login - Development</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>تسجيل الدخول - قيد</title>
         <style>
-          body { font-family: Arial, sans-serif; max-width: 400px; margin: 100px auto; padding: 20px; }
-          .form-group { margin-bottom: 15px; }
-          label { display: block; margin-bottom: 5px; }
-          input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-          button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-          button:hover { background: #0056b3; }
+          body { 
+            font-family: 'Tajawal', 'Cairo', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 0; 
+            padding: 20px;
+          }
+          .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+          }
+          .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+            font-weight: bold;
+            color: #D4AF37;
+          }
+          .form-group { margin-bottom: 20px; }
+          label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 500;
+            color: #333;
+          }
+          input { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid #e1e5e9; 
+            border-radius: 8px; 
+            font-size: 16px;
+            transition: border-color 0.3s;
+          }
+          input:focus {
+            outline: none;
+            border-color: #D4AF37;
+          }
+          button { 
+            background: linear-gradient(135deg, #D4AF37, #B8941F); 
+            color: white; 
+            padding: 14px 24px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s;
+          }
+          button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+          }
+          .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+          }
         </style>
       </head>
       <body>
-        <h2>Local Login (Development)</h2>
-        <form method="post" action="/api/local-login">
-          <div class="form-group">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" value="Test User" required>
-          </div>
-          <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" value="test@example.com" required>
-          </div>
-          <button type="submit">Login</button>
-        </form>
-        <p><small>This is a development login form for local testing.</small></p>
+        <div class="login-container">
+          <div class="logo">قيد</div>
+          <p class="subtitle">المساعد القانوني الذكي</p>
+          <form method="post" action="/api/local-login">
+            <div class="form-group">
+              <label for="name">الاسم:</label>
+              <input type="text" id="name" name="name" value="مستخدم تجريبي" required>
+            </div>
+            <div class="form-group">
+              <label for="email">البريد الإلكتروني:</label>
+              <input type="email" id="email" name="email" value="test@example.com" required>
+            </div>
+            <button type="submit">تسجيل الدخول</button>
+          </form>
+        </div>
       </body>
       </html>
     `);
@@ -50,7 +109,7 @@ export function registerOAuthRoutes(app: Express) {
     console.log("[Local Login] Processing local login");
     
     try {
-      const name = req.body.name || "Test User";
+      const name = req.body.name || "مستخدم تجريبي";
       const email = req.body.email || "test@example.com";
       const openId = `local-${email.replace(/[^a-zA-Z0-9]/g, '')}`;
 
@@ -84,94 +143,6 @@ export function registerOAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[Local Login] Login failed", error);
       res.status(500).json({ error: "Login failed" });
-    }
-  });
-
-  // Test endpoint for debugging cookie setting
-  app.get("/api/test-login", async (req: Request, res: Response) => {
-    console.log("[Test] Creating test session");
-    
-    try {
-      const testUserInfo = {
-        openId: "test-user-123",
-        name: "Test User",
-        email: "test@example.com",
-        loginMethod: "test"
-      };
-
-      await db.upsertUser({
-        openId: testUserInfo.openId,
-        name: testUserInfo.name,
-        email: testUserInfo.email,
-        loginMethod: testUserInfo.loginMethod,
-        lastSignedIn: new Date(),
-      });
-
-      const sessionToken = await sdk.createSessionToken(testUserInfo.openId, {
-        name: testUserInfo.name,
-        expiresInMs: ONE_YEAR_MS,
-      });
-      console.log("[Test] Session token created, length:", sessionToken.length);
-
-      const cookieOptions = getSessionCookieOptions(req);
-      console.log("[Test] Setting cookie with options:", cookieOptions);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      console.log("[Test] Cookie set, redirecting to /");
-
-      res.redirect(302, "/");
-    } catch (error) {
-      console.error("[Test] Test login failed", error);
-      res.status(500).json({ error: "Test login failed" });
-    }
-  });
-
-  app.get("/api/oauth/callback", async (req: Request, res: Response) => {
-    console.log("[OAuth] Callback received");
-    const code = getQueryParam(req, "code");
-    const state = getQueryParam(req, "state");
-
-    if (!code || !state) {
-      console.error("[OAuth] Missing code or state");
-      res.status(400).json({ error: "code and state are required" });
-      return;
-    }
-
-    try {
-      console.log("[OAuth] Exchanging code for token");
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
-
-      if (!userInfo.openId) {
-        console.error("[OAuth] openId missing from user info");
-        res.status(400).json({ error: "openId missing from user info" });
-        return;
-      }
-
-      console.log("[OAuth] User info:", { openId: userInfo.openId, name: userInfo.name });
-      await db.upsertUser({
-        openId: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-        lastSignedIn: new Date(),
-      });
-
-      console.log("[OAuth] Creating session token");
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
-        expiresInMs: ONE_YEAR_MS,
-      });
-      console.log("[OAuth] Session token created, length:", sessionToken.length);
-
-      const cookieOptions = getSessionCookieOptions(req);
-      console.log("[OAuth] Setting cookie with options:", cookieOptions);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      console.log("[OAuth] Cookie set, redirecting to /");
-
-      res.redirect(302, "/");
-    } catch (error) {
-      console.error("[OAuth] Callback failed", error);
-      res.status(500).json({ error: "OAuth callback failed" });
     }
   });
 }
