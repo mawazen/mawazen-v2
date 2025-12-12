@@ -1,56 +1,38 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield } from "lucide-react";
+import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield, Phone, Building } from "lucide-react";
 
-export default function Login() {
+export default function SignUp() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: ""
+    password: "",
+    phone: "",
+    lawFirm: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log('[Login] Submitting form with data:', { name: formData.name, email: formData.email });
+    console.log('[SignUp] Submitting form with data:', { 
+      name: formData.name, 
+      email: formData.email,
+      phone: formData.phone,
+      lawFirm: formData.lawFirm
+    });
 
     try {
-      // Create a form element and submit it to handle the redirect properly
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `${import.meta.env.VITE_BACKEND_ORIGIN}/api/local-login`;
-      
-      // Add form data
-      const nameField = document.createElement('input');
-      nameField.type = 'hidden';
-      nameField.name = 'name';
-      nameField.value = formData.name;
-      form.appendChild(nameField);
-      
-      const emailField = document.createElement('input');
-      emailField.type = 'hidden';
-      emailField.name = 'email';
-      emailField.value = formData.email;
-      form.appendChild(emailField);
-      
-      const passwordField = document.createElement('input');
-      passwordField.type = 'hidden';
-      passwordField.name = 'password';
-      passwordField.value = formData.password;
-      form.appendChild(passwordField);
-      
-      console.log('[Login] Submitting form to:', form.action);
-      
-      // Submit the form
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
+      // For now, redirect to login with a success message
+      // In the future, this would create a new user account
+      setTimeout(() => {
+        setLocation('/login?message=account_created');
+      }, 1500);
       
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Sign up error:", error);
       setIsLoading(false);
     }
   };
@@ -62,7 +44,7 @@ export default function Login() {
     });
   };
 
-  console.log('[Login] Login page rendered');
+  console.log('[SignUp] Sign up page rendered');
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -78,15 +60,15 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-foreground mb-2">
             <span className="text-gold">قيد</span>
           </h1>
-          <p className="text-muted-foreground">نظام إدارة القضايا القانونية المتقدم</p>
+          <p className="text-muted-foreground">انضم إلى نظام إدارة القضايا القانونية المتقدم</p>
         </div>
 
-        {/* Login Card */}
+        {/* Sign Up Card */}
         <div className="bg-card text-card-foreground border rounded-xl shadow-sm p-6">
           <div className="text-center pb-4">
-            <h2 className="text-2xl font-bold text-foreground">تسجيل الدخول</h2>
+            <h2 className="text-2xl font-bold text-foreground">إنشاء حساب جديد</h2>
             <p className="text-muted-foreground text-sm mt-2">
-              أدخل بياناتك للوصول إلى حسابك
+              ابدأ رحلتك مع نظام قيد لإدارة القضايا
             </p>
           </div>
           
@@ -124,6 +106,43 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
+                className="w-full p-3 border rounded-lg text-right"
+                dir="rtl"
+              />
+            </div>
+
+            {/* Phone Field */}
+            <div className="space-y-2">
+              <label htmlFor="phone" className="text-right flex items-center gap-2 text-sm font-medium">
+                <Phone className="h-4 w-4" />
+                رقم الهاتف
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="أدخل رقم هاتفك"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+                className="w-full p-3 border rounded-lg text-right"
+                dir="rtl"
+              />
+            </div>
+
+            {/* Law Firm Field */}
+            <div className="space-y-2">
+              <label htmlFor="lawFirm" className="text-right flex items-center gap-2 text-sm font-medium">
+                <Building className="h-4 w-4" />
+                اسم المكتب أو الشركة
+              </label>
+              <input
+                id="lawFirm"
+                name="lawFirm"
+                type="text"
+                placeholder="اسم مكتب المحاماة أو الشركة"
+                value={formData.lawFirm}
+                onChange={handleInputChange}
                 className="w-full p-3 border rounded-lg text-right"
                 dir="rtl"
               />
@@ -169,26 +188,26 @@ export default function Login() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
-                  جاري تسجيل الدخول...
+                  جاري إنشاء الحساب...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  تسجيل الدخول
+                  إنشاء حساب جديد
                 </div>
               )}
             </button>
           </form>
 
-          {/* Sign Up Link */}
+          {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              ليس لديك حساب؟{" "}
+              لديك حساب بالفعل؟{" "}
               <button 
-                onClick={() => setLocation('/signup')}
+                onClick={() => setLocation('/login')}
                 className="text-gold hover:text-gold/80 font-medium"
               >
-                إنشاء حساب جديد
+                تسجيل الدخول
               </button>
             </p>
           </div>
