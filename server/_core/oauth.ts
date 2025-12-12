@@ -137,9 +137,11 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       console.log("[Local Login] Setting cookie with options:", cookieOptions);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      console.log("[Local Login] Cookie set, redirecting to /");
+      console.log("[Local Login] Cookie set, redirecting to frontend");
 
-      res.redirect(302, "/");
+      // Redirect to frontend (Netlify) instead of local root
+      const frontendOrigin = process.env.FRONTEND_URL || "https://qaid.netlify.app";
+      res.redirect(302, frontendOrigin);
     } catch (error) {
       console.error("[Local Login] Login failed", error);
       res.status(500).json({ error: "Login failed" });
