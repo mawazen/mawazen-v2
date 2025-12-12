@@ -48,6 +48,14 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
+  // In production (Railway), we only serve the API
+  // The frontend is served separately by Netlify
+  if (process.env.NODE_ENV === "production") {
+    console.log("[Static] Production mode - serving API only, frontend handled by Netlify");
+    return;
+  }
+  
+  // In development, serve static files
   const distPath = path.resolve(import.meta.dirname, "../..", "client", "dist");
   
   if (!fs.existsSync(distPath)) {
