@@ -19,9 +19,18 @@ const handleTokenFromUrl = () => {
   if (token) {
     // Store token in localStorage
     localStorage.setItem('auth_token', token);
+    console.log('[Auth] Token stored from URL:', token.substring(0, 20) + '...');
     // Clean the URL
     window.history.replaceState({}, document.title, window.location.pathname);
     console.log('[Auth] Token stored from URL');
+  } else {
+    // Check if token exists in localStorage
+    const existingToken = localStorage.getItem('auth_token');
+    if (existingToken) {
+      console.log('[Auth] Found existing token in localStorage:', existingToken.substring(0, 20) + '...');
+    } else {
+      console.log('[Auth] No token found in URL or localStorage');
+    }
   }
 };
 
@@ -69,6 +78,12 @@ const trpcClient = trpc.createClient({
           ...(init?.headers || {}),
           ...(token && { Authorization: `Bearer ${token}` }),
         };
+        
+        if (token) {
+          console.log('[Auth] Sending Bearer token in headers');
+        } else {
+          console.log('[Auth] No token available to send');
+        }
         
         return globalThis.fetch(input, {
           ...(init ?? {}),
