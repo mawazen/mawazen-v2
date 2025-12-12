@@ -24,13 +24,26 @@ function isSecureRequest(req: Request) {
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  // For localhost, don't require secure
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  // For cross-origin cookies in production, we need specific settings
+  if (isProduction) {
+    return {
+      httpOnly: true,
+      path: "/",
+      sameSite: "none" as const, // Required for cross-origin
+      secure: true, // Required for cross-origin
+      domain: undefined, // Let browser handle it automatically
+    };
+  }
+  
+  // Development settings
   const isLocalhost = req.hostname === "localhost" || req.hostname === "127.0.0.1";
   
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     secure: isSecureRequest(req) && !isLocalhost,
   };
 }
