@@ -1,14 +1,8 @@
 [build]
-  command = "cd .. && npm install && npm run build"
-  publish = "dist/public"
+  command = "npm install && npm run build"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "18"
   VITE_API_BASE_URL = "https://qaid-production.up.railway.app"
   VITE_BACKEND_ORIGIN = "https://qaid-production.up.railway.app"
-  NODE_ENV = "production"
-  
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
