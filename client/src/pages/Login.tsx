@@ -22,24 +22,37 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ORIGIN}/api/local-login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        // The response will be a redirect to the frontend with token
-        const redirectUrl = response.headers.get('location') || `${window.location.origin}?token=`;
-        window.location.href = redirectUrl;
-      } else {
-        console.error("Login failed");
-      }
+      // Create a form element and submit it to handle the redirect properly
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `${import.meta.env.VITE_BACKEND_ORIGIN}/api/local-login`;
+      
+      // Add form data
+      const nameField = document.createElement('input');
+      nameField.type = 'hidden';
+      nameField.name = 'name';
+      nameField.value = formData.name;
+      form.appendChild(nameField);
+      
+      const emailField = document.createElement('input');
+      emailField.type = 'hidden';
+      emailField.name = 'email';
+      emailField.value = formData.email;
+      form.appendChild(emailField);
+      
+      const passwordField = document.createElement('input');
+      passwordField.type = 'hidden';
+      passwordField.name = 'password';
+      passwordField.value = formData.password;
+      form.appendChild(passwordField);
+      
+      // Submit the form
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+      
     } catch (error) {
       console.error("Login error:", error);
-    } finally {
       setIsLoading(false);
     }
   };
