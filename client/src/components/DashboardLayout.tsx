@@ -73,11 +73,6 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
-  const { data: unreadNotifications } = trpc.notifications.list.useQuery(
-    { unreadOnly: true },
-    { enabled: !loading && Boolean(user) }
-  );
-  const unreadCount = unreadNotifications?.length ?? 0;
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -155,6 +150,11 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find((item) => item.path === location);
   const isMobile = useIsMobile();
+  const { data: unreadNotifications } = trpc.notifications.list.useQuery(
+    { unreadOnly: true },
+    { enabled: Boolean(user) }
+  );
+  const unreadCount = unreadNotifications?.length ?? 0;
 
   useEffect(() => {
     if (isCollapsed) {
