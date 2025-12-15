@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Cases from "./pages/Cases";
+import CaseDetails from "./pages/CaseDetails";
 import Clients from "./pages/Clients";
 import ClientDetails from "./pages/ClientDetails";
 import AIAssistant from "./pages/AIAssistant";
@@ -30,6 +31,7 @@ function Router() {
       <Route path={"/login"} component={Login} />
       <Route path={"/signup"} component={SignUp} />
       <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/cases/:id"} component={CaseDetails} />
       <Route path={"/cases"} component={Cases} />
       <Route path={"/clients/:id"} component={ClientDetails} />
       <Route path={"/clients"} component={Clients} />
