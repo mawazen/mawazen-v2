@@ -17,6 +17,8 @@ import {
   aiChatHistory,
   notifications,
   timeEntries,
+  serviceProjects,
+  serviceProjectExpenses,
   serviceCatalog,
   serviceRequests,
   sitePages,
@@ -41,6 +43,8 @@ import {
   InsertAiChatHistory,
   InsertNotification,
   InsertTimeEntry,
+  InsertServiceProject,
+  InsertServiceProjectExpense,
   InsertServiceCatalogItem,
   InsertServiceRequest,
   InsertSitePage,
@@ -63,6 +67,8 @@ let _schemaInitPromise: Promise<void> | null = null;
 const inMemoryUsers = new Map<string, any>();
 const inMemoryOrganizations = new Map<number, any>();
 const inMemoryDocuments = new Map<number, any>();
+const inMemoryServiceProjects = new Map<number, any>();
+const inMemoryServiceProjectExpenses = new Map<number, any>();
 const inMemoryServiceCatalog = new Map<number, any>();
 const inMemoryServiceRequests = new Map<number, any>();
 const inMemorySitePages = new Map<number, any>();
@@ -1532,6 +1538,132 @@ export async function getAllDocuments(search?: string) {
   }
 
   return db.select().from(documents).orderBy(desc(documents.createdAt));
+}
+
+// ==================== SERVICE PROJECTS (Legal Services Workflow) ====================
+export async function createServiceProject(project: InsertServiceProject) {
+  const db = await getDb();
+  if (!db) {
+    const id = Date.now();
+    const now = new Date();
+    inMemoryServiceProjects.set(id, {
+      id,
+      ...project,
+      createdAt: project.createdAt ?? now,
+      updatedAt: project.updatedAt ?? now,
+    });
+    return id;
+  }
+  const result = await db.insert(serviceProjects).values(project as any);
+  return result[0].insertId;
+}
+
+export async function updateServiceProject(id: number, data: Partial<InsertServiceProject>) {
+  const db = await getDb();
+  if (!db) {
+    const existing = inMemoryServiceProjects.get(id);
+    if (!existing) throw new Error("Service project not found");
+    inMemoryServiceProjects.set(id, {
+      ...existing,
+      ...data,
+      updatedAt: new Date(),
+    });
+    return;
+  }
+  await db.update(serviceProjects).set(data as any).where(eq(serviceProjects.id, id));
+}
+
+export async function deleteServiceProject(id: number) {
+  const db = await getDb();
+  if (!db) {
+    inMemoryServiceProjects.delete(id);
+    // Also remove expenses
+    for (const [eid, e] of inMemoryServiceProjectExpenses.entries()) {
+      if (e?.serviceProjectId === id) inMemoryServiceProjectExpenses.delete(eid);
+    }
+    return;
+  }
+  await db.delete(serviceProjectExpenses).where(eq(serviceProjectExpenses.serviceProjectId, id));
+  await db.delete(serviceProjects).where(eq(serviceProjects.id, id));
+}
+
+export async function getServiceProjectById(id: number) {
+  const db = await getDb();
+  if (!db) return inMemoryServiceProjects.get(id);
+  const rows = await db.select().from(serviceProjects).where(eq(serviceProjects.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function listServiceProjectsByOrganizationId(params: {
+  organizationId: number;
+  status?: "new" | "in_progress" | "on_hold" | "completed" | "cancelled";
+  search?: string;
+}) {
+  const db = await getDb();
+  const { organizationId, status, search } = params;
+
+  if (!db) {
+    const all = Array.from(inMemoryServiceProjects.values())
+      .filter((p) => p?.organizationId === organizationId)
+      .filter((p) => (status ? p?.status === status : true))
+      .filter((p) => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return String(p?.title ?? "").toLowerCase().includes(q);
+      })
+      .sort((a, b) => new Date(b.updatedAt ?? b.createdAt).getTime() - new Date(a.updatedAt ?? a.createdAt).getTime());
+    return all;
+  }
+
+  const conditions: any[] = [eq(serviceProjects.organizationId, organizationId)];
+  if (status) conditions.push(eq(serviceProjects.status, status));
+  if (search && search.trim()) {
+    conditions.push(like(serviceProjects.title, `%${search.trim()}%`));
+  }
+
+  return db
+    .select()
+    .from(serviceProjects)
+    .where(and(...conditions))
+    .orderBy(desc(serviceProjects.updatedAt));
+}
+
+export async function createServiceProjectExpense(expense: InsertServiceProjectExpense) {
+  const db = await getDb();
+  if (!db) {
+    const id = Date.now();
+    inMemoryServiceProjectExpenses.set(id, {
+      id,
+      ...expense,
+      createdAt: expense.createdAt ?? new Date(),
+    });
+    return id;
+  }
+  const result = await db.insert(serviceProjectExpenses).values(expense as any);
+  return result[0].insertId;
+}
+
+export async function listServiceProjectExpenses(serviceProjectId: number) {
+  const db = await getDb();
+  if (!db) {
+    return Array.from(inMemoryServiceProjectExpenses.values())
+      .filter((e) => e?.serviceProjectId === serviceProjectId)
+      .sort((a, b) => new Date(b.expenseDate ?? b.createdAt).getTime() - new Date(a.expenseDate ?? a.createdAt).getTime());
+  }
+  return db
+    .select()
+    .from(serviceProjectExpenses)
+    .where(eq(serviceProjectExpenses.serviceProjectId, serviceProjectId))
+    .orderBy(desc(serviceProjectExpenses.expenseDate));
+}
+
+export async function deleteServiceProjectExpense(id: number) {
+  const db = await getDb();
+  if (!db) {
+    inMemoryServiceProjectExpenses.delete(id);
+    return;
+  }
+  await db.delete(serviceProjectExpenses).where(eq(serviceProjectExpenses.id, id));
 }
 
 // ==================== TASK FUNCTIONS ====================

@@ -378,6 +378,142 @@ export const appRouter = router({
       }),
   }),
 
+  // ==================== SERVICE PROJECTS (Legal Services Workflow) ====================
+  serviceProjects: router({
+    list: protectedProcedure
+      .input(
+        z
+          .object({
+            status: z.enum(["new", "in_progress", "on_hold", "completed", "cancelled"]).optional(),
+            search: z.string().optional(),
+          })
+          .optional()
+      )
+      .query(async ({ ctx, input }) => {
+        const organizationId = await db.ensureUserHasOrganization({
+          openId: ctx.user.openId,
+          defaultOrganizationName: ctx.user.name ?? null,
+        });
+
+        return db.listServiceProjectsByOrganizationId({
+          organizationId,
+          status: input?.status,
+          search: input?.search,
+        } as any);
+      }),
+
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return db.getServiceProjectById(input.id);
+      }),
+
+    create: protectedProcedure
+      .input(
+        z.object({
+          serviceCatalogId: z.number().optional().nullable(),
+          clientId: z.number().optional().nullable(),
+          caseId: z.number().optional().nullable(),
+          title: z.string().min(1),
+          description: z.string().optional().nullable(),
+          status: z.enum(["new", "in_progress", "on_hold", "completed", "cancelled"]).optional(),
+          priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+          assignedToUserId: z.number().optional().nullable(),
+          startDate: z.date().optional().nullable(),
+          dueDate: z.date().optional().nullable(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const organizationId = await db.ensureUserHasOrganization({
+          openId: ctx.user.openId,
+          defaultOrganizationName: ctx.user.name ?? null,
+        });
+
+        const id = await db.createServiceProject({
+          organizationId,
+          serviceCatalogId: input.serviceCatalogId ?? null,
+          clientId: input.clientId ?? null,
+          caseId: input.caseId ?? null,
+          title: input.title,
+          description: input.description ?? null,
+          status: input.status ?? "new",
+          priority: input.priority ?? "medium",
+          assignedToUserId: input.assignedToUserId ?? null,
+          createdByUserId: ctx.user.id,
+          startDate: input.startDate ?? null,
+          dueDate: input.dueDate ?? null,
+          completedAt: null,
+        } as any);
+
+        return { id } as const;
+      }),
+
+    update: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          title: z.string().min(1).optional(),
+          description: z.string().optional().nullable(),
+          status: z.enum(["new", "in_progress", "on_hold", "completed", "cancelled"]).optional(),
+          priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+          assignedToUserId: z.number().optional().nullable(),
+          startDate: z.date().optional().nullable(),
+          dueDate: z.date().optional().nullable(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        const update: any = { ...data };
+        if (data.status === "completed") {
+          update.completedAt = new Date();
+        }
+        await db.updateServiceProject(id, update);
+        return { success: true as const };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteServiceProject(input.id);
+        return { success: true as const };
+      }),
+
+    expensesList: protectedProcedure
+      .input(z.object({ serviceProjectId: z.number() }))
+      .query(async ({ input }) => {
+        return db.listServiceProjectExpenses(input.serviceProjectId);
+      }),
+
+    expensesCreate: protectedProcedure
+      .input(
+        z.object({
+          serviceProjectId: z.number(),
+          amount: z.number().int().min(0),
+          currency: z.string().min(1).max(10).default("SAR"),
+          description: z.string().optional().nullable(),
+          expenseDate: z.date().optional().nullable(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createServiceProjectExpense({
+          serviceProjectId: input.serviceProjectId,
+          amount: input.amount,
+          currency: input.currency,
+          description: input.description ?? null,
+          expenseDate: input.expenseDate ?? new Date(),
+          createdByUserId: ctx.user.id,
+        } as any);
+        return { id } as const;
+      }),
+
+    expensesDelete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteServiceProjectExpense(input.id);
+        return { success: true as const };
+      }),
+  }),
+
   publicSite: router({
     page: publicProcedure
       .input(z.object({ slug: z.string().min(1).max(100) }))
@@ -1248,6 +1384,7 @@ export const appRouter = router({
         fileSize: z.number().optional().nullable(),
         caseId: z.number().optional().nullable(),
         clientId: z.number().optional().nullable(),
+        serviceProjectId: z.number().optional().nullable(),
         isTemplate: z.boolean().optional(),
         templateCategory: z.string().optional().nullable(),
         expiresAt: z.date().optional().nullable(),
@@ -1269,6 +1406,7 @@ export const appRouter = router({
         name: z.string().min(1).optional(),
         description: z.string().optional().nullable(),
         type: z.enum(["contract", "memo", "pleading", "evidence", "correspondence", "court_order", "power_of_attorney", "other"]).optional(),
+        serviceProjectId: z.number().optional().nullable(),
         isTemplate: z.boolean().optional(),
         templateCategory: z.string().optional().nullable(),
         expiresAt: z.date().optional().nullable(),
@@ -1355,6 +1493,7 @@ export const appRouter = router({
         title: z.string().min(1),
         description: z.string().optional().nullable(),
         caseId: z.number().optional().nullable(),
+        serviceProjectId: z.number().optional().nullable(),
         assignedToId: z.number().optional().nullable(),
         dueDate: z.date().optional().nullable(),
         priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
@@ -1377,6 +1516,7 @@ export const appRouter = router({
         dueDate: z.date().optional().nullable(),
         priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
         status: z.enum(["pending", "in_progress", "completed", "cancelled"]).optional(),
+        serviceProjectId: z.number().optional().nullable(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
@@ -1417,6 +1557,7 @@ export const appRouter = router({
       .input(z.object({
         clientId: z.number(),
         caseId: z.number().optional().nullable(),
+        serviceProjectId: z.number().optional().nullable(),
         amount: z.number(),
         taxAmount: z.number().optional(),
         currency: z.string().optional(),
@@ -1448,6 +1589,7 @@ export const appRouter = router({
         status: z.enum(["draft", "sent", "paid", "partial", "overdue", "cancelled"]).optional(),
         description: z.string().optional().nullable(),
         dueDate: z.date().optional().nullable(),
+        serviceProjectId: z.number().optional().nullable(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;

@@ -124,6 +124,7 @@ export const documents = mysqlTable("documents", {
   fileSize: bigint("fileSize", { mode: "number" }),
   caseId: int("caseId"),
   clientId: int("clientId"),
+  serviceProjectId: int("serviceProjectId"),
   version: int("version").default(1),
   parentDocumentId: int("parentDocumentId"),
   isTemplate: boolean("isTemplate").default(false),
@@ -146,6 +147,7 @@ export const tasks = mysqlTable("tasks", {
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
   caseId: int("caseId"),
+  serviceProjectId: int("serviceProjectId"),
   assignedToId: int("assignedToId"),
   assignedById: int("assignedById"),
   dueDate: timestamp("dueDate"),
@@ -165,6 +167,7 @@ export const invoices = mysqlTable("invoices", {
   invoiceNumber: varchar("invoiceNumber", { length: 50 }).notNull().unique(),
   clientId: int("clientId").notNull(),
   caseId: int("caseId"),
+  serviceProjectId: int("serviceProjectId"),
   amount: bigint("amount", { mode: "number" }).notNull(),
   taxAmount: bigint("taxAmount", { mode: "number" }).default(0),
   totalAmount: bigint("totalAmount", { mode: "number" }).notNull(),
@@ -285,6 +288,43 @@ export const timeEntries = mysqlTable("timeEntries", {
 
 export type TimeEntry = typeof timeEntries.$inferSelect;
 export type InsertTimeEntry = typeof timeEntries.$inferInsert;
+
+// ==================== SERVICE PROJECTS (Legal Services Workflow) ====================
+export const serviceProjects = mysqlTable("serviceProjects", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  serviceCatalogId: int("serviceCatalogId"),
+  clientId: int("clientId"),
+  caseId: int("caseId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("status", ["new", "in_progress", "on_hold", "completed", "cancelled"]).default("new").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium").notNull(),
+  assignedToUserId: int("assignedToUserId"),
+  createdByUserId: int("createdByUserId"),
+  startDate: timestamp("startDate"),
+  dueDate: timestamp("dueDate"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ServiceProject = typeof serviceProjects.$inferSelect;
+export type InsertServiceProject = typeof serviceProjects.$inferInsert;
+
+export const serviceProjectExpenses = mysqlTable("serviceProjectExpenses", {
+  id: int("id").autoincrement().primaryKey(),
+  serviceProjectId: int("serviceProjectId").notNull(),
+  amount: bigint("amount", { mode: "number" }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("SAR").notNull(),
+  description: text("description"),
+  expenseDate: timestamp("expenseDate").defaultNow().notNull(),
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ServiceProjectExpense = typeof serviceProjectExpenses.$inferSelect;
+export type InsertServiceProjectExpense = typeof serviceProjectExpenses.$inferInsert;
 
 export const serviceCatalog = mysqlTable("serviceCatalog", {
   id: int("id").autoincrement().primaryKey(),

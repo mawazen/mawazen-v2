@@ -29,6 +29,13 @@
       "when": 1766160000000,
       "tag": "0003_mawazin_document_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1766165000000,
+      "tag": "0004_mawazin_service_projects",
+      "breakpoints": true
     }
   ]
 }

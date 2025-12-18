@@ -27,6 +27,7 @@ import Tasks from "./pages/Tasks";
 import PublicServices from "./pages/PublicServices";
 import ServiceCatalogAdmin from "./pages/ServiceCatalogAdmin";
 import ServiceRequestsAdmin from "./pages/ServiceRequestsAdmin";
+import ServiceProjects from "./pages/ServiceProjects";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import SiteTeam from "./pages/SiteTeam";
@@ -78,6 +79,7 @@ function Router() {
       <Route path={"/reports"} component={Reports} />
       <Route path={"/service-catalog"} component={ServiceCatalogAdmin} />
       <Route path={"/service-requests"} component={ServiceRequestsAdmin} />
+      <Route path={"/service-projects"} component={ServiceProjects} />
       <Route path={"/cms/pages"} component={CmsPagesAdmin} />
       <Route path={"/cms/team"} component={CmsTeamAdmin} />
       <Route path={"/cms/practices"} component={CmsPracticesAdmin} />

@@ -59,6 +59,7 @@ const menuItems = [
   { icon: Wand2, label: "أدوات ذكية", labelEn: "Legal Tools", path: "/legal-tools" },
   { icon: Calendar, label: "التقويم", labelEn: "Calendar", path: "/calendar" },
   { icon: Receipt, label: "الفواتير", labelEn: "Invoices", path: "/invoices" },
+  { icon: Briefcase, label: "مشاريع الخدمات", labelEn: "Service Projects", path: "/service-projects" },
   { icon: Store, label: "كتالوج الخدمات", labelEn: "Service Catalog", path: "/service-catalog" },
   { icon: ClipboardList, label: "طلبات الخدمات", labelEn: "Service Requests", path: "/service-requests" },
   { icon: FileText, label: "صفحات الموقع", labelEn: "Site Pages", path: "/cms/pages" },
