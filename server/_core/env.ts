@@ -17,4 +17,6 @@ export const ENV = {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),
+  documentRemindersEnabled: process.env.DOCUMENT_REMINDERS_ENABLED === "true",
+  documentRemindersIntervalMinutes: Number(process.env.DOCUMENT_REMINDERS_INTERVAL_MINUTES ?? "1440"),
 };

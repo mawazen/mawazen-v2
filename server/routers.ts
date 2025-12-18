@@ -904,7 +904,10 @@ export const appRouter = router({
         }
 
         const requestedPlan = input?.plan ?? "individual";
-        const normalizedPlan = requestedPlan === "monthly" ? "individual" : requestedPlan;
+        const normalizedPlan = (requestedPlan === "monthly" ? "individual" : requestedPlan) as
+          | "individual"
+          | "law_firm"
+          | "enterprise";
         const seatLimit =
           normalizedPlan === "law_firm" ? 5 : normalizedPlan === "enterprise" ? 15 : 1;
 
@@ -929,7 +932,7 @@ export const appRouter = router({
 
         return {
           success: true as const,
-          plan: normalizedPlan as const,
+          plan: normalizedPlan,
         };
       }),
   }),
@@ -1246,6 +1249,10 @@ export const appRouter = router({
         caseId: z.number().optional().nullable(),
         clientId: z.number().optional().nullable(),
         isTemplate: z.boolean().optional(),
+        templateCategory: z.string().optional().nullable(),
+        expiresAt: z.date().optional().nullable(),
+        renewAt: z.date().optional().nullable(),
+        reminderDays: z.number().int().min(1).max(365).optional().nullable(),
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createDocument({
@@ -1262,11 +1269,62 @@ export const appRouter = router({
         name: z.string().min(1).optional(),
         description: z.string().optional().nullable(),
         type: z.enum(["contract", "memo", "pleading", "evidence", "correspondence", "court_order", "power_of_attorney", "other"]).optional(),
+        isTemplate: z.boolean().optional(),
+        templateCategory: z.string().optional().nullable(),
+        expiresAt: z.date().optional().nullable(),
+        renewAt: z.date().optional().nullable(),
+        reminderDays: z.number().int().min(1).max(365).optional().nullable(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
         await db.updateDocument(id, data);
         return { success: true };
+      }),
+
+    createFromTemplate: protectedProcedure
+      .input(
+        z.object({
+          templateId: z.number(),
+          name: z.string().min(1).optional(),
+          description: z.string().optional().nullable(),
+          caseId: z.number().optional().nullable(),
+          clientId: z.number().optional().nullable(),
+          expiresAt: z.date().optional().nullable(),
+          renewAt: z.date().optional().nullable(),
+          reminderDays: z.number().int().min(1).max(365).optional().nullable(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const template = await db.getDocumentById(input.templateId);
+        if (!template || !template.isTemplate) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "القالب غير موجود",
+          });
+        }
+
+        const id = await db.createDocument({
+          name: input.name ?? template.name,
+          description: input.description ?? null,
+          type: template.type as any,
+          fileUrl: template.fileUrl,
+          fileKey: template.fileKey,
+          mimeType: template.mimeType ?? null,
+          fileSize: (template.fileSize as any) ?? null,
+          caseId: input.caseId ?? null,
+          clientId: input.clientId ?? null,
+          version: 1,
+          parentDocumentId: template.id,
+          isTemplate: false,
+          templateCategory: template.templateCategory ?? null,
+          expiresAt: input.expiresAt ?? null,
+          renewAt: input.renewAt ?? null,
+          reminderDays: input.reminderDays ?? (template.reminderDays as any) ?? 30,
+          lastReminderSentAt: null,
+          uploadedById: ctx.user.id,
+        } as any);
+
+        return { id } as const;
       }),
     
     delete: protectedProcedure

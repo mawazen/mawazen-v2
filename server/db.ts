@@ -1724,7 +1724,8 @@ export async function createAiChatMessage(message: InsertAiChatHistory) {
   if (!db) {
     console.log("[DB] Using in-memory storage for AI chat message");
     // Use in-memory storage for local development
-    const inMemoryMessages = globalThis.aiChatMessages || (globalThis.aiChatMessages = []);
+    const g = globalThis as any;
+    const inMemoryMessages: any[] = g.aiChatMessages || (g.aiChatMessages = []);
     const newMessage = {
       ...message,
       id: Date.now(),
@@ -1745,10 +1746,14 @@ export async function getAiChatHistory(userId: number, sessionId: string) {
   if (!db) {
     console.log("[DB] Using in-memory storage for AI chat history");
     // Use in-memory storage for local development
-    const inMemoryMessages = globalThis.aiChatMessages || [];
-    return inMemoryMessages.filter(msg => 
-      msg.userId === userId && msg.sessionId === sessionId
-    ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const g = globalThis as any;
+    const inMemoryMessages: any[] = g.aiChatMessages || [];
+    return inMemoryMessages
+      .filter((msg: any) => msg.userId === userId && msg.sessionId === sessionId)
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
   }
   return db.select().from(aiChatHistory)
     .where(and(

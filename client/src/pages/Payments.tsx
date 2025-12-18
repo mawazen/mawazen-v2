@@ -194,7 +194,7 @@ export default function Payments() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {subscriptionPlans.map((plan) => {
               const isSelected = selectedPlan === plan.id;
-              const isPopular = plan.id === "monthly";
+              const isPopular = isSelected;
               return (
                 <Card
                   key={plan.id}

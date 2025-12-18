@@ -11,6 +11,7 @@ import { createContext } from "./context";
 import { sdk } from "./sdk";
 import { storagePut } from "../storage";
 import { startLegalCrawlerScheduler } from "../legalCrawler";
+import { startDocumentRemindersScheduler } from "../documentReminders";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -135,6 +136,13 @@ async function startServer() {
     console.log(`[LegalCrawler] Scheduler started (intervalMinutes=${crawler.intervalMinutes})`);
   } else {
     console.log(`[LegalCrawler] Scheduler not started (${crawler.reason})`);
+  }
+
+  const docReminders = startDocumentRemindersScheduler();
+  if (docReminders.started) {
+    console.log(`[DocumentReminders] Scheduler started (intervalMinutes=${docReminders.intervalMinutes})`);
+  } else {
+    console.log(`[DocumentReminders] Scheduler not started (${docReminders.reason})`);
   }
 
   // development mode uses Vite, production mode uses static files

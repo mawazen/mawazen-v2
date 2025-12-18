@@ -20,7 +20,10 @@ export async function createContext(
     console.log("[Context] Authentication successful, user ID:", user?.id);
   } catch (error) {
     // Authentication is optional for public procedures.
-    console.log("[Context] Authentication failed:", error.message);
+    console.log(
+      "[Context] Authentication failed:",
+      error instanceof Error ? error.message : String(error)
+    );
     user = null;
   }
 
