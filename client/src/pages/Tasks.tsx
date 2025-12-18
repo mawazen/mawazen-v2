@@ -78,13 +78,13 @@ const statusIcon: Record<string, ElementType> = {
 
 export default function Tasks() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [priorityFilter, setPriorityFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const { data: tasks, isLoading, refetch } = trpc.tasks.list.useQuery({
-    status: statusFilter || undefined,
-    priority: priorityFilter || undefined,
+    status: statusFilter === "all" ? undefined : statusFilter,
+    priority: priorityFilter === "all" ? undefined : priorityFilter,
   });
 
   const filteredTasks = useMemo(() => {
@@ -270,7 +270,7 @@ export default function Tasks() {
                   <SelectValue placeholder="فلترة بالحالة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={""}>الكل</SelectItem>
+                  <SelectItem value="all">الكل</SelectItem>
                   {Object.entries(statusLabels).map(([key, label]) => (
                     <SelectItem key={key} value={key}>
                       {label}
@@ -284,7 +284,7 @@ export default function Tasks() {
                   <SelectValue placeholder="فلترة بالأولوية" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={""}>الكل</SelectItem>
+                  <SelectItem value="all">الكل</SelectItem>
                   {Object.entries(priorityLabels).map(([key, label]) => (
                     <SelectItem key={key} value={key}>
                       {label}
