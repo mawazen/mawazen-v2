@@ -4,6 +4,30 @@ import * as db from "../db";
 import { sdk } from "./sdk";
 
 export function registerOAuthRoutes(app: Express) {
+  const getFrontendOrigin = (req: Request) => {
+    const fromEnv = (process.env.FRONTEND_URL ?? "").trim();
+    if (fromEnv) return fromEnv.replace(/\/+$/, "");
+
+    const originHeader = (req.get("origin") ?? "").trim();
+    const refererHeader = (req.get("referer") ?? "").trim();
+    const candidate = originHeader || refererHeader;
+    if (candidate) {
+      try {
+        const u = new URL(candidate);
+        return `${u.protocol}//${u.host}`;
+      } catch {
+        // ignore
+      }
+    }
+
+    return process.env.NODE_ENV === "production" ? "https://mawazen.netlify.app" : "http://localhost:5173";
+  };
+
+  const getSafeRedirectPath = (req: Request) => {
+    const redirect = typeof req.body.redirect === "string" ? req.body.redirect : "";
+    return redirect.startsWith("/") ? redirect : "";
+  };
+
   // Simple login form for all environments
   app.get("/api/local-login", (req: Request, res: Response) => {
     res.send(`
@@ -134,8 +158,8 @@ export function registerOAuthRoutes(app: Express) {
 
       // Instead of setting a cookie, return the token in the response
       // and redirect with the token as a query parameter
-      const frontendOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
-      const redirect = typeof req.body.redirect === "string" ? req.body.redirect : "";
+      const frontendOrigin = getFrontendOrigin(req);
+      const redirect = getSafeRedirectPath(req);
       const redirectQuery = redirect ? `&redirect=${encodeURIComponent(redirect)}` : "";
       const redirectUrl = `${frontendOrigin}?token=${sessionToken}${redirectQuery}`;
       
@@ -194,8 +218,8 @@ export function registerOAuthRoutes(app: Express) {
         expiresInMs: ONE_YEAR_MS,
       });
 
-      const frontendOrigin = process.env.FRONTEND_URL || "https://qaid.netlify.app";
-      const redirect = typeof req.body.redirect === "string" ? req.body.redirect : "";
+      const frontendOrigin = getFrontendOrigin(req);
+      const redirect = getSafeRedirectPath(req);
       const redirectQuery = redirect ? `&redirect=${encodeURIComponent(redirect)}` : "";
       const redirectUrl = `${frontendOrigin}?token=${sessionToken}${redirectQuery}`;
 
