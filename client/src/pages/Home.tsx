@@ -1,5 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLocation } from "wouter";
 import {
   Scale,
@@ -15,6 +18,13 @@ import {
   Gavel,
   BookOpen,
   MessageSquare,
+  Zap,
+  Clock,
+  Bell,
+  Link,
+  Search,
+  Lock,
+  BadgeCheck,
 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -48,6 +58,16 @@ const features = [
     icon: Shield,
     title: "أمان متقدم",
     description: "حماية كاملة للبيانات مع تشفير وصلاحيات متعددة",
+  },
+  {
+    icon: Bell,
+    title: "تنبيهات ومتابعات",
+    description: "تنبيهات للجلسات والمواعيد والمتأخرات، مع متابعة واضحة لما يجب إنجازه",
+  },
+  {
+    icon: Link,
+    title: "بوابة عميل عامة",
+    description: "رابط آمن يتيح للعميل متابعة قضاياه والفواتير والدفعات والمستندات المشتركة",
   },
 ];
 
@@ -138,6 +158,51 @@ const supportedSystems = [
   "القرارات التفسيرية",
 ];
 
+const outcomes = [
+  { icon: Clock, label: "توفير الوقت", value: "ساعات يوميًا" },
+  { icon: Zap, label: "سرعة الإنجاز", value: "تنفيذ أسرع" },
+  { icon: Shield, label: "موثوقية", value: "تنظيم + أمان" },
+  { icon: BarChart3, label: "رؤية واضحة", value: "تقارير فورية" },
+];
+
+const steps = [
+  {
+    title: "أنشئ ملف العميل والقضية",
+    description: "نظّم كل بيانات العميل، المستندات، والأحداث في مكان واحد.",
+  },
+  {
+    title: "تابع الجلسات والمهام والتنبيهات",
+    description: "تقويم ذكي + مهام مرتبطة بالقضية مع تذكيرات تمنع أي سهو.",
+  },
+  {
+    title: "شارك ما يلزم عبر بوابة العميل",
+    description: "ارسل رابطًا آمنًا للعميل لمتابعة التقدّم والمستندات والفواتير.",
+  },
+  {
+    title: "استخدم المساعد الذكي",
+    description: "تحليل، صياغة، وبحث نظامي/قضائي — مع مصادر واضحة.",
+  },
+];
+
+const faqs = [
+  {
+    q: "هل موازين مناسب للمحامي الفردي أم للمكتب؟",
+    a: "مناسب للطرفين. يمكنك البدء كمحامٍ فردي ثم التوسع بسهولة، مع تنظيم القضايا والعملاء والمهام والتقارير.",
+  },
+  {
+    q: "كيف تعمل بوابة العميل؟",
+    a: "تولّد رابطًا آمنًا لكل عميل، يظهر له القضايا والجلسات والفواتير والدفعات والمستندات المشتركة فقط.",
+  },
+  {
+    q: "هل البيانات آمنة؟",
+    a: "نركّز على الأمان: صلاحيات، ممارسات تشفير، وتقليل مشاركة البيانات. ويمكنك التحكم بما يتم مشاركته للعميل.",
+  },
+  {
+    q: "هل الذكاء الاصطناعي يكتب بدل المحامي؟",
+    a: "هو مساعد يزيد الإنتاجية: يقترح، ينظّم، ويولّد مسودات قابلة للمراجعة. القرار النهائي دائمًا بيد المحامي.",
+  },
+];
+
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
@@ -164,7 +229,48 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-background to-background" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNEMkFGMzciIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         
-        <div className="container relative py-20 lg:py-32">
+        <div className="container relative pt-6 pb-20 lg:pt-10 lg:pb-28">
+          <div className="flex items-center justify-between gap-4 mb-10">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2"
+              onClick={() => setLocation("/")}
+            >
+              <Scale className="h-6 w-6 text-gold" />
+              <span className="font-bold text-foreground">موازين</span>
+            </button>
+
+            <div className="hidden md:flex items-center gap-2">
+              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/services")}
+              >
+                الخدمات
+              </Button>
+              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/pricing")}
+              >
+                الأسعار
+              </Button>
+              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/about")}
+              >
+                من نحن
+              </Button>
+              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/contact")}
+              >
+                تواصل
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" className="border-gold/30 hover:border-gold/50 hover:bg-gold/5" onClick={() => setLocation("/login")}
+              >
+                تسجيل الدخول
+              </Button>
+              <Button className="btn-gold" onClick={() => setLocation("/signup?mode=trial")}
+              >
+                ابدأ الآن
+              </Button>
+            </div>
+          </div>
+
           <div className="flex flex-col lg:flex-row items-center gap-12">
             {/* Hero Content */}
             <div className="flex-1 text-center lg:text-right">
@@ -176,12 +282,20 @@ export default function Home() {
               <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
                 <span className="text-gold">موازين</span>
                 <br />
-                مساعدك القانوني الذكي
+                منصة إدارة المكتب القانوني
               </h1>
               
-              <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0">
-                منصة متكاملة لإدارة المكاتب القانونية في المملكة العربية السعودية، مع مساعد ذكي متخصص في القانون السعودي لتحليل القضايا واكتشاف الثغرات القانونية.
+              <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                نظم قضاياك وعملاءك ومستنداتك وفواتيرك في نظام واحد. وفعّل بوابة عميل آمنة لمتابعة القضايا والمستندات المشتركة.
+                مع مساعد ذكي يساعدك في التحليل والصياغة والبحث في الأنظمة السعودية.
               </p>
+
+              <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-8">
+                <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">إدارة قضايا</Badge>
+                <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">بوابة عميل</Badge>
+                <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">مستندات وفواتير</Badge>
+                <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">ذكاء اصطناعي قانوني</Badge>
+              </div>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button
@@ -198,6 +312,24 @@ export default function Home() {
                 >
                   اكتشف المزيد
                 </Button>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
+                {outcomes.map((o, i) => (
+                  <Card key={i} className="bg-card/70 border-border/50">
+                    <CardContent className="px-6 py-5">
+                      <div className="flex items-center justify-between">
+                        <div className="text-right">
+                          <div className="text-sm text-muted-foreground">{o.label}</div>
+                          <div className="text-base font-semibold text-foreground">{o.value}</div>
+                        </div>
+                        <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                          <o.icon className="h-5 w-5 text-gold" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
             
@@ -234,6 +366,16 @@ export default function Home() {
                       </div>
                       <p className="text-xs text-muted-foreground">
                         سأحتاج بعض التفاصيل (نوع الدعوى، المحكمة/الجهة، التسلسل الزمني) ثم أقدّم لك مسارات نظامية محتملة ومخاطر ومتطلبات.
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-secondary/40 border border-border/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BadgeCheck className="h-4 w-4 text-gold" />
+                        <span className="text-sm font-medium text-foreground">بوابة العميل</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        أنشئ رابطًا آمنًا للعميل لعرض القضايا والفواتير والدفعات والمستندات المشتركة.
                       </p>
                     </div>
                   </div>
@@ -281,6 +423,29 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="py-20">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">كيف يعمل موازين؟</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">رحلة واضحة من تنظيم البيانات إلى مشاركة ذكية وتجربة عميل احترافية.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {steps.map((s, idx) => (
+              <Card key={idx} className="border-border/50 hover:border-gold/30 transition-colors">
+                <CardHeader className="px-6">
+                  <CardTitle className="text-right flex items-start justify-between gap-4">
+                    <span className="leading-snug">{s.title}</span>
+                    <span className="w-10 h-10 rounded-full bg-gold/10 text-gold flex items-center justify-center font-bold">{idx + 1}</span>
+                  </CardTitle>
+                  <CardDescription className="text-right">{s.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* AI Capabilities Section */}
       <section className="py-20">
         <div className="container">
@@ -307,6 +472,14 @@ export default function Home() {
                     <span className="text-foreground">{capability}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                <Button className="btn-gold" onClick={() => setLocation("/signup?mode=trial")}>ابدأ التجربة</Button>
+                <Button variant="outline" className="border-gold/30 hover:border-gold/50 hover:bg-gold/5" onClick={() => setLocation("/legal-tools")}
+                >
+                  استكشف الأدوات القانونية
+                </Button>
               </div>
             </div>
             
@@ -340,6 +513,106 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="py-20 bg-secondary/30">
+        <div className="container">
+          <div className="flex flex-col lg:flex-row items-center gap-10">
+            <div className="flex-1 text-center lg:text-right">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/20 mb-6">
+                <Users className="h-4 w-4 text-gold" />
+                <span className="text-sm text-gold">بوابة العميل</span>
+              </div>
+
+              <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+                تجربة عميل احترافية برابط واحد
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                بدل الرسائل المتفرقة… اعط العميل لوحة متابعة واضحة تُظهر القضايا والجلسات والفواتير والدفعات والمستندات المشتركة فقط.
+                أنت تتحكم بالكامل فيما يتم مشاركته.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { icon: Lock, text: "رابط آمن لكل عميل" },
+                  { icon: FileText, text: "مستندات مشتركة فقط" },
+                  { icon: Search, text: "جدول زمني مرتب" },
+                  { icon: Shield, text: "تحكم كامل بالصلاحيات" },
+                ].map((it, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <it.icon className="h-5 w-5 text-gold" />
+                    <span className="text-foreground">{it.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-10">
+                <Button className="btn-gold" onClick={() => setLocation("/signup?mode=trial")}>فعّل بوابة العميل الآن</Button>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full">
+              <Card className="border-gold/20 shadow-xl">
+                <CardHeader className="px-6">
+                  <CardTitle className="text-right">مثال سريع</CardTitle>
+                  <CardDescription className="text-right">شكل مبسّط لما يراه العميل عبر الرابط</CardDescription>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "القضايا", value: "1" },
+                      { label: "الفواتير", value: "1" },
+                      { label: "المدفوعات", value: "1" },
+                      { label: "المستندات", value: "1" },
+                    ].map((x, idx) => (
+                      <div key={idx} className="rounded-xl border border-border/50 bg-secondary/40 p-4 text-right">
+                        <div className="text-sm text-muted-foreground">{x.label}</div>
+                        <div className="text-2xl font-bold text-foreground">{x.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 rounded-xl border border-border/50 bg-background/60 p-4 text-right">
+                    <div className="text-sm font-medium text-foreground mb-2">الجدول الزمني</div>
+                    <div className="space-y-2">
+                      {[
+                        "فاتورة #INV-...",
+                        "دفعة",
+                        "قضية جديدة",
+                        "مستند مشترك",
+                      ].map((t, idx) => (
+                        <div key={idx} className="flex items-center justify-between gap-3 rounded-lg bg-secondary/40 p-3">
+                          <span className="text-xs text-muted-foreground">اليوم</span>
+                          <span className="text-sm text-foreground">{t}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">أسئلة شائعة</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">إجابات مختصرة على أكثر الأسئلة تكرارًا قبل البدء.</p>
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible>
+              {faqs.map((f, idx) => (
+                <AccordionItem key={idx} value={`item-${idx}`}>
+                  <AccordionTrigger className="text-right">{f.q}</AccordionTrigger>
+                  <AccordionContent className="text-right text-muted-foreground leading-relaxed">{f.a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-b from-background to-gold/5">
         <div className="container">
@@ -357,6 +630,16 @@ export default function Home() {
               ابدأ الآن مجاناً
               <ArrowLeft className="h-5 w-5 mr-2" />
             </Button>
+            <div className="mt-6 text-sm text-muted-foreground">
+              لديك حساب؟
+              <button
+                type="button"
+                onClick={() => setLocation("/login")}
+                className="text-gold hover:text-gold/80 font-medium mr-2"
+              >
+                سجّل الدخول
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -364,14 +647,34 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-8 border-t border-border/50">
         <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Scale className="h-6 w-6 text-gold" />
-              <span className="font-bold text-foreground">موازين</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center md:text-right">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+                <Scale className="h-6 w-6 text-gold" />
+                <span className="font-bold text-foreground">موازين</span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                منصة إدارة قانونية حديثة تساعدك على تنظيم القضايا والعملاء والمستندات، مع بوابة عميل وتجربة احترافية.
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} موازين - جميع الحقوق محفوظة
-            </p>
+
+            <div className="text-center md:text-right">
+              <div className="font-semibold text-foreground mb-3">روابط</div>
+              <div className="flex flex-col gap-2">
+                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/services")}>الخدمات</button>
+                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/pricing")}>الأسعار</button>
+                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/about")}>من نحن</button>
+                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/contact")}>تواصل</button>
+              </div>
+            </div>
+
+            <div className="text-center md:text-right">
+              <div className="font-semibold text-foreground mb-3">ابدأ</div>
+              <div className="flex flex-col gap-3 items-center md:items-start">
+                <Button className="btn-gold" onClick={() => setLocation("/signup?mode=trial")}>ابدأ التجربة</Button>
+                <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} موازين - جميع الحقوق محفوظة</div>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
