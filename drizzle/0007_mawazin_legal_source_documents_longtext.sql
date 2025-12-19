@@ -1,0 +1,3 @@
+ALTER TABLE legalSourceDocuments
+  MODIFY COLUMN `contentText` LONGTEXT NULL,
+  MODIFY COLUMN `error` LONGTEXT NULL;

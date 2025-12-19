@@ -50,6 +50,13 @@
       "when": 1766169000000,
       "tag": "0006_mawazin_legal_crawler_longtext",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1766171000000,
+      "tag": "0007_mawazin_legal_source_documents_longtext",
+      "breakpoints": true
     }
   ]
 }
