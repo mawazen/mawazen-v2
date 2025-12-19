@@ -115,7 +115,7 @@ async function fetchText(url: string, headers: Record<string, string>) {
 
 async function parseSitemapXml(xml: string): Promise<string[]> {
   // Supports sitemapindex and urlset (basic)
-  const locs = Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/gi)).map((m) => m[1].trim());
+  const locs = Array.from(xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi)).map((m) => m[1].trim());
   return locs.filter(Boolean);
 }
 
@@ -279,6 +279,12 @@ export async function runLegalCrawlerOnce(params?: { seedSitemaps?: string[]; fo
       const source = inferSource(url);
       const contentHash = result.text ? sha256Hex(result.text) : null;
 
+      const raw = (result.rawBody ?? result.text ?? "").trim();
+      const isSitemapXml =
+        /sitemap/i.test(url) &&
+        (raw.startsWith("<?xml") || raw.includes("<urlset") || raw.includes("<sitemapindex")) &&
+        raw.includes("<loc>");
+
       const existing = await db.getLegalSourceDocumentBySourceUrl({ source, url });
       if (existing?.contentHash && contentHash && existing.contentHash === contentHash) {
         // No change
@@ -286,8 +292,8 @@ export async function runLegalCrawlerOnce(params?: { seedSitemaps?: string[]; fo
           source,
           url,
           title: result.title,
-          contentText: existing.contentText ?? result.text,
-          contentHash,
+          contentText: isSitemapXml ? null : existing.contentText ?? result.text,
+          contentHash: isSitemapXml ? null : contentHash,
           httpStatus: result.status ?? null,
           etag: result.etag,
           lastModified: result.lastModified,
@@ -303,17 +309,17 @@ export async function runLegalCrawlerOnce(params?: { seedSitemaps?: string[]; fo
         source,
         url,
         title: result.title,
-        contentText: result.text,
-        contentHash,
+        contentText: isSitemapXml ? null : result.text,
+        contentHash: isSitemapXml ? null : contentHash,
         httpStatus: result.status ?? null,
         etag: result.etag,
         lastModified: result.lastModified,
         fetchedAt: new Date(),
-        status: result.error ? "error" : "ok",
-        error: result.error,
+        status: isSitemapXml ? "skipped" : result.error ? "error" : "ok",
+        error: isSitemapXml ? null : result.error,
       } as any);
 
-      if (!result.error && result.text && result.text.length > 100) {
+      if (!isSitemapXml && !result.error && result.text && result.text.length > 100) {
         const chunks = chunkText(result.text);
         // Embed in batches
         const embeddings: number[][] = [];

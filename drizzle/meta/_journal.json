@@ -43,6 +43,13 @@
       "when": 1766167000000,
       "tag": "0005_mawazin_client_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1766169000000,
+      "tag": "0006_mawazin_legal_crawler_longtext",
+      "breakpoints": true
     }
   ]
 }

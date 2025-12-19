@@ -1,0 +1,4 @@
+ALTER TABLE legalCrawlerRuns MODIFY COLUMN `error` LONGTEXT NULL;
+
+ALTER TABLE legalSourceDocuments MODIFY COLUMN `contentText` LONGTEXT NULL;
+ALTER TABLE legalSourceDocuments MODIFY COLUMN `error` LONGTEXT NULL;

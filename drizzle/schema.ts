@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, bigint } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, longtext, timestamp, varchar, boolean, bigint } from "drizzle-orm/mysql-core";
 
 // ==================== ORGANIZATIONS ====================
 export const organizations = mysqlTable("organizations", {
@@ -472,14 +472,14 @@ export const legalSourceDocuments = mysqlTable("legalSourceDocuments", {
   source: varchar("source", { length: 64 }).notNull(),
   url: text("url").notNull(),
   title: text("title"),
-  contentText: text("contentText"),
+  contentText: longtext("contentText"),
   contentHash: varchar("contentHash", { length: 64 }),
   httpStatus: int("httpStatus"),
   etag: varchar("etag", { length: 255 }),
   lastModified: varchar("lastModified", { length: 255 }),
   fetchedAt: timestamp("fetchedAt"),
   status: mysqlEnum("status", ["ok", "error", "skipped"]).default("ok").notNull(),
-  error: text("error"),
+  error: longtext("error"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -508,7 +508,7 @@ export const legalCrawlerRuns = mysqlTable("legalCrawlerRuns", {
   status: mysqlEnum("status", ["running", "success", "error"]).default("running").notNull(),
   pagesCrawled: int("pagesCrawled").default(0).notNull(),
   documentsUpdated: int("documentsUpdated").default(0).notNull(),
-  error: text("error"),
+  error: longtext("error"),
 });
 
 export type LegalCrawlerRun = typeof legalCrawlerRuns.$inferSelect;

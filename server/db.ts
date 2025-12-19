@@ -267,14 +267,14 @@ async function ensureSchemaInitialized(db: ReturnType<typeof drizzle>) {
           source VARCHAR(64) NOT NULL,
           url TEXT NOT NULL,
           title TEXT NULL,
-          contentText TEXT NULL,
+          contentText LONGTEXT NULL,
           contentHash VARCHAR(64) NULL,
           httpStatus INT NULL,
           etag VARCHAR(255) NULL,
           lastModified VARCHAR(255) NULL,
           fetchedAt TIMESTAMP NULL,
           status ENUM('ok','error','skipped') NOT NULL DEFAULT 'ok',
-          error TEXT NULL,
+          error LONGTEXT NULL,
           createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
@@ -301,7 +301,7 @@ async function ensureSchemaInitialized(db: ReturnType<typeof drizzle>) {
           status ENUM('running','success','error') NOT NULL DEFAULT 'running',
           pagesCrawled INT NOT NULL DEFAULT 0,
           documentsUpdated INT NOT NULL DEFAULT 0,
-          error TEXT NULL
+          error LONGTEXT NULL
         )
       `);
     } catch (error) {
@@ -329,6 +329,13 @@ export async function finishLegalCrawlerRun(params: {
   documentsUpdated: number;
   error?: string | null;
 }) {
+  const truncateForDb = (value: string | null | undefined, maxLen: number) => {
+    if (!value) return null;
+    const s = String(value);
+    if (s.length <= maxLen) return s;
+    return `${s.slice(0, maxLen)}\n...[truncated ${s.length - maxLen} chars]`;
+  };
+
   const db = await getDb();
   if (!db) {
     const existing = inMemoryLegalRuns.get(params.id) ?? { id: params.id };
@@ -337,7 +344,7 @@ export async function finishLegalCrawlerRun(params: {
       status: params.status,
       pagesCrawled: params.pagesCrawled,
       documentsUpdated: params.documentsUpdated,
-      error: params.error ?? null,
+      error: truncateForDb(params.error, 8000),
       finishedAt: new Date(),
     });
     return;
@@ -349,22 +356,35 @@ export async function finishLegalCrawlerRun(params: {
       status: params.status,
       pagesCrawled: params.pagesCrawled,
       documentsUpdated: params.documentsUpdated,
-      error: params.error ?? null,
+      error: truncateForDb(params.error, 8000),
       finishedAt: new Date(),
     } as any)
     .where(eq(legalCrawlerRuns.id, params.id));
 }
 
 export async function upsertLegalSourceDocument(doc: InsertLegalSourceDocument) {
+  const truncateForDb = (value: string | null | undefined, maxLen: number) => {
+    if (!value) return null;
+    const s = String(value);
+    if (s.length <= maxLen) return s;
+    return `${s.slice(0, maxLen)}\n...[truncated ${s.length - maxLen} chars]`;
+  };
+
+  // Protect DB from oversized error strings (some drivers include full response bodies / params)
+  const safeDoc: any = {
+    ...doc,
+    error: truncateForDb((doc as any).error, 8000),
+  };
+
   const dbConn = await getDb();
   if (!dbConn) {
     const existing = Array.from(inMemoryLegalDocuments.values()).find((d) => d.source === doc.source && d.url === doc.url);
     if (existing?.id) {
-      inMemoryLegalDocuments.set(existing.id, { ...existing, ...doc, updatedAt: new Date() });
+      inMemoryLegalDocuments.set(existing.id, { ...existing, ...safeDoc, updatedAt: new Date() });
       return existing.id as number;
     }
     const id = Date.now();
-    inMemoryLegalDocuments.set(id, { id, ...doc, createdAt: new Date(), updatedAt: new Date() });
+    inMemoryLegalDocuments.set(id, { id, ...safeDoc, createdAt: new Date(), updatedAt: new Date() });
     return id;
   }
 
@@ -375,11 +395,11 @@ export async function upsertLegalSourceDocument(doc: InsertLegalSourceDocument) 
     .limit(1);
 
   if (existing[0]?.id) {
-    await dbConn.update(legalSourceDocuments).set(doc as any).where(eq(legalSourceDocuments.id, existing[0].id));
+    await dbConn.update(legalSourceDocuments).set(safeDoc).where(eq(legalSourceDocuments.id, existing[0].id));
     return existing[0].id;
   }
 
-  const result = await dbConn.insert(legalSourceDocuments).values(doc as any);
+  const result = await dbConn.insert(legalSourceDocuments).values(safeDoc);
   return result[0].insertId;
 }
 
