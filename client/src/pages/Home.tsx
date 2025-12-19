@@ -25,6 +25,8 @@ import {
   Search,
   Lock,
   BadgeCheck,
+  Star,
+  Quote,
 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -200,6 +202,42 @@ const faqs = [
   {
     q: "هل الذكاء الاصطناعي يكتب بدل المحامي؟",
     a: "هو مساعد يزيد الإنتاجية: يقترح، ينظّم، ويولّد مسودات قابلة للمراجعة. القرار النهائي دائمًا بيد المحامي.",
+  },
+];
+
+const testimonials = [
+  {
+    quote: "أخيرًا صار عندنا مكان واحد لكل شيء: قضايا، مستندات، فواتير، وتنبيهات. وفر علينا وقت كبير في المتابعة.",
+    name: "محامٍ",
+    org: "مكتب محاماة",
+  },
+  {
+    quote: "بوابة العميل رفعت مستوى الخدمة. العميل يشوف التحديثات والمستندات المشتركة بدون رسائل متفرقة.",
+    name: "مدير مكتب",
+    org: "شركة قانونية",
+  },
+  {
+    quote: "المساعد الذكي ممتاز كبداية للمسودات وتلخيص المعطيات. نراجع ونعدل، لكنه يسرّع الشغل.",
+    name: "مستشار قانوني",
+    org: "ممارسة خاصة",
+  },
+];
+
+const pricingTeaser = [
+  {
+    title: "فردي",
+    description: "للمحامي الفردي الذي يريد تنظيم القضايا والعملاء والمهام بسهولة.",
+    bullets: ["إدارة القضايا والعملاء", "مستندات وفواتير", "تقويم وتنبيهات"],
+  },
+  {
+    title: "مكتب",
+    description: "للمكاتب التي تحتاج صلاحيات وتنظيم أعلى وإدارة فريق.",
+    bullets: ["فرق وصلاحيات", "تقارير وتحليلات", "بوابة عميل"],
+  },
+  {
+    title: "مؤسسي",
+    description: "للجهات الكبيرة التي تحتاج تخصيص أعلى وتوسع.",
+    bullets: ["توسّع ومرونة", "حوكمة وصلاحيات", "دعم وإعداد"],
   },
 ];
 
@@ -589,6 +627,76 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">آراء العملاء</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">تجارب واقعية تعكس قيمة التنظيم والشفافية وتجربة العميل.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t, idx) => (
+              <Card key={idx} className="border-border/50 hover:border-gold/30 transition-colors">
+                <CardContent className="px-6 pb-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} className="h-4 w-4 text-gold" />
+                      ))}
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                      <Quote className="h-5 w-5 text-gold" />
+                    </div>
+                  </div>
+                  <p className="mt-4 text-sm text-muted-foreground leading-relaxed text-right">{t.quote}</p>
+                  <div className="mt-6 text-right">
+                    <div className="font-semibold text-foreground">{t.name}</div>
+                    <div className="text-xs text-muted-foreground">{t.org}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-gradient-to-b from-background to-gold/5">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">باقات مرنة تناسبك</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">ابدأ بسرعة، ثم اختر الباقة الأنسب عندما تتوسع احتياجاتك.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {pricingTeaser.map((p, idx) => (
+              <Card key={idx} className="border-border/50 hover:border-gold/30 transition-colors">
+                <CardHeader className="px-6">
+                  <CardTitle className="text-right">{p.title}</CardTitle>
+                  <CardDescription className="text-right">{p.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                  <div className="space-y-3">
+                    {p.bullets.map((b, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
+                        <span className="text-foreground">{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <Button className="btn-gold" onClick={() => setLocation("/signup?mode=trial")}>ابدأ مجانًا</Button>
+            <Button variant="outline" className="border-gold/30 hover:border-gold/50 hover:bg-gold/5" onClick={() => setLocation("/pricing")}>
+              اطلع على الأسعار
+            </Button>
           </div>
         </div>
       </section>
