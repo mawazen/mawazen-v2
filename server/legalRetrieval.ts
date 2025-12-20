@@ -42,8 +42,27 @@ function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function normalizeDigits(input: string) {
+  return String(input ?? "").replace(/[٠-٩]/g, (d) => {
+    const map: Record<string, string> = {
+      "٠": "0",
+      "١": "1",
+      "٢": "2",
+      "٣": "3",
+      "٤": "4",
+      "٥": "5",
+      "٦": "6",
+      "٧": "7",
+      "٨": "8",
+      "٩": "9",
+    };
+    return map[d] ?? d;
+  });
+}
+
 function extractArticleNumber(query: string): number | null {
-  const m = String(query ?? "").match(/\b(?:المادة|ماده|مادة)\s*(\d{1,4})\b/);
+  const q = normalizeDigits(String(query ?? ""));
+  const m = q.match(/(?:المادة|ماده|مادة|لمادة)\s*(?:رقم\s*)?[:(\[]?\s*([0-9]{1,4})/);
   if (!m?.[1]) return null;
   const n = Number(m[1]);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -141,7 +160,6 @@ function buildKeywordTerms(query: string): string[] {
     terms.push("نظام العمل");
   }
 
-  // Keep a few informative tokens as generic fallback.
   const tokens = q
     .replace(/[\u200f\u200e]/g, " ")
     .replace(/[\p{P}\p{S}]+/gu, " ")
@@ -165,7 +183,6 @@ function scoreTextByTerms(text: string, terms: string[]) {
 }
 
 async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
-  // Minimal on-demand fallback when DB is empty.
   const boeLabel = articleLabelBoeStyle(params.articleNumber);
   if (!boeLabel) return null;
 
@@ -198,13 +215,11 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
       .replace(/ {2,}/g, " ")
       .trim();
 
-    const heading = `المادة ${boeLabel}`;
-    const idx = plain.indexOf(heading);
-    if (idx < 0) return null;
-    const tail = plain.slice(idx);
-    const nextIdx = tail.slice(heading.length).search(/\n\s*المادة\s+/);
-    const end = nextIdx >= 0 ? heading.length + nextIdx : Math.min(tail.length, 1600);
-    const snippetText = tail.slice(0, Math.min(end, 1600)).trim();
+    const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
+    const re = new RegExp(`المادة\\s+${labelPattern}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`);
+    const match = plain.match(re);
+    if (!match?.[0]) return null;
+    const snippetText = match[0].trim().slice(0, 1600);
     if (snippetText.length < 40) return null;
 
     return {
@@ -230,7 +245,6 @@ export async function retrieveLegalSnippets(params: {
 
   const terms = buildKeywordTerms(params.query);
 
-  // 1) Vector retrieval (if embeddings are available)
   if (ENV.openaiApiKey && ENV.openaiApiKey.trim().length > 0) {
     try {
       const queryVector = await embedText(params.query);
@@ -260,11 +274,9 @@ export async function retrieveLegalSnippets(params: {
         }
       }
     } catch {
-      // Fall through to keyword search
     }
   }
 
-  // 2) Keyword retrieval (works with or without embeddings)
   try {
     const rows: any[] = (await db.listLegalChunksByTextSearch({ terms, limit: Math.max(scanLimit, topK * 10) })) as any[];
     const scored = rows
@@ -285,10 +297,8 @@ export async function retrieveLegalSnippets(params: {
       .slice(0, topK);
     if (scored.length > 0) return scored;
   } catch {
-    // ignore
   }
 
-  // 3) On-demand BOE fallback for نظام العمل when the DB is empty.
   const n = extractArticleNumber(params.query);
   if (n !== null && (/نظام\s*العمل/.test(params.query) || /مكتب\s*العمل/.test(params.query))) {
     const live = await fetchBoeLaborArticleSnippet({ articleNumber: n });
