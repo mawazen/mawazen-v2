@@ -588,6 +588,12 @@ export async function getOrganizationById(orgId: number) {
   return result[0];
 }
 
+export async function getAllOrganizations() {
+  const db = await getDb();
+  if (!db) return Array.from(inMemoryOrganizations.values());
+  return db.select().from(organizations).orderBy(desc(organizations.createdAt));
+}
+
 export async function setOrganizationSubscriptionPlan(params: {
   organizationId: number;
   subscriptionPlan: "individual" | "law_firm" | "enterprise";
@@ -1181,6 +1187,19 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    for (const u of inMemoryUsers.values()) {
+      if (u?.id === userId) return u;
+    }
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return result[0];
+}
+
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];
@@ -1326,6 +1345,65 @@ export async function getAllClients(search?: string) {
   return db.select().from(clients).orderBy(desc(clients.createdAt));
 }
 
+async function listClientIdsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [] as number[];
+  const rows = await db
+    .select({ id: clients.id })
+    .from(clients)
+    .where(eq(clients.createdById, userId));
+  return rows.map((r) => r.id);
+}
+
+async function listCaseIdsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [] as number[];
+  const clientIds = await listClientIdsByUserId(userId);
+  if (clientIds.length === 0) return [];
+  const rows = await db
+    .select({ id: cases.id })
+    .from(cases)
+    .where(or(...clientIds.map((id) => eq(cases.clientId, id))));
+  return rows.map((r) => r.id);
+}
+
+export async function getAllClientsByUserId(userId: number, search?: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const base = eq(clients.createdById, userId);
+
+  if (search) {
+    return db
+      .select()
+      .from(clients)
+      .where(
+        and(
+          base,
+          or(
+            like(clients.name, `%${search}%`),
+            like(clients.email, `%${search}%`),
+            like(clients.phone, `%${search}%`)
+          )
+        )
+      )
+      .orderBy(desc(clients.createdAt));
+  }
+
+  return db.select().from(clients).where(base).orderBy(desc(clients.createdAt));
+}
+
+export async function getClientByIdForUser(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(clients)
+    .where(and(eq(clients.id, id), eq(clients.createdById, userId)))
+    .limit(1);
+  return result[0];
+}
+
 // ==================== CASE FUNCTIONS ====================
 export async function createCase(caseData: InsertCase) {
   const db = await getDb();
@@ -1380,6 +1458,54 @@ export async function getAllCases(filters?: { status?: string; type?: string; se
   return db.select().from(cases).orderBy(desc(cases.createdAt));
 }
 
+export async function getAllCasesByUserId(
+  userId: number,
+  filters?: { status?: string; type?: string; search?: string }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const clientIds = await listClientIdsByUserId(userId);
+  if (clientIds.length === 0) return [];
+
+  const conditions: any[] = [or(...clientIds.map((id) => eq(cases.clientId, id)))];
+
+  if (filters?.status) {
+    conditions.push(eq(cases.status, filters.status as any));
+  }
+  if (filters?.type) {
+    conditions.push(eq(cases.type, filters.type as any));
+  }
+  if (filters?.search) {
+    conditions.push(
+      or(
+        like(cases.caseNumber, `%${filters.search}%`),
+        like(cases.title, `%${filters.search}%`)
+      )
+    );
+  }
+
+  return db
+    .select()
+    .from(cases)
+    .where(and(...conditions))
+    .orderBy(desc(cases.createdAt));
+}
+
+export async function getCasesByClientIdForUser(userId: number, clientId: number) {
+  const owned = await getClientByIdForUser(userId, clientId);
+  if (!owned) return [];
+  return getCasesByClientId(clientId);
+}
+
+export async function getCaseByIdForUser(userId: number, id: number) {
+  const row = await getCaseById(id);
+  if (!row) return undefined;
+  const owned = await getClientByIdForUser(userId, Number((row as any).clientId));
+  if (!owned) return undefined;
+  return row;
+}
+
 export async function getCasesByClientId(clientId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -1403,6 +1529,25 @@ export async function getCaseStats() {
     lost: lost[0]?.count ?? 0,
     pending: pending[0]?.count ?? 0,
   };
+}
+
+export async function getCaseStatsForUser(userId: number) {
+  const list = (await getAllCasesByUserId(userId)) as any[];
+  let total = 0;
+  let active = 0;
+  let won = 0;
+  let lost = 0;
+  let pending = 0;
+
+  for (const c of list) {
+    total += 1;
+    if (c.status === "active") active += 1;
+    if (c.status === "won") won += 1;
+    if (c.status === "lost") lost += 1;
+    if (c.status === "pending") pending += 1;
+  }
+
+  return { total, active, won, lost, pending };
 }
 
 // ==================== HEARING FUNCTIONS ====================
@@ -1456,6 +1601,63 @@ export async function getUpcomingHearings(days: number = 7) {
       eq(hearings.status, "scheduled")
     ))
     .orderBy(hearings.hearingDate);
+}
+
+export async function getUpcomingHearingsForUser(userId: number, days: number = 7) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const caseIds = await listCaseIdsByUserId(userId);
+  if (caseIds.length === 0) return [];
+
+  const now = new Date();
+  const future = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+  return db
+    .select()
+    .from(hearings)
+    .where(
+      and(
+        or(...caseIds.map((id) => eq(hearings.caseId, id))),
+        gte(hearings.hearingDate, now),
+        lte(hearings.hearingDate, future),
+        eq(hearings.status, "scheduled")
+      )
+    )
+    .orderBy(hearings.hearingDate);
+}
+
+export async function getHearingsByDateRangeForUser(userId: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const caseIds = await listCaseIdsByUserId(userId);
+  if (caseIds.length === 0) return [];
+
+  const conditions: any[] = [or(...caseIds.map((id) => eq(hearings.caseId, id)))];
+  if (startDate) conditions.push(gte(hearings.hearingDate, startDate));
+  if (endDate) conditions.push(lte(hearings.hearingDate, endDate));
+
+  return db
+    .select()
+    .from(hearings)
+    .where(and(...conditions))
+    .orderBy(hearings.hearingDate);
+}
+
+export async function getHearingById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(hearings).where(eq(hearings.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getHearingByIdForUser(userId: number, id: number) {
+  const hearing = await getHearingById(id);
+  if (!hearing) return undefined;
+  const ownedCase = await getCaseByIdForUser(userId, Number((hearing as any).caseId));
+  if (!ownedCase) return undefined;
+  return hearing;
 }
 
 export async function getHearingsByDateRange(startDate?: Date, endDate?: Date) {
@@ -1601,6 +1803,63 @@ export async function getAllDocuments(search?: string) {
   }
 
   return db.select().from(documents).orderBy(desc(documents.createdAt));
+}
+
+export async function getAllDocumentsForUser(userId: number, search?: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const base = eq(documents.uploadedById, userId);
+  if (search) {
+    return db
+      .select()
+      .from(documents)
+      .where(and(base, like(documents.name, `%${search}%`)))
+      .orderBy(desc(documents.createdAt));
+  }
+
+  return db.select().from(documents).where(base).orderBy(desc(documents.createdAt));
+}
+
+export async function getDocumentByIdForUser(userId: number, id: number) {
+  const doc = await getDocumentById(id);
+  if (!doc) return undefined;
+  if (Number((doc as any).uploadedById) !== userId) return undefined;
+  return doc;
+}
+
+export async function getDocumentsByCaseIdForUser(userId: number, caseId: number) {
+  const ownedCase = await getCaseByIdForUser(userId, caseId);
+  if (!ownedCase) return [];
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(documents)
+    .where(and(eq(documents.caseId, caseId), eq(documents.uploadedById, userId)))
+    .orderBy(desc(documents.createdAt));
+}
+
+export async function getDocumentsByClientIdForUser(userId: number, clientId: number) {
+  const ownedClient = await getClientByIdForUser(userId, clientId);
+  if (!ownedClient) return [];
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(documents)
+    .where(and(eq(documents.clientId, clientId), eq(documents.uploadedById, userId)))
+    .orderBy(desc(documents.createdAt));
+}
+
+export async function getDocumentTemplatesForUser(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(documents)
+    .where(and(eq(documents.isTemplate, true), eq(documents.uploadedById, userId)))
+    .orderBy(desc(documents.createdAt));
 }
 
 // ==================== SERVICE PROJECTS (Legal Services Workflow) ====================
@@ -1780,6 +2039,38 @@ export async function getAllTasks(filters?: { status?: string; priority?: string
   return db.select().from(tasks).orderBy(desc(tasks.createdAt));
 }
 
+export async function getAllTasksForUser(userId: number, filters?: { status?: string; priority?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const owner = or(eq(tasks.assignedById, userId), eq(tasks.assignedToId, userId));
+  const conditions: any[] = [owner];
+  if (filters?.status) conditions.push(eq(tasks.status, filters.status as any));
+  if (filters?.priority) conditions.push(eq(tasks.priority, filters.priority as any));
+
+  return db
+    .select()
+    .from(tasks)
+    .where(and(...conditions))
+    .orderBy(desc(tasks.createdAt));
+}
+
+export async function getTaskById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function getTaskByIdForUser(userId: number, id: number) {
+  const task = await getTaskById(id);
+  if (!task) return undefined;
+  const ok =
+    Number((task as any).assignedById) === userId || Number((task as any).assignedToId) === userId;
+  if (!ok) return undefined;
+  return task;
+}
+
 // ==================== INVOICE FUNCTIONS ====================
 export async function createInvoice(invoice: InsertInvoice) {
   const db = await getDb();
@@ -1824,6 +2115,43 @@ export async function getAllInvoices(status?: string) {
   return db.select().from(invoices).orderBy(desc(invoices.createdAt));
 }
 
+export async function getAllInvoicesForUser(userId: number, status?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const base = eq(invoices.createdById, userId);
+  if (status) {
+    return db
+      .select()
+      .from(invoices)
+      .where(and(base, eq(invoices.status, status as any)))
+      .orderBy(desc(invoices.createdAt));
+  }
+  return db.select().from(invoices).where(base).orderBy(desc(invoices.createdAt));
+}
+
+export async function getInvoiceByIdForUser(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.id, id), eq(invoices.createdById, userId)))
+    .limit(1);
+  return rows[0];
+}
+
+export async function getInvoicesByClientIdForUser(userId: number, clientId: number) {
+  const ownedClient = await getClientByIdForUser(userId, clientId);
+  if (!ownedClient) return [];
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.clientId, clientId), eq(invoices.createdById, userId)))
+    .orderBy(desc(invoices.createdAt));
+}
+
 export async function getInvoiceStats() {
   const db = await getDb();
   if (!db) return { total: 0, paid: 0, pending: 0, overdue: 0, totalAmount: 0, paidAmount: 0 };
@@ -1848,6 +2176,35 @@ export async function getInvoiceStats() {
   return { total, paid, pending, overdue, totalAmount, paidAmount };
 }
 
+export async function getInvoiceStatsForUser(userId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, paid: 0, pending: 0, overdue: 0, totalAmount: 0, paidAmount: 0 };
+
+  const allInvoices = await db.select().from(invoices).where(eq(invoices.createdById, userId));
+
+  let total = 0,
+    paid = 0,
+    pending = 0,
+    overdue = 0,
+    totalAmount = 0,
+    paidAmount = 0;
+
+  allInvoices.forEach((inv) => {
+    total++;
+    totalAmount += inv.totalAmount ?? 0;
+    if (inv.status === "paid") {
+      paid++;
+      paidAmount += inv.paidAmount ?? 0;
+    } else if (inv.status === "overdue") {
+      overdue++;
+    } else if (inv.status === "sent" || inv.status === "partial") {
+      pending++;
+    }
+  });
+
+  return { total, paid, pending, overdue, totalAmount, paidAmount };
+}
+
 // ==================== PAYMENT FUNCTIONS ====================
 export async function createPayment(payment: InsertPayment) {
   const db = await getDb();
@@ -1862,11 +2219,37 @@ export async function getPaymentsByInvoiceId(invoiceId: number) {
   return db.select().from(payments).where(eq(payments.invoiceId, invoiceId)).orderBy(desc(payments.paidAt));
 }
 
+export async function getPaymentsByInvoiceIdForUser(userId: number, invoiceId: number) {
+  const invoice = await getInvoiceByIdForUser(userId, invoiceId);
+  if (!invoice) return [];
+  return getPaymentsByInvoiceId(invoiceId);
+}
+
 export async function getPaymentsByClientId(clientId: number) {
   const db = await getDb();
   if (!db) return [];
 
   const inv = await db.select({ id: invoices.id }).from(invoices).where(eq(invoices.clientId, clientId));
+  const ids = inv.map((i) => i.id);
+  if (ids.length === 0) return [];
+  return db
+    .select()
+    .from(payments)
+    .where(or(...ids.map((id) => eq(payments.invoiceId, id))))
+    .orderBy(desc(payments.paidAt));
+}
+
+export async function getPaymentsByClientIdForUser(userId: number, clientId: number) {
+  const ownedClient = await getClientByIdForUser(userId, clientId);
+  if (!ownedClient) return [];
+
+  const db = await getDb();
+  if (!db) return [];
+
+  const inv = await db
+    .select({ id: invoices.id })
+    .from(invoices)
+    .where(and(eq(invoices.clientId, clientId), eq(invoices.createdById, userId)));
   const ids = inv.map((i) => i.id);
   if (ids.length === 0) return [];
   return db
@@ -1913,6 +2296,33 @@ export async function getCalendarEventsByDateRange(startDate: Date, endDate: Dat
     .orderBy(calendarEvents.startTime);
 }
 
+export async function getCalendarEventsByDateRangeForUser(userId: number, startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(calendarEvents)
+    .where(
+      and(
+        eq(calendarEvents.userId, userId),
+        gte(calendarEvents.startTime, startDate),
+        lte(calendarEvents.startTime, endDate)
+      )
+    )
+    .orderBy(calendarEvents.startTime);
+}
+
+export async function getCalendarEventByIdForUser(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, userId)))
+    .limit(1);
+  return rows[0];
+}
+
 // ==================== COMMUNICATION LOG FUNCTIONS ====================
 export async function createCommunicationLog(log: InsertCommunicationLog) {
   const db = await getDb();
@@ -1925,6 +2335,18 @@ export async function getCommunicationLogsByClientId(clientId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(communicationLogs).where(eq(communicationLogs.clientId, clientId)).orderBy(desc(communicationLogs.contactedAt));
+}
+
+export async function getCommunicationLogsByClientIdForUser(userId: number, clientId: number) {
+  const ownedClient = await getClientByIdForUser(userId, clientId);
+  if (!ownedClient) return [];
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(communicationLogs)
+    .where(and(eq(communicationLogs.clientId, clientId), eq(communicationLogs.userId, userId)))
+    .orderBy(desc(communicationLogs.contactedAt));
 }
 
 // ==================== AI CHAT HISTORY FUNCTIONS ====================
@@ -2009,6 +2431,15 @@ export async function markNotificationAsRead(id: number) {
   await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
 }
 
+export async function markNotificationAsReadForUser(userId: number, id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(notifications)
+    .set({ isRead: true })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+}
+
 export async function markAllNotificationsAsRead(userId: number) {
   const db = await getDb();
   if (!db) return;
@@ -2027,6 +2458,18 @@ export async function getTimeEntriesByCaseId(caseId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(timeEntries).where(eq(timeEntries.caseId, caseId)).orderBy(desc(timeEntries.entryDate));
+}
+
+export async function getTimeEntriesByCaseIdForUser(userId: number, caseId: number) {
+  const ownedCase = await getCaseByIdForUser(userId, caseId);
+  if (!ownedCase) return [];
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(timeEntries)
+    .where(and(eq(timeEntries.caseId, caseId), eq(timeEntries.userId, userId)))
+    .orderBy(desc(timeEntries.entryDate));
 }
 
 export async function getTimeEntriesByUserId(userId: number) {
@@ -2083,6 +2526,59 @@ export async function getReportsStats(range?: "week" | "month" | "quarter" | "ye
   };
 }
 
+export async function getReportsStatsForUser(userId: number, range?: "week" | "month" | "quarter" | "year") {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalRevenue: 0,
+      totalExpenses: 0,
+      netProfit: 0,
+      totalCases: 0,
+      wonCases: 0,
+      lostCases: 0,
+      totalClients: 0,
+      newClients: 0,
+    };
+  }
+
+  const invoiceStats = await getInvoiceStatsForUser(userId);
+  const caseStats = await getCaseStatsForUser(userId);
+
+  const totalClientsResult = await db
+    .select({ count: count() })
+    .from(clients)
+    .where(eq(clients.createdById, userId));
+  const totalClients = totalClientsResult[0]?.count ?? 0;
+
+  const now = new Date();
+  const start = new Date(now);
+  if (range === "week") start.setDate(now.getDate() - 7);
+  else if (range === "month") start.setMonth(now.getMonth() - 1);
+  else if (range === "quarter") start.setMonth(now.getMonth() - 3);
+  else if (range === "year") start.setFullYear(now.getFullYear() - 1);
+  else start.setMonth(now.getMonth() - 1);
+
+  const newClientsResult = await db
+    .select({ count: count() })
+    .from(clients)
+    .where(and(eq(clients.createdById, userId), gte(clients.createdAt, start)));
+
+  const totalRevenue = invoiceStats.paidAmount;
+  const totalExpenses = 0;
+  const netProfit = totalRevenue - totalExpenses;
+
+  return {
+    totalRevenue,
+    totalExpenses,
+    netProfit,
+    totalCases: caseStats.total,
+    wonCases: caseStats.won,
+    lostCases: caseStats.lost,
+    totalClients,
+    newClients: newClientsResult[0]?.count ?? 0,
+  };
+}
+
 // ==================== DASHBOARD STATS ====================
 export async function getDashboardStats() {
   const db = await getDb();
@@ -2110,6 +2606,63 @@ export async function getDashboardStats() {
     ? Math.round((caseStats.won / (caseStats.won + caseStats.lost || 1)) * 100) 
     : 0;
   
+  return {
+    totalCases: caseStats.total,
+    activeCases: caseStats.active,
+    totalClients: clientCount,
+    upcomingHearings: upcoming.length,
+    pendingTasks: pendingTasksResult[0]?.count ?? 0,
+    unpaidInvoices: invoiceStats.pending + invoiceStats.overdue,
+    winRate,
+    totalRevenue: invoiceStats.paidAmount,
+    wonCases: caseStats.won,
+    lostCases: caseStats.lost,
+    pendingCases: caseStats.pending,
+  };
+}
+
+export async function getDashboardStatsForUser(userId: number) {
+  const db = await getDb();
+  if (!db)
+    return {
+      totalCases: 0,
+      activeCases: 0,
+      totalClients: 0,
+      upcomingHearings: 0,
+      pendingTasks: 0,
+      unpaidInvoices: 0,
+      winRate: 0,
+      totalRevenue: 0,
+      wonCases: 0,
+      lostCases: 0,
+      pendingCases: 0,
+    };
+
+  const caseStats = await getCaseStatsForUser(userId);
+
+  const clientCountResult = await db
+    .select({ count: count() })
+    .from(clients)
+    .where(eq(clients.createdById, userId));
+  const clientCount = clientCountResult[0]?.count ?? 0;
+
+  const upcoming = await getUpcomingHearingsForUser(userId, 7);
+  const pendingTasksResult = await db
+    .select({ count: count() })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.status, "pending"),
+        or(eq(tasks.assignedById, userId), eq(tasks.assignedToId, userId))
+      )
+    );
+  const invoiceStats = await getInvoiceStatsForUser(userId);
+
+  const winRate =
+    caseStats.total > 0
+      ? Math.round((caseStats.won / (caseStats.won + caseStats.lost || 1)) * 100)
+      : 0;
+
   return {
     totalCases: caseStats.total,
     activeCases: caseStats.active,

@@ -43,6 +43,7 @@ import {
   BookOpen,
   MessageSquareText,
   Wand2,
+  Crown,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -166,7 +167,17 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find((item) => item.path === location);
+  const { data: isOwner } = trpc.auth.isOwner.useQuery(undefined, {
+    enabled: Boolean(user),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const effectiveMenuItems = (isOwner
+    ? [...menuItems, { icon: Crown, label: "لوحة المالك", labelEn: "Owner", path: "/owner" }]
+    : menuItems) as typeof menuItems;
+
+  const activeMenuItem = effectiveMenuItems.find((item) => item.path === location);
   const isMobile = useIsMobile();
   const { data: unreadNotifications } = trpc.notifications.list.useQuery(
     { unreadOnly: true },
@@ -254,7 +265,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0 py-4">
             <SidebarMenu className="px-2 py-1 space-y-1">
-              {menuItems.map((item) => {
+              {effectiveMenuItems.map((item) => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>

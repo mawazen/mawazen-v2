@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "portal:smoke": "tsx scripts/portal-smoke.ts",
+    "owner:openid": "tsx scripts/owner-openid.ts",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "db:migrate": "drizzle-kit migrate"
   },

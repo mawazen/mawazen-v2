@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { adminProcedure, publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { adminProcedure, ownerProcedure, publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import { nanoid } from "nanoid";
@@ -244,6 +244,12 @@ export const appRouter = router({
   
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
+    isOwner: publicProcedure.query((opts) => {
+      const user = opts.ctx.user;
+      if (!user) return false;
+      if (!ENV.ownerOpenId) return false;
+      return user.openId === ENV.ownerOpenId;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -668,7 +674,7 @@ export const appRouter = router({
 
         let caseContext = "";
         if (input.caseId) {
-          const caseData = await db.getCaseById(input.caseId);
+          const caseData = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
           if (caseData) {
             caseContext = `\n\nبيانات القضية بالنظام:\n- رقم القضية: ${caseData.caseNumber}\n- العنوان: ${caseData.title}\n- النوع: ${caseData.type}\n- المحكمة: ${caseData.court || "غير محدد"}\n- المرحلة: ${caseData.stage}\n- الحالة: ${caseData.status}`;
           }
@@ -1075,16 +1081,16 @@ export const appRouter = router({
 
   // ==================== DASHBOARD ====================
   dashboard: router({
-    stats: protectedProcedure.query(async () => {
-      return db.getDashboardStats();
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      return db.getDashboardStatsForUser(ctx.user.id);
     }),
     
-    upcomingHearings: protectedProcedure.query(async () => {
-      return db.getUpcomingHearings(7);
+    upcomingHearings: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUpcomingHearingsForUser(ctx.user.id, 7);
     }),
     
-    recentCases: protectedProcedure.query(async () => {
-      const cases = await db.getAllCases();
+    recentCases: protectedProcedure.query(async ({ ctx }) => {
+      const cases = await db.getAllCasesByUserId(ctx.user.id);
       return cases.slice(0, 5);
     }),
   }),
@@ -1098,8 +1104,8 @@ export const appRouter = router({
           })
           .optional()
       )
-      .query(async ({ input }) => {
-        return db.getReportsStats(input?.range);
+      .query(async ({ input, ctx }) => {
+        return db.getReportsStatsForUser(ctx.user.id, input?.range);
       }),
   }),
 
@@ -1188,14 +1194,14 @@ export const appRouter = router({
   clients: router({
     list: protectedProcedure
       .input(z.object({ search: z.string().optional() }).optional())
-      .query(async ({ input }) => {
-        return db.getAllClients(input?.search);
+      .query(async ({ input, ctx }) => {
+        return db.getAllClientsByUserId(ctx.user.id, input?.search);
       }),
     
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return db.getClientById(input.id);
+      .query(async ({ input, ctx }) => {
+        return db.getClientByIdForUser(ctx.user.id, input.id);
       }),
     
     create: protectedProcedure
@@ -1235,47 +1241,55 @@ export const appRouter = router({
         city: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        const owned = await db.getClientByIdForUser(ctx.user.id, id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "العميل غير موجود" });
+        }
         await db.updateClient(id, data);
         return { success: true };
       }),
     
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const owned = await db.getClientByIdForUser(ctx.user.id, input.id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "العميل غير موجود" });
+        }
         await db.deleteClient(input.id);
         return { success: true };
       }),
     
     getCases: protectedProcedure
       .input(z.object({ clientId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getCasesByClientId(input.clientId);
+      .query(async ({ input, ctx }) => {
+        return db.getCasesByClientIdForUser(ctx.user.id, input.clientId);
       }),
     
     getDocuments: protectedProcedure
       .input(z.object({ clientId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getDocumentsByClientId(input.clientId);
+      .query(async ({ input, ctx }) => {
+        return db.getDocumentsByClientIdForUser(ctx.user.id, input.clientId);
       }),
     
     getInvoices: protectedProcedure
       .input(z.object({ clientId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getInvoicesByClientId(input.clientId);
+      .query(async ({ input, ctx }) => {
+        return db.getInvoicesByClientIdForUser(ctx.user.id, input.clientId);
       }),
     
     getCommunicationLogs: protectedProcedure
       .input(z.object({ clientId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getCommunicationLogsByClientId(input.clientId);
+      .query(async ({ input, ctx }) => {
+        return db.getCommunicationLogsByClientIdForUser(ctx.user.id, input.clientId);
       }),
 
     portalGenerate: protectedProcedure
       .input(z.object({ clientId: z.number() }))
-      .mutation(async ({ input }) => {
-        const client = await db.getClientById(input.clientId);
+      .mutation(async ({ input, ctx }) => {
+        const client = await db.getClientByIdForUser(ctx.user.id, input.clientId);
         if (!client) {
           throw new TRPCError({ code: "NOT_FOUND", message: "العميل غير موجود" });
         }
@@ -1291,8 +1305,8 @@ export const appRouter = router({
 
     portalDisable: protectedProcedure
       .input(z.object({ clientId: z.number() }))
-      .mutation(async ({ input }) => {
-        const client = await db.getClientById(input.clientId);
+      .mutation(async ({ input, ctx }) => {
+        const client = await db.getClientByIdForUser(ctx.user.id, input.clientId);
         if (!client) {
           throw new TRPCError({ code: "NOT_FOUND", message: "العميل غير موجود" });
         }
@@ -1312,14 +1326,14 @@ export const appRouter = router({
         type: z.string().optional(),
         search: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return db.getAllCases(input);
+      .query(async ({ input, ctx }) => {
+        return db.getAllCasesByUserId(ctx.user.id, input);
       }),
     
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return db.getCaseById(input.id);
+      .query(async ({ input, ctx }) => {
+        return db.getCaseByIdForUser(ctx.user.id, input.id);
       }),
     
     create: protectedProcedure
@@ -1341,7 +1355,11 @@ export const appRouter = router({
         estimatedValue: z.number().optional().nullable(),
         notes: z.string().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const ownedClient = await db.getClientByIdForUser(ctx.user.id, input.clientId);
+        if (!ownedClient) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+        }
         const id = await db.createCase(input);
         return { id };
       }),
@@ -1368,45 +1386,57 @@ export const appRouter = router({
         actualValue: z.number().optional().nullable(),
         notes: z.string().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        const ownedCase = await db.getCaseByIdForUser(ctx.user.id, id);
+        if (!ownedCase) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "القضية غير موجودة" });
+        }
         await db.updateCase(id, data);
         return { success: true };
       }),
     
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.id);
+        if (!ownedCase) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "القضية غير موجودة" });
+        }
         await db.deleteCase(input.id);
         return { success: true };
       }),
     
     getHearings: protectedProcedure
       .input(z.object({ caseId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+        if (!ownedCase) return [];
         return db.getHearingsByCaseId(input.caseId);
       }),
     
     getDocuments: protectedProcedure
       .input(z.object({ caseId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getDocumentsByCaseId(input.caseId);
+      .query(async ({ input, ctx }) => {
+        return db.getDocumentsByCaseIdForUser(ctx.user.id, input.caseId);
       }),
     
     getTasks: protectedProcedure
       .input(z.object({ caseId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+        if (!ownedCase) return [];
         return db.getTasksByCaseId(input.caseId);
       }),
     
     getTimeEntries: protectedProcedure
       .input(z.object({ caseId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getTimeEntriesByCaseId(input.caseId);
+      .query(async ({ input, ctx }) => {
+        return db.getTimeEntriesByCaseIdForUser(ctx.user.id, input.caseId);
       }),
     
-    stats: protectedProcedure.query(async () => {
-      return db.getCaseStats();
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      return db.getCaseStatsForUser(ctx.user.id);
     }),
   }),
 
@@ -1417,8 +1447,8 @@ export const appRouter = router({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return db.getHearingsByDateRange(input?.startDate, input?.endDate);
+      .query(async ({ input, ctx }) => {
+        return db.getHearingsByDateRangeForUser(ctx.user.id, input?.startDate, input?.endDate);
       }),
     
     create: protectedProcedure
@@ -1431,7 +1461,11 @@ export const appRouter = router({
         courtRoom: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+        if (!ownedCase) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+        }
         const id = await db.createHearing({
           ...input,
           status: "scheduled",
@@ -1451,23 +1485,31 @@ export const appRouter = router({
         outcome: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        const ownedHearing = await db.getHearingByIdForUser(ctx.user.id, id);
+        if (!ownedHearing) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+        }
         await db.updateHearing(id, data);
         return { success: true };
       }),
     
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const ownedHearing = await db.getHearingByIdForUser(ctx.user.id, input.id);
+        if (!ownedHearing) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "الجلسة غير موجودة" });
+        }
         await db.deleteHearing(input.id);
         return { success: true };
       }),
     
     upcoming: protectedProcedure
       .input(z.object({ days: z.number().optional() }).optional())
-      .query(async ({ input }) => {
-        return db.getUpcomingHearings(input?.days ?? 7);
+      .query(async ({ input, ctx }) => {
+        return db.getUpcomingHearingsForUser(ctx.user.id, input?.days ?? 7);
       }),
   }),
 
@@ -1475,14 +1517,14 @@ export const appRouter = router({
   documents: router({
     list: protectedProcedure
       .input(z.object({ search: z.string().optional() }).optional())
-      .query(async ({ input }) => {
-        return db.getAllDocuments(input?.search);
+      .query(async ({ input, ctx }) => {
+        return db.getAllDocumentsForUser(ctx.user.id, input?.search);
       }),
     
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return db.getDocumentById(input.id);
+      .query(async ({ input, ctx }) => {
+        return db.getDocumentByIdForUser(ctx.user.id, input.id);
       }),
     
     create: protectedProcedure
@@ -1505,6 +1547,18 @@ export const appRouter = router({
         reminderDays: z.number().int().min(1).max(365).optional().nullable(),
       }))
       .mutation(async ({ input, ctx }) => {
+        if (input.caseId) {
+          const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+          if (!ownedCase) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+          }
+        }
+        if (input.clientId) {
+          const ownedClient = await db.getClientByIdForUser(ctx.user.id, input.clientId);
+          if (!ownedClient) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+          }
+        }
         const id = await db.createDocument({
           ...input,
           uploadedById: ctx.user.id,
@@ -1527,8 +1581,12 @@ export const appRouter = router({
         renewAt: z.date().optional().nullable(),
         reminderDays: z.number().int().min(1).max(365).optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        const owned = await db.getDocumentByIdForUser(ctx.user.id, id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "المستند غير موجود" });
+        }
         await db.updateDocument(id, data);
         return { success: true };
       }),
@@ -1547,12 +1605,25 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        const template = await db.getDocumentById(input.templateId);
+        const template = await db.getDocumentByIdForUser(ctx.user.id, input.templateId);
         if (!template || !template.isTemplate) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "القالب غير موجود",
           });
+        }
+
+        if (input.caseId) {
+          const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+          if (!ownedCase) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+          }
+        }
+        if (input.clientId) {
+          const ownedClient = await db.getClientByIdForUser(ctx.user.id, input.clientId);
+          if (!ownedClient) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+          }
         }
 
         const id = await db.createDocument({
@@ -1581,13 +1652,17 @@ export const appRouter = router({
     
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const owned = await db.getDocumentByIdForUser(ctx.user.id, input.id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "المستند غير موجود" });
+        }
         await db.deleteDocument(input.id);
         return { success: true };
       }),
     
-    templates: protectedProcedure.query(async () => {
-      return db.getDocumentTemplates();
+    templates: protectedProcedure.query(async ({ ctx }) => {
+      return db.getDocumentTemplatesForUser(ctx.user.id);
     }),
   }),
 
@@ -1598,8 +1673,8 @@ export const appRouter = router({
         status: z.string().optional(),
         priority: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return db.getAllTasks(input);
+      .query(async ({ input, ctx }) => {
+        return db.getAllTasksForUser(ctx.user.id, input);
       }),
     
     create: protectedProcedure
@@ -1613,6 +1688,12 @@ export const appRouter = router({
         priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        if (input.caseId) {
+          const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+          if (!ownedCase) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+          }
+        }
         const id = await db.createTask({
           ...input,
           assignedById: ctx.user.id,
@@ -1632,8 +1713,12 @@ export const appRouter = router({
         status: z.enum(["pending", "in_progress", "completed", "cancelled"]).optional(),
         serviceProjectId: z.number().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        const owned = await db.getTaskByIdForUser(ctx.user.id, id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "المهمة غير موجودة" });
+        }
         if (data.status === "completed") {
           (data as any).completedAt = new Date();
         }
@@ -1643,7 +1728,11 @@ export const appRouter = router({
     
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const owned = await db.getTaskByIdForUser(ctx.user.id, input.id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "المهمة غير موجودة" });
+        }
         await db.deleteTask(input.id);
         return { success: true };
       }),
@@ -1657,14 +1746,14 @@ export const appRouter = router({
   invoices: router({
     list: protectedProcedure
       .input(z.object({ status: z.string().optional() }).optional())
-      .query(async ({ input }) => {
-        return db.getAllInvoices(input?.status);
+      .query(async ({ input, ctx }) => {
+        return db.getAllInvoicesForUser(ctx.user.id, input?.status);
       }),
     
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return db.getInvoiceById(input.id);
+      .query(async ({ input, ctx }) => {
+        return db.getInvoiceByIdForUser(ctx.user.id, input.id);
       }),
     
     create: protectedProcedure
@@ -1680,6 +1769,16 @@ export const appRouter = router({
         dueDate: z.date().optional().nullable(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const ownedClient = await db.getClientByIdForUser(ctx.user.id, input.clientId);
+        if (!ownedClient) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+        }
+        if (input.caseId) {
+          const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+          if (!ownedCase) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+          }
+        }
         const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
         const taxAmount = input.taxAmount ?? Math.round(input.amount * 0.15); // 15% VAT
         const totalAmount = input.amount + taxAmount;
@@ -1705,8 +1804,12 @@ export const appRouter = router({
         dueDate: z.date().optional().nullable(),
         serviceProjectId: z.number().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        const owned = await db.getInvoiceByIdForUser(ctx.user.id, id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "الفاتورة غير موجودة" });
+        }
         if (data.amount !== undefined) {
           const taxAmount = data.taxAmount ?? Math.round(data.amount * 0.15);
           (data as any).totalAmount = data.amount + taxAmount;
@@ -1717,7 +1820,11 @@ export const appRouter = router({
     
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const owned = await db.getInvoiceByIdForUser(ctx.user.id, input.id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "الفاتورة غير موجودة" });
+        }
         await db.deleteInvoice(input.id);
         return { success: true };
       }),
@@ -1730,11 +1837,15 @@ export const appRouter = router({
         transactionId: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const ownedInvoice = await db.getInvoiceByIdForUser(ctx.user.id, input.invoiceId);
+        if (!ownedInvoice) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "الفاتورة غير موجودة" });
+        }
         await db.createPayment(input);
         
         // Update invoice paid amount
-        const invoice = await db.getInvoiceById(input.invoiceId);
+        const invoice = await db.getInvoiceByIdForUser(ctx.user.id, input.invoiceId);
         if (invoice) {
           const newPaidAmount = (invoice.paidAmount ?? 0) + input.amount;
           const newStatus = newPaidAmount >= invoice.totalAmount ? "paid" : "partial";
@@ -1750,12 +1861,12 @@ export const appRouter = router({
     
     getPayments: protectedProcedure
       .input(z.object({ invoiceId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getPaymentsByInvoiceId(input.invoiceId);
+      .query(async ({ input, ctx }) => {
+        return db.getPaymentsByInvoiceIdForUser(ctx.user.id, input.invoiceId);
       }),
     
-    stats: protectedProcedure.query(async () => {
-      return db.getInvoiceStats();
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      return db.getInvoiceStatsForUser(ctx.user.id);
     }),
   }),
 
@@ -1766,8 +1877,8 @@ export const appRouter = router({
         startDate: z.date(),
         endDate: z.date(),
       }))
-      .query(async ({ input }) => {
-        return db.getCalendarEventsByDateRange(input.startDate, input.endDate);
+      .query(async ({ input, ctx }) => {
+        return db.getCalendarEventsByDateRangeForUser(ctx.user.id, input.startDate, input.endDate);
       }),
     
     create: protectedProcedure
@@ -1783,6 +1894,12 @@ export const appRouter = router({
         reminderMinutes: z.number().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        if (input.caseId) {
+          const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+          if (!ownedCase) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+          }
+        }
         const id = await db.createCalendarEvent({
           ...input,
           userId: ctx.user.id,
@@ -1801,15 +1918,23 @@ export const appRouter = router({
         allDay: z.boolean().optional(),
         location: z.string().optional().nullable(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
+        const owned = await db.getCalendarEventByIdForUser(ctx.user.id, id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "الحدث غير موجود" });
+        }
         await db.updateCalendarEvent(id, data);
         return { success: true };
       }),
     
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const owned = await db.getCalendarEventByIdForUser(ctx.user.id, input.id);
+        if (!owned) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "الحدث غير موجود" });
+        }
         await db.deleteCalendarEvent(input.id);
         return { success: true };
       }),
@@ -1861,7 +1986,7 @@ export const appRouter = router({
         
         // Add case context if available
         if (input.caseId) {
-          const caseData = await db.getCaseById(input.caseId);
+          const caseData = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
           if (caseData) {
             messages.push({
               role: "system",
@@ -1961,7 +2086,7 @@ export const appRouter = router({
           });
         }
 
-        const caseData = await db.getCaseById(input.caseId);
+        const caseData = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
         if (!caseData) {
           throw new Error("القضية غير موجودة");
         }
@@ -2007,7 +2132,7 @@ export const appRouter = router({
         clientId: z.number().optional().nullable(),
         customInstructions: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         // Subscription check is kept consistent with chat/analyzeCase
         // The protectedProcedure already ensures ctx.user exists
         // and subscription gating is handled in those mutations.
@@ -2021,16 +2146,18 @@ export const appRouter = router({
         
         let context = "";
         if (input.caseId) {
-          const caseData = await db.getCaseById(input.caseId);
-          if (caseData) {
-            context = `\n\nسياق القضية:\n- رقم القضية: ${caseData.caseNumber}\n- العنوان: ${caseData.title}\n- النوع: ${caseData.type}`;
+          const caseData = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+          if (!caseData) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "القضية غير موجودة" });
           }
+          context = `\n\nسياق القضية:\n- رقم القضية: ${caseData.caseNumber}\n- العنوان: ${caseData.title}\n- النوع: ${caseData.type}`;
         }
         if (input.clientId) {
-          const client = await db.getClientById(input.clientId);
-          if (client) {
-            context += `\n\nبيانات العميل:\n- الاسم: ${client.name}\n- النوع: ${client.type}`;
+          const client = await db.getClientByIdForUser(ctx.user.id, input.clientId);
+          if (!client) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "العميل غير موجود" });
           }
+          context += `\n\nبيانات العميل:\n- الاسم: ${client.name}\n- النوع: ${client.type}`;
         }
         
         const messages: { role: "system" | "user"; content: string }[] = [
@@ -2089,8 +2216,8 @@ export const appRouter = router({
     
     markAsRead: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.markNotificationAsRead(input.id);
+      .mutation(async ({ input, ctx }) => {
+        await db.markNotificationAsReadForUser(ctx.user.id, input.id);
         return { success: true };
       }),
     
@@ -2183,6 +2310,16 @@ export const appRouter = router({
         content: z.string().optional().nullable(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const ownedClient = await db.getClientByIdForUser(ctx.user.id, input.clientId);
+        if (!ownedClient) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "العميل غير موجود" });
+        }
+        if (input.caseId) {
+          const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+          if (!ownedCase) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "القضية غير موجودة" });
+          }
+        }
         const id = await db.createCommunicationLog({
           ...input,
           userId: ctx.user.id,
@@ -2202,6 +2339,10 @@ export const appRouter = router({
         billable: z.boolean().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        const ownedCase = await db.getCaseByIdForUser(ctx.user.id, input.caseId);
+        if (!ownedCase) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "غير مصرح" });
+        }
         const id = await db.createTimeEntry({
           ...input,
           userId: ctx.user.id,
@@ -2211,12 +2352,170 @@ export const appRouter = router({
     
     byCaseId: protectedProcedure
       .input(z.object({ caseId: z.number() }))
-      .query(async ({ input }) => {
-        return db.getTimeEntriesByCaseId(input.caseId);
+      .query(async ({ input, ctx }) => {
+        return db.getTimeEntriesByCaseIdForUser(ctx.user.id, input.caseId);
       }),
     
     myEntries: protectedProcedure.query(async ({ ctx }) => {
       return db.getTimeEntriesByUserId(ctx.user.id);
+    }),
+  }),
+
+  owner: router({
+    overview: ownerProcedure.query(async () => {
+      const [users, organizations] = await Promise.all([db.getAllUsers(), db.getAllOrganizations()]);
+
+      const totalUsers = users.length;
+      const activeUsers = users.filter((u) => u.isActive).length;
+      const totalOrganizations = organizations.length;
+
+      const byPlan = {
+        individual: 0,
+        law_firm: 0,
+        enterprise: 0,
+      } as Record<"individual" | "law_firm" | "enterprise", number>;
+
+      for (const u of users) {
+        const plan = (u.subscriptionPlan ?? "individual") as "individual" | "law_firm" | "enterprise";
+        byPlan[plan] = (byPlan[plan] ?? 0) + 1;
+      }
+
+      return {
+        totalUsers,
+        activeUsers,
+        totalOrganizations,
+        usersByPlan: byPlan,
+      } as const;
+    }),
+
+    stats: ownerProcedure
+      .input(
+        z
+          .object({
+            range: z.enum(["week", "month", "quarter", "year"]).optional(),
+          })
+          .optional()
+      )
+      .query(async ({ input }) => {
+        const [users, organizations, caseStats, invoiceStats, reportsStats, dashboardStats] =
+          await Promise.all([
+            db.getAllUsers(),
+            db.getAllOrganizations(),
+            db.getCaseStats(),
+            db.getInvoiceStats(),
+            db.getReportsStats(input?.range),
+            db.getDashboardStats(),
+          ]);
+
+        const totalUsers = users.length;
+        const activeUsers = users.filter((u) => u.isActive).length;
+        const totalOrganizations = organizations.length;
+
+        return {
+          users: {
+            total: totalUsers,
+            active: activeUsers,
+          },
+          organizations: {
+            total: totalOrganizations,
+          },
+          cases: caseStats,
+          invoices: invoiceStats,
+          reports: reportsStats,
+          dashboard: dashboardStats,
+        } as const;
+      }),
+
+    users: router({
+      list: ownerProcedure
+        .input(
+          z
+            .object({
+              query: z.string().optional(),
+              role: z.enum(["admin", "lawyer", "assistant", "client"]).optional(),
+              isActive: z.boolean().optional(),
+            })
+            .optional()
+        )
+        .query(async ({ input }) => {
+          const [users, organizations] = await Promise.all([db.getAllUsers(), db.getAllOrganizations()]);
+          const orgById = new Map<number, any>(organizations.map((o: any) => [Number(o.id), o]));
+
+          const q = (input?.query ?? "").trim().toLowerCase();
+          let list = users;
+
+          if (input?.role) {
+            list = list.filter((u) => u.role === input.role);
+          }
+          if (typeof input?.isActive === "boolean") {
+            list = list.filter((u) => Boolean(u.isActive) === input.isActive);
+          }
+          if (q) {
+            list = list.filter((u) => {
+              const name = (u.name ?? "").toLowerCase();
+              const email = (u.email ?? "").toLowerCase();
+              const phone = (u.phone ?? "").toLowerCase();
+              const openId = (u.openId ?? "").toLowerCase();
+              return name.includes(q) || email.includes(q) || phone.includes(q) || openId.includes(q);
+            });
+          }
+
+          return list.map((u) => {
+            const orgId = u.organizationId ? Number(u.organizationId) : null;
+            const org = orgId ? orgById.get(orgId) : null;
+            return {
+              ...u,
+              organization: org ? { id: Number(org.id), name: org.name, subscriptionPlan: org.subscriptionPlan, seatLimit: org.seatLimit } : null,
+            };
+          });
+        }),
+
+      setActive: ownerProcedure
+        .input(z.object({ userId: z.number(), isActive: z.boolean() }))
+        .mutation(async ({ input }) => {
+          await db.setUserActive(input.userId, input.isActive);
+          return { success: true as const };
+        }),
+
+      setPlan: ownerProcedure
+        .input(
+          z.object({
+            userId: z.number(),
+            plan: z.enum(["individual", "law_firm", "enterprise"]),
+            isActive: z.boolean().optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const user = await db.getUserById(input.userId);
+          if (!user) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+          }
+
+          const seatLimit = input.plan === "law_firm" ? 5 : input.plan === "enterprise" ? 15 : 1;
+          const organizationId = await db.ensureUserHasOrganization({
+            openId: user.openId,
+            defaultOrganizationName: user.name ?? null,
+          });
+
+          await db.setOrganizationSubscriptionPlan({
+            organizationId,
+            subscriptionPlan: input.plan,
+            seatLimit,
+          });
+
+          await db.setUserSubscriptionPlan({
+            userId: user.id,
+            subscriptionPlan: input.plan,
+            accountType: input.plan,
+            seatLimit,
+          });
+
+          if (typeof input.isActive === "boolean") {
+            await db.setUserActive(user.id, input.isActive);
+          }
+
+          return { success: true as const };
+        }),
     }),
   }),
 });

@@ -44,6 +44,7 @@ import BlogPost from "./pages/BlogPost";
 import CmsBlogAdmin from "./pages/CmsBlogAdmin";
 import LegalTools from "./pages/LegalTools";
 import PublicClientPortal from "./pages/PublicClientPortal";
+import OwnerDashboard from "./pages/OwnerDashboard";
 
 function Router() {
   return (
@@ -88,6 +89,7 @@ function Router() {
       <Route path={"/cms/testimonials"} component={CmsTestimonialsAdmin} />
       <Route path={"/cms/messages"} component={CmsContactMessagesAdmin} />
       <Route path={"/cms/blog"} component={CmsBlogAdmin} />
+      <Route path={"/owner"} component={OwnerDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
