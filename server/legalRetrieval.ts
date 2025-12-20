@@ -1,6 +1,7 @@
 import * as db from "./db";
 import { ENV } from "./_core/env";
 import { embedText } from "./legalEmbeddings";
+import axios from "axios";
 
 export type RetrievedLegalSnippet = {
   text: string;
@@ -10,6 +11,48 @@ export type RetrievedLegalSnippet = {
   title: string | null;
   meta: Record<string, unknown> | null;
 };
+
+type SimpleHttpResponse = {
+  ok: boolean;
+  status: number;
+  text: () => Promise<string>;
+};
+
+async function httpGetText(url: string, headers: Record<string, string>): Promise<SimpleHttpResponse> {
+  const f = (globalThis as any)?.fetch as
+    | undefined
+    | ((input: string, init?: { headers?: Record<string, string>; redirect?: "follow" | "manual" | "error" }) => Promise<any>);
+
+  if (typeof f === "function") {
+    const res = await f(url, { headers, redirect: "follow" });
+    return {
+      ok: !!res?.ok,
+      status: Number(res?.status ?? 0),
+      text: async () => String(await res.text()),
+    };
+  }
+
+  try {
+    const res = await axios.get(url, {
+      headers,
+      maxRedirects: 5,
+      timeout: 12000,
+      responseType: "text",
+      validateStatus: () => true,
+    });
+    return {
+      ok: res.status >= 200 && res.status < 300,
+      status: res.status,
+      text: async () => String(res.data ?? ""),
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 0,
+      text: async () => "",
+    };
+  }
+}
 
 function safeJsonParse<T>(value: unknown, fallback: T): T {
   if (typeof value !== "string" || value.trim().length === 0) return fallback;
@@ -187,12 +230,9 @@ async function webSearchArticleSnippet(params: { query: string; articleNumber: n
 
   const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
   try {
-    const res = await fetch(searchUrl, {
-      headers: {
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "user-agent": ENV.legalCrawlerUserAgent,
-      },
-      redirect: "follow",
+    const res = await httpGetText(searchUrl, {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": ENV.legalCrawlerUserAgent,
     });
     if (!res.ok) return null;
     const html = await res.text();
@@ -206,12 +246,9 @@ async function webSearchArticleSnippet(params: { query: string; articleNumber: n
       }
       if (!isAllowedWebFallbackHost(host)) continue;
 
-      const pageRes = await fetch(u, {
-        headers: {
-          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "user-agent": ENV.legalCrawlerUserAgent,
-        },
-        redirect: "follow",
+      const pageRes = await httpGetText(u, {
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "user-agent": ENV.legalCrawlerUserAgent,
       });
       if (!pageRes.ok) continue;
       const pageHtml = await pageRes.text();
@@ -326,12 +363,9 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
 
   const url = BOE_LABOR_LAW_URL;
   try {
-    const res = await fetch(url, {
-      headers: {
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "user-agent": ENV.legalCrawlerUserAgent,
-      },
-      redirect: "follow",
+    const res = await httpGetText(url, {
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": ENV.legalCrawlerUserAgent,
     });
     if (!res.ok) return getStaticBoeLaborLawSnippet(params.articleNumber);
     const html = await res.text();
