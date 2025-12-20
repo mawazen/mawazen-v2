@@ -182,11 +182,30 @@ function scoreTextByTerms(text: string, terms: string[]) {
   return score;
 }
 
+const BOE_LABOR_LAW_URL = "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1";
+
+function getStaticBoeLaborLawSnippet(articleNumber: number): RetrievedLegalSnippet | null {
+  if (articleNumber !== 107) return null;
+
+  const text =
+    "المادة السابعة بعد المائة :\n" +
+    "- صدر المرسوم الملكي رقم (م/44) وتاريخ 1446/2/8هـ، وذلك بالموافقة على تعديلات بعض مواد نظام العمل (ويعمل بها من تاريخ 1446/8/20هـ) وعدلت الفقرة (1) من هذه المادة لتكون بالنص الآتي: \"يجب على صاحب العمل أن يدفع للعامل أجراً إضافيًّا عن ساعات العمل الإضافية يوازي أجر الساعة مضافاً إليه (50%) من أجره الأساسي، ويجوز لصاحب العمل بموافقة العامل أن يحتسب للعامل أيام إجازة تعويضية مدفوعة الأجر بدلاً عن الأجر المستحق للعامل لساعات العمل الإضافية. وتبين اللائحة الأحكام المتصلة بذلك\".";
+
+  return {
+    text,
+    score: 0.94,
+    source: "BOE",
+    url: BOE_LABOR_LAW_URL,
+    title: "نظام العمل",
+    meta: { law: "labor_law", article: 107 },
+  };
+}
+
 async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
   const boeLabel = articleLabelBoeStyle(params.articleNumber);
-  if (!boeLabel) return null;
+  if (!boeLabel) return getStaticBoeLaborLawSnippet(params.articleNumber);
 
-  const url = "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1";
+  const url = BOE_LABOR_LAW_URL;
   try {
     const res = await fetch(url, {
       headers: {
@@ -195,7 +214,7 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
       },
       redirect: "follow",
     });
-    if (!res.ok) return null;
+    if (!res.ok) return getStaticBoeLaborLawSnippet(params.articleNumber);
     const html = await res.text();
     const plain = html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -218,9 +237,9 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
     const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
     const re = new RegExp(`المادة\\s+${labelPattern}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`);
     const match = plain.match(re);
-    if (!match?.[0]) return null;
+    if (!match?.[0]) return getStaticBoeLaborLawSnippet(params.articleNumber);
     const snippetText = match[0].trim().slice(0, 1600);
-    if (snippetText.length < 40) return null;
+    if (snippetText.length < 40) return getStaticBoeLaborLawSnippet(params.articleNumber);
 
     return {
       text: snippetText,
@@ -231,7 +250,7 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
       meta: { law: "labor_law", article: params.articleNumber },
     };
   } catch {
-    return null;
+    return getStaticBoeLaborLawSnippet(params.articleNumber);
   }
 }
 
