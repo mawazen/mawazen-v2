@@ -211,14 +211,17 @@ export async function runLegalCrawlerOnce(params?: { seedSitemaps?: string[]; fo
     return { skipped: true as const, reason: "LEGAL_CRAWLER_ENABLED is not true" };
   }
 
-  if (!ENV.openaiApiKey || ENV.openaiApiKey.trim().length === 0) {
-    return { skipped: true as const, reason: "OPENAI_API_KEY is required for embeddings" };
-  }
+  const seedSitemaps =
+    params?.seedSitemaps && params.seedSitemaps.length > 0
+      ? params.seedSitemaps
+      : ENV.legalCrawlerSeedSitemaps;
 
-  const seedSitemaps = params?.seedSitemaps && params.seedSitemaps.length > 0 ? params.seedSitemaps : ENV.legalCrawlerSeedSitemaps;
-  if (!seedSitemaps || seedSitemaps.length === 0) {
-    return { skipped: true as const, reason: "No seed sitemaps provided (LEGAL_CRAWLER_SEED_SITEMAPS)" };
-  }
+  const effectiveSeeds =
+    seedSitemaps && seedSitemaps.length > 0
+      ? seedSitemaps
+      : ["https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1"];
+
+  const embeddingsEnabled = !!(ENV.openaiApiKey && ENV.openaiApiKey.trim().length > 0);
 
   const runId = await db.createLegalCrawlerRun({
     status: "running",
@@ -231,7 +234,7 @@ export async function runLegalCrawlerOnce(params?: { seedSitemaps?: string[]; fo
 
   try {
     const discoveredUrls: string[] = [];
-    for (const sitemapUrl of seedSitemaps) {
+    for (const sitemapUrl of effectiveSeeds) {
       if (discoveredUrls.length >= ENV.legalCrawlerMaxPagesPerRun) break;
       const page = await crawlSingleUrl(sitemapUrl);
       await sleep(500);
@@ -321,20 +324,23 @@ export async function runLegalCrawlerOnce(params?: { seedSitemaps?: string[]; fo
 
       if (!isSitemapXml && !result.error && result.text && result.text.length > 100) {
         const chunks = chunkText(result.text);
-        // Embed in batches
-        const embeddings: number[][] = [];
-        const batchSize = 32;
-        for (let i = 0; i < chunks.length; i += batchSize) {
-          const batch = chunks.slice(i, i + batchSize);
-          const vecs = await embedTexts(batch);
-          embeddings.push(...vecs);
-          await sleep(300);
+        let embeddings: number[][] | null = null;
+        if (embeddingsEnabled) {
+          // Embed in batches
+          embeddings = [];
+          const batchSize = 32;
+          for (let i = 0; i < chunks.length; i += batchSize) {
+            const batch = chunks.slice(i, i + batchSize);
+            const vecs = await embedTexts(batch);
+            embeddings.push(...vecs);
+            await sleep(300);
+          }
         }
 
         const rows = chunks.map((t, idx) => ({
           chunkIndex: idx,
           text: t,
-          embeddingJson: JSON.stringify(embeddings[idx] ?? []),
+          embeddingJson: embeddings ? JSON.stringify(embeddings[idx] ?? []) : null,
           metaJson: JSON.stringify({
             source,
             url,

@@ -474,6 +474,57 @@ export async function listLegalChunksWithEmbeddings(params: { limit: number }) {
   return rows;
 }
 
+export async function listLegalChunksByTextSearch(params: { terms: string[]; limit: number }) {
+  const terms = (params.terms ?? []).map((t) => String(t ?? "").trim()).filter(Boolean);
+  if (terms.length === 0) return [];
+
+  const dbConn = await getDb();
+  if (!dbConn) {
+    const docById = new Map<number, any>(Array.from(inMemoryLegalDocuments.values()).map((d) => [d.id, d]));
+    const chunks = Array.from(inMemoryLegalChunks.values())
+      .filter((c) => {
+        const text = String(c?.text ?? "");
+        return terms.some((t) => text.includes(t));
+      })
+      .slice(0, params.limit);
+
+    return chunks.map((c) => ({
+      chunkId: c.id,
+      documentId: c.documentId,
+      chunkIndex: c.chunkIndex,
+      text: c.text,
+      embeddingJson: c.embeddingJson,
+      metaJson: c.metaJson,
+      url: docById.get(c.documentId)?.url ?? "",
+      source: docById.get(c.documentId)?.source ?? "",
+      title: docById.get(c.documentId)?.title ?? null,
+    }));
+  }
+
+  const whereClause = or(
+    ...terms.map((t) => like(legalSourceChunks.text as any, `%${t}%`))
+  );
+
+  const rows = await dbConn
+    .select({
+      chunkId: legalSourceChunks.id,
+      documentId: legalSourceChunks.documentId,
+      chunkIndex: legalSourceChunks.chunkIndex,
+      text: legalSourceChunks.text,
+      embeddingJson: legalSourceChunks.embeddingJson,
+      metaJson: legalSourceChunks.metaJson,
+      url: legalSourceDocuments.url,
+      source: legalSourceDocuments.source,
+      title: legalSourceDocuments.title,
+    })
+    .from(legalSourceChunks)
+    .innerJoin(legalSourceDocuments, eq(legalSourceDocuments.id, legalSourceChunks.documentId))
+    .where(whereClause)
+    .limit(params.limit);
+
+  return rows;
+}
+
 function toDayKey(date: Date) {
   // YYYY-MM-DD
   const y = date.getFullYear();
