@@ -63,9 +63,9 @@
   /* Charts - Gold gradient palette */
   --chart-1: var(--gold-light);
   --chart-2: var(--gold);
-  --chart-3: color-mix(in oklab, var(--gold) 80%, var(--gold-dark));
-  --chart-4: color-mix(in oklab, var(--gold) 60%, var(--gold-dark));
-  --chart-5: var(--gold-dark);
+  --chart-3: #003049;
+  --chart-4: #c1121f;
+  --chart-5: #780000;
   
   --radius: 0.75rem;
   
@@ -73,32 +73,34 @@
   --background: #fdf0d5;
   --foreground: #003049;
   
-  --card: #ffffff;
+  --card: #fffbf2;
   --card-foreground: #003049;
   
-  --popover: #ffffff;
+  --popover: #fffbf2;
   --popover-foreground: #003049;
   
-  --secondary: color-mix(in oklab, #fdf0d5 75%, #669bbc);
+  --secondary: #f3e6cc;
   --secondary-foreground: #003049;
   
-  --muted: color-mix(in oklab, #fdf0d5 86%, #003049);
-  --muted-foreground: color-mix(in oklab, #003049 55%, #fdf0d5);
+  --muted: #f6edd8;
+  --muted-foreground: #466372;
   
-  --accent: color-mix(in oklab, var(--primary) 12%, var(--background));
+  --accent: rgba(0, 48, 73, 0.07);
+  --accent: color-mix(in srgb, var(--primary) 18%, var(--background));
   --accent-foreground: var(--foreground);
   
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
   
-  --border: color-mix(in oklab, var(--foreground) 18%, var(--background));
-  --input: color-mix(in oklab, var(--foreground) 14%, var(--background));
+  --border: rgba(0, 48, 73, 0.18);
+  --input: rgba(0, 48, 73, 0.14);
   --ring: var(--primary);
   
   /* Sidebar - Darker for contrast */
-  --sidebar: color-mix(in oklab, #ffffff 92%, #fdf0d5);
+  --sidebar: #fff5de;
   --sidebar-foreground: var(--foreground);
-  --sidebar-accent: color-mix(in oklab, var(--primary) 10%, var(--sidebar));
+  --sidebar-accent: rgba(0, 48, 73, 0.06);
+  --sidebar-accent: color-mix(in srgb, var(--primary) 14%, var(--sidebar));
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
@@ -118,9 +120,9 @@
   --sidebar-primary-foreground: var(--primary-foreground);
   --chart-1: var(--gold-light);
   --chart-2: var(--gold);
-  --chart-3: color-mix(in oklab, var(--gold) 80%, var(--gold-dark));
-  --chart-4: color-mix(in oklab, var(--gold) 60%, var(--gold-dark));
-  --chart-5: var(--gold-dark);
+  --chart-3: #003049;
+  --chart-4: #c1121f;
+  --chart-5: #780000;
 }
 
 :root[data-theme="burgundy"] {
@@ -169,28 +171,30 @@
 }
 
 .dark {
-  --background: oklch(0.12 0.01 260);
-  --foreground: oklch(0.95 0.01 85);
-  --card: oklch(0.16 0.01 260);
-  --card-foreground: oklch(0.95 0.01 85);
-  --popover: oklch(0.18 0.01 260);
-  --popover-foreground: oklch(0.95 0.01 85);
-  --secondary: oklch(0.22 0.01 260);
-  --secondary-foreground: oklch(0.88 0.02 85);
-  --muted: oklch(0.25 0.01 260);
-  --muted-foreground: oklch(0.65 0.02 260);
-  --accent: color-mix(in oklab, var(--primary) 14%, var(--background));
-  --accent-foreground: oklch(0.95 0.01 85);
+  --background: #0b1722;
+  --foreground: #fdf0d5;
+  --card: #0f2232;
+  --card-foreground: #fdf0d5;
+  --popover: #11283a;
+  --popover-foreground: #fdf0d5;
+  --secondary: #123044;
+  --secondary-foreground: #fdf0d5;
+  --muted: #16384e;
+  --muted-foreground: rgba(253, 240, 213, 0.7);
+  --accent: rgba(253, 240, 213, 0.06);
+  --accent: color-mix(in srgb, var(--primary) 18%, var(--background));
+  --accent-foreground: #fdf0d5;
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.3 0.01 260);
-  --input: oklch(0.25 0.01 260);
+  --border: rgba(253, 240, 213, 0.12);
+  --input: rgba(253, 240, 213, 0.1);
   --ring: var(--primary);
-  --sidebar: oklch(0.1 0.01 260);
-  --sidebar-foreground: oklch(0.92 0.01 85);
-  --sidebar-accent: color-mix(in oklab, var(--primary) 12%, var(--sidebar));
-  --sidebar-accent-foreground: oklch(0.95 0.01 85);
-  --sidebar-border: oklch(0.25 0.01 260);
+  --sidebar: #08131c;
+  --sidebar-foreground: #fdf0d5;
+  --sidebar-accent: rgba(253, 240, 213, 0.06);
+  --sidebar-accent: color-mix(in srgb, var(--primary) 14%, var(--sidebar));
+  --sidebar-accent-foreground: #fdf0d5;
+  --sidebar-border: rgba(253, 240, 213, 0.1);
   --sidebar-ring: var(--ring);
 }
 
