@@ -71,7 +71,7 @@
   
   /* Dark theme base - Deep charcoal */
   --background: #ffffff;
-  --foreground: #0b1f2a;
+  --foreground: #061824;
   
   --card: #ffffff;
   --card-foreground: var(--foreground);
@@ -79,32 +79,39 @@
   --popover: #ffffff;
   --popover-foreground: var(--foreground);
   
-  --secondary: #f5f7fa;
+  --secondary: #eef2f6;
   --secondary-foreground: var(--foreground);
   
-  --muted: #f1f5f9;
-  --muted-foreground: #2f4a59;
+  --muted: #e9eff4;
+  --muted-foreground: #163343;
   
-  --accent: rgba(0, 48, 73, 0.08);
+  --accent: rgba(0, 48, 73, 0.1);
   --accent-foreground: var(--foreground);
   
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
   
-  --border: rgba(0, 48, 73, 0.32);
-  --input: rgba(0, 48, 73, 0.24);
+  --border: rgba(0, 48, 73, 0.52);
+  --input: rgba(0, 48, 73, 0.4);
   --ring: var(--primary);
   
   /* Sidebar - Darker for contrast */
   --sidebar: #ffffff;
   --sidebar-foreground: var(--foreground);
-  --sidebar-accent: rgba(0, 48, 73, 0.05);
+  --sidebar-accent: rgba(0, 48, 73, 0.08);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
   
   /* Arabic font */
   --font-arabic: 'Tajawal', 'Cairo', 'Noto Kufi Arabic', sans-serif;
+
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-bg-2: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 48, 73, 0.22);
+  --glass-shadow: 0 18px 55px rgba(0, 48, 73, 0.14);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --glass-blur: 20px;
 }
 
 :root:not([data-theme]),
@@ -194,6 +201,13 @@
   --sidebar-accent-foreground: #fdf0d5;
   --sidebar-border: rgba(253, 240, 213, 0.1);
   --sidebar-ring: var(--ring);
+
+  --glass-bg: rgba(17, 40, 58, 0.72);
+  --glass-bg-2: rgba(17, 40, 58, 0.55);
+  --glass-border: rgba(253, 240, 213, 0.14);
+  --glass-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --glass-inner: inset 0 1px 0 rgba(253, 240, 213, 0.10);
+  --glass-blur: 18px;
 }
 
 @layer base {
@@ -288,13 +302,18 @@
   
   /* Card with gold accent */
   .card-gold {
-    background: linear-gradient(145deg, var(--card), color-mix(in oklab, var(--card) 85%, var(--background)));
-    border: 1px solid color-mix(in oklab, var(--gold) 25%, var(--border));
+    background: linear-gradient(135deg, var(--glass-bg), var(--glass-bg-2));
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    box-shadow: var(--glass-shadow), var(--glass-inner);
+    position: relative;
+    overflow: hidden;
   }
   
   .card-gold:hover {
-    border-color: color-mix(in oklab, var(--gold) 40%, var(--border));
-    box-shadow: 0 4px 20px color-mix(in oklab, var(--gold) 18%, transparent);
+    border-color: color-mix(in srgb, var(--gold) 35%, var(--glass-border));
+    box-shadow: 0 24px 70px rgba(0, 48, 73, 0.18), var(--glass-inner);
   }
   
   /* Premium button styles */
@@ -333,9 +352,28 @@
   
   /* Glass morphism effect */
   .glass {
-    background: color-mix(in oklab, var(--card) 80%, transparent);
-    backdrop-filter: blur(12px);
-    border: 1px solid oklch(1 0 0 / 0.1);
+    background: linear-gradient(135deg, var(--glass-bg), var(--glass-bg-2));
+    backdrop-filter: blur(var(--glass-blur)) saturate(165%) contrast(1.05);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%) contrast(1.05);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow), var(--glass-inner);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass::before,
+  .card-gold::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(255, 255, 255, 0.18) 22%,
+      rgba(255, 255, 255, 0) 55%
+    );
+    pointer-events: none;
+    opacity: 0.85;
   }
   
   /* Animated gold shimmer */
