@@ -99,6 +99,9 @@ type SubscriptionPlanId = (typeof subscriptionPlans)[number]["id"];
 export default function Payments() {
   const [, setLocation] = useLocation();
   const [selectedGateway, setSelectedGateway] = useState<"moyasar" | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "card" | "applepay" | "tabby" | "tamara" | "cod"
+  >("card");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanId | null>(() => {
     return getPlanFromUrl();
@@ -160,6 +163,10 @@ export default function Payments() {
     if (!moyasarContainerRef.current) return;
     if (typeof window === "undefined") return;
     if (!window.Moyasar?.init) return;
+    if (!selectedGateway) return;
+
+    const method = selectedPaymentMethod === "applepay" ? "applepay" : "creditcard";
+    if (selectedPaymentMethod !== "card" && selectedPaymentMethod !== "applepay") return;
 
     moyasarContainerRef.current.innerHTML = "";
 
@@ -179,7 +186,7 @@ export default function Payments() {
       publishable_api_key: moyasarPublishableKey,
       callback_url: callbackUrl,
       supported_networks: ["visa", "mastercard", "mada"],
-      methods: ["creditcard", "applepay"],
+      methods: [method],
       language: "ar",
       apple_pay: {
         country: "SA",
@@ -190,7 +197,7 @@ export default function Payments() {
         toast.error("تعذر بدء الدفع. حاول مرة أخرى.");
       },
     });
-  }, [moyasarPublishableKey, selectedPlanDetails]);
+  }, [moyasarPublishableKey, selectedPlanDetails, selectedGateway, selectedPaymentMethod]);
 
   const paymentGateways = [
     {
@@ -290,53 +297,93 @@ export default function Payments() {
           <p className="text-sm text-muted-foreground mb-4">
             أكمل الدفع لتفعيل اشتراكك السنوي بشكل تلقائي.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {paymentGateways.map((gateway) => {
-              const Icon = gateway.icon;
-              return (
-                <Card
-                  key={gateway.id}
-                  className={`card-gold cursor-pointer transition-all ${
-                    selectedGateway === gateway.id
-                      ? "border-gold ring-2 ring-gold/50"
-                      : "hover:border-gold/50"
-                  }`}
-                  onClick={() => setSelectedGateway("moyasar")}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gold/10 rounded-lg">
-                          <Icon className="h-6 w-6 text-gold" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{gateway.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground">
-                            {gateway.description}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                        {gateway.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {gateway.features.map((feature, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-center gap-2 text-sm text-muted-foreground"
-                        >
-                          <CheckCircle2 className="h-4 w-4 text-gold flex-shrink-0" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className={`justify-center h-14 ${
+                selectedPaymentMethod === "card"
+                  ? "border-gold ring-2 ring-gold/40"
+                  : "border-border/60 hover:border-gold/50"
+              }`}
+              onClick={() => {
+                setSelectedGateway("moyasar");
+                setSelectedPaymentMethod("card");
+              }}
+            >
+              VISA / Mastercard
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className={`justify-center h-14 ${
+                selectedPaymentMethod === "card"
+                  ? "border-gold/30"
+                  : "border-border/60 hover:border-gold/50"
+              }`}
+              onClick={() => {
+                setSelectedGateway("moyasar");
+                setSelectedPaymentMethod("card");
+              }}
+            >
+              mada
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className={`justify-center h-14 ${
+                selectedPaymentMethod === "applepay"
+                  ? "border-gold ring-2 ring-gold/40"
+                  : "border-border/60 hover:border-gold/50"
+              }`}
+              onClick={() => {
+                setSelectedGateway("moyasar");
+                setSelectedPaymentMethod("applepay");
+              }}
+            >
+              Apple Pay
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              className="justify-center h-14 opacity-60"
+              onClick={() => {
+                setSelectedPaymentMethod("tabby");
+                toast.info("Tabby يتطلب تكامل ومفاتيح منفصلة (غير مفعّل حالياً)");
+              }}
+            >
+              tabby
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              className="justify-center h-14 opacity-60"
+              onClick={() => {
+                setSelectedPaymentMethod("tamara");
+                toast.info("Tamara يتطلب تكامل ومفاتيح منفصلة (غير مفعّل حالياً)");
+              }}
+            >
+              Tamara
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              className="justify-center h-14 opacity-60"
+              onClick={() => {
+                setSelectedPaymentMethod("cod");
+                toast.info("الدفع عند الاستلام غير متاح للاشتراكات الرقمية");
+              }}
+            >
+              الدفع عند الاستلام
+            </Button>
           </div>
         </div>
 
@@ -378,20 +425,6 @@ export default function Payments() {
 
               <div className="rounded-xl border border-border/50 bg-secondary/20 p-4">
                 <div ref={moyasarContainerRef} className="mysr-form" />
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-gold/30 hover:border-gold/50"
-                  onClick={() => {
-                    const target = backendOrigin ? `${backendOrigin}/api/local-login` : "/api/local-login";
-                    window.location.href = target;
-                  }}
-                >
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                  مساعدة في تسجيل الدخول
-                </Button>
               </div>
             </CardContent>
           </Card>
