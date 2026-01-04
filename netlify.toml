@@ -1,0 +1,21 @@
+[build]
+  command = "npm install && npm run build"
+  publish = "client/dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+  VITE_API_BASE_URL = "https://qaid-production.up.railway.app"
+  VITE_BACKEND_ORIGIN = "https://qaid-production.up.railway.app"
+  VITE_OAUTH_PORTAL_URL = ""
+  VITE_APP_ID = ""
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://qaid-production.up.railway.app/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

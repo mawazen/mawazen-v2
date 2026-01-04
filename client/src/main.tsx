@@ -10,6 +10,23 @@ import "./index.css";
 const queryClient = new QueryClient();
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
+const injectUmami = () => {
+  const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT as string | undefined;
+  const websiteId = import.meta.env.VITE_ANALYTICS_WEBSITE_ID as string | undefined;
+
+  if (!endpoint || !websiteId) return;
+
+  const normalizedEndpoint = endpoint.replace(/\/$/, "");
+  const existing = document.querySelector('script[data-website-id]');
+  if (existing) return;
+
+  const script = document.createElement("script");
+  script.defer = true;
+  script.src = `${normalizedEndpoint}/umami`;
+  script.setAttribute("data-website-id", websiteId);
+  document.head.appendChild(script);
+};
+
 // Handle token from URL query parameter
 const handleTokenFromUrl = () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -40,6 +57,8 @@ const handleTokenFromUrl = () => {
 
 // Handle token from URL on app load
 handleTokenFromUrl();
+
+injectUmami();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
