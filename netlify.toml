@@ -4,10 +4,28 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  VITE_API_BASE_URL = "https://qaid-production.up.railway.app"
-  VITE_BACKEND_ORIGIN = "https://qaid-production.up.railway.app"
+  VITE_API_BASE_URL = ""
+  VITE_BACKEND_ORIGIN = ""
   VITE_OAUTH_PORTAL_URL = ""
   VITE_APP_ID = ""
+
+[[redirects]]
+  from = "http://mawazenco.com/*"
+  to = "https://mawazenco.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.mawazenco.com/*"
+  to = "https://mawazenco.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.mawazenco.com/*"
+  to = "https://mawazenco.com/:splat"
+  status = 301
+  force = true
 
 [[redirects]]
   from = "/api/*"
