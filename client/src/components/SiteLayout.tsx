@@ -322,7 +322,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="space-y-3">
               <div className="flex items-center gap-4">
-                <span className="h-24 w-24 overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm">
+                <span className="h-32 w-32 overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm">
                   <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
                 </span>
                 <div>

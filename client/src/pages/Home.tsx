@@ -275,7 +275,7 @@ export default function Home() {
       <section className="relative overflow-hidden">
         {/* Background Pattern */}
         <motion.div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-background to-background"
+          className="absolute inset-0 bg-gold/3"
           initial={fadeInInitial}
           animate={fadeInAnimate}
           transition={fadeInTransition}
@@ -705,7 +705,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-gradient-to-b from-background to-gold/5">
+      <section className="py-20 bg-gold/3">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">باقات مرنة تناسبك</h2>
@@ -763,7 +763,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-b from-background to-gold/5">
+      <section className="py-20 bg-gold/3">
         <div className="container">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">

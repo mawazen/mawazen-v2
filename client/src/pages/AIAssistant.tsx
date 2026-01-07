@@ -204,8 +204,8 @@ export default function AIAssistant() {
             <CardHeader className="border-b border-border/50 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-light to-gold-dark flex items-center justify-center">
-                    <Scale className="h-5 w-5 text-background" />
+                  <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center">
+                    <Scale className="h-5 w-5 text-gold" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">المساعد القانوني الذكي</CardTitle>
