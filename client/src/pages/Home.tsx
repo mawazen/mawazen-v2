@@ -418,7 +418,7 @@ export default function Home() {
                   }}
                 >
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold/10 to-gold/5 flex items-center justify-center overflow-hidden border border-gold/30 shadow-lg shadow-gold/10">
+                    <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center overflow-hidden border border-white/20 shadow-lg backdrop-blur-sm">
                       <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
                     </div>
                     <div>
@@ -428,7 +428,7 @@ export default function Home() {
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-secondary/60 border border-border/40 shadow-sm">
+                    <div className="p-4 rounded-xl bg-white/8 border border-white/15 shadow-sm backdrop-blur-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <MessageSquare className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium text-foreground">تحليل قضية</span>
@@ -438,7 +438,7 @@ export default function Home() {
                       </p>
                     </div>
                     
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-gold/8 to-gold/3 border border-gold/25 shadow-sm shadow-gold/5">
+                    <div className="p-4 rounded-xl bg-white/8 border border-white/15 shadow-sm backdrop-blur-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <Brain className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium text-gold">رد المساعد</span>
@@ -448,7 +448,7 @@ export default function Home() {
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 shadow-sm">
+                    <div className="p-4 rounded-xl bg-white/8 border border-white/15 shadow-sm backdrop-blur-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <BadgeCheck className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium text-foreground">بوابة العميل</span>
