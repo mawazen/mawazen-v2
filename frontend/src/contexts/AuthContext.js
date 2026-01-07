@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../services/api';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { getFirebaseAuth } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
+    const auth = await getFirebaseAuth();
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const idToken = await result.user.getIdToken();
@@ -63,15 +64,17 @@ export const AuthProvider = ({ children }) => {
       throw new Error(response.data?.message || 'فشل تسجيل الدخول عبر Google');
     } catch (error) {
       try {
+        const auth = await getFirebaseAuth();
         await signOut(auth);
       } catch {}
       throw error;
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     try {
-      signOut(auth);
+      const auth = await getFirebaseAuth();
+      await signOut(auth);
     } catch {}
     localStorage.removeItem('token');
     delete api.defaults.headers.common['Authorization'];

@@ -8,6 +8,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { firebaseWebConfig } from "./firebaseWebConfig";
 import { sdk } from "./sdk";
 import * as db from "../db";
 import { storagePut } from "../storage";
@@ -73,6 +74,14 @@ async function startServer() {
     }
 
     next();
+  });
+
+  app.get("/api/public/firebase-config", (req, res) => {
+    try {
+      res.json(firebaseWebConfig);
+    } catch (err) {
+      res.status(500).json({ success: false, message: "Failed to load Firebase config" });
+    }
   });
 
   app.post("/api/auth/firebase", async (req, res) => {

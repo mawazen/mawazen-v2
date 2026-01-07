@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield, Chrome } from "lucide-react";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "@/_core/firebase";
+import { getFirebaseAuth } from "@/_core/firebase";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -84,6 +84,7 @@ export default function Login() {
     setGoogleLoading(true);
 
     try {
+      const auth = await getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();

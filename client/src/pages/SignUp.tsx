@@ -14,7 +14,7 @@ import {
   Chrome,
 } from "lucide-react";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "@/_core/firebase";
+import { getFirebaseAuth } from "@/_core/firebase";
 
 export default function SignUp() {
   const [, setLocation] = useLocation();
@@ -144,6 +144,7 @@ export default function SignUp() {
     setGoogleLoading(true);
 
     try {
+      const auth = await getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();

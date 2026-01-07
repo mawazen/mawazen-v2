@@ -1,17 +1,33 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBruN5zEgWK9I1YdDhJ-fHtrDl4iMTPTFg",
-  authDomain: "mawazen-b6541.firebaseapp.com",
-  projectId: "mawazen-b6541",
-  storageBucket: "mawazen-b6541.firebasestorage.app",
-  messagingSenderId: "370573201852",
-  appId: "1:370573201852:web:eb5953ce0378b50ee39bb9",
-  measurementId: "G-MPRKHJ017W"
-};
+let firebaseConfig = null;
+let app = null;
+let auth = null;
 
-const app = initializeApp(firebaseConfig);
+async function getFirebaseConfig() {
+  if (!firebaseConfig) {
+    const res = await fetch('/api/public/firebase-config');
+    if (!res.ok) throw new Error('Failed to fetch Firebase config');
+    firebaseConfig = await res.json();
+  }
+  return firebaseConfig;
+}
 
-export const auth = getAuth(app);
+export async function getFirebaseApp() {
+  if (!app) {
+    const config = await getFirebaseConfig();
+    app = initializeApp(config);
+  }
+  return app;
+}
+
+export async function getFirebaseAuth() {
+  if (!auth) {
+    const firebaseApp = await getFirebaseApp();
+    auth = getAuth(firebaseApp);
+  }
+  return auth;
+}
+
 export default app;
