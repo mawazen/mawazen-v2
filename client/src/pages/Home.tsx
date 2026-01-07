@@ -408,7 +408,7 @@ export default function Home() {
               <div className="relative w-full max-w-lg mx-auto">
                 {/* Main Card */}
                 <motion.div
-                  className="relative z-10 p-8 rounded-2xl glass"
+                  className="relative z-10 p-8 rounded-2xl card-gold"
                   initial={{ opacity: 0, y: reducedMotion ? 0 : 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
@@ -418,42 +418,42 @@ export default function Home() {
                   }}
                 >
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-xl bg-gold/10 flex items-center justify-center overflow-hidden border border-gold/25">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold/10 to-gold/5 flex items-center justify-center overflow-hidden border border-gold/30 shadow-lg shadow-gold/10">
                       <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-foreground">موازين</h3>
-                      <p className="text-sm text-muted-foreground">المساعد القانوني الذكي</p>
+                      <h3 className="text-2xl font-bold text-foreground">موازين</h3>
+                      <p className="text-sm text-gold font-medium">المساعد القانوني الذكي</p>
                     </div>
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="p-4 rounded-lg bg-secondary/50 border border-border/50">
+                    <div className="p-4 rounded-xl bg-secondary/60 border border-border/40 shadow-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <MessageSquare className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium text-foreground">تحليل قضية</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         "حلل لي هذه القضية التجارية وحدد الثغرات القانونية المحتملة..."
                       </p>
                     </div>
                     
-                    <div className="p-4 rounded-lg bg-gold/5 border border-gold/20">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-gold/8 to-gold/3 border border-gold/25 shadow-sm shadow-gold/5">
                       <div className="flex items-center gap-2 mb-2">
                         <Brain className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium text-gold">رد المساعد</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         سأحتاج بعض التفاصيل (نوع الدعوى، المحكمة/الجهة، التسلسل الزمني) ثم أقدّم لك مسارات نظامية محتملة ومخاطر ومتطلبات.
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-lg bg-secondary/40 border border-border/50">
+                    <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 shadow-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <BadgeCheck className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium text-foreground">بوابة العميل</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         أنشئ رابطًا آمنًا للعميل لعرض القضايا والفواتير والدفعات والمستندات المشتركة.
                       </p>
                     </div>
@@ -792,41 +792,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 border-t border-border/50">
-        <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center md:text-right">
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
-                <Scale className="h-6 w-6 text-gold" />
-                <span className="font-bold text-foreground">موازين</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                منصة إدارة قانونية حديثة تساعدك على تنظيم القضايا والعملاء والمستندات، مع بوابة عميل وتجربة احترافية.
-              </p>
-            </div>
-
-            <div className="text-center md:text-right">
-              <div className="font-semibold text-foreground mb-3">روابط</div>
-              <div className="flex flex-col gap-2">
-                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/services")}>الخدمات</button>
-                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/pricing")}>الأسعار</button>
-                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/about")}>من نحن</button>
-                <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setLocation("/contact")}>تواصل</button>
-              </div>
-            </div>
-
-            <div className="text-center md:text-right">
-              <div className="font-semibold text-foreground mb-3">ابدأ</div>
-              <div className="flex flex-col gap-3 items-center md:items-start">
-                <Button className="btn-gold" onClick={() => setLocation("/signup?mode=trial")}>ابدأ التجربة</Button>
-                <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} موازين - جميع الحقوق محفوظة</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

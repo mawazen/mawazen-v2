@@ -170,7 +170,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                 className="flex items-center gap-3"
                 onClick={() => setLocation("/")}
               >
-                <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm">
+                <span className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm">
                   <img
                     src="/logo.png"
                     alt="موازين"
@@ -322,7 +322,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <span className="h-10 w-10 overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm">
+                <span className="h-12 w-12 overflow-hidden rounded-2xl border border-border/60 bg-card/60 shadow-sm">
                   <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
                 </span>
                 <div>
