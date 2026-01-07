@@ -1,10 +1,25 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield, Phone, Building, CheckCircle2, Chrome } from "lucide-react";
+import {
+  Scale,
+  Sparkles,
+  Eye,
+  EyeOff,
+  Mail,
+  User,
+  Shield,
+  Phone,
+  Building,
+  CheckCircle2,
+  Chrome,
+} from "lucide-react";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "@/_core/firebase";
 
 export default function SignUp() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signupMode, setSignupMode] = useState<"trial" | "pay">("trial");
   const [serverError, setServerError] = useState<string>("");
@@ -125,64 +140,123 @@ export default function SignUp() {
     });
   };
 
+  const handleGoogleSignUp = async () => {
+    setGoogleLoading(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+
+      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+      const url = apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        const message = data?.message || "فشل إنشاء الحساب بواسطة Google";
+        throw new Error(message);
+      }
+
+      const token = data?.data?.token;
+      if (typeof token !== "string" || !token) {
+        throw new Error("فشل إنشاء الحساب بواسطة Google");
+      }
+
+      localStorage.setItem("auth_token", token);
+
+      const redirectTarget =
+        signupMode === "pay"
+          ? `/payments?plan=${encodeURIComponent(formData.accountType)}`
+          : "/dashboard";
+
+      setLocation(redirectTarget);
+    } catch (error) {
+      console.error("Google signup error:", error);
+      setServerError(error instanceof Error ? error.message : "فشل إنشاء الحساب بواسطة Google");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   console.log('[SignUp] Sign up page rendered');
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-background to-background" />
-      
-      <div className="relative w-full max-w-md">
-        {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-full mb-4">
-            <Scale className="h-8 w-8 text-gold" />
+    <div className="container py-12 lg:py-16">
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
+        <div className="hidden lg:block">
+          <div className="glass h-full rounded-3xl p-10">
+            <div className="flex items-center gap-3">
+              <span className="h-12 w-12 overflow-hidden rounded-2xl border border-border/60 bg-card/60">
+                <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
+              </span>
+              <div>
+                <div className="text-xl font-extrabold text-gold-gradient">موازين</div>
+                <div className="text-sm text-muted-foreground">ابدأ تجربة Premium الآن</div>
+              </div>
+            </div>
+
+            <div className="mt-10 space-y-4 text-sm text-muted-foreground leading-relaxed">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 text-gold" />
+                <div>تهيئة سريعة، ولوحة تحكم وتنظيم كامل للقضايا والمهام.</div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Sparkles className="mt-0.5 h-5 w-5 text-gold" />
+                <div>مساعد ذكي للصياغة والبحث والتحليل ضمن سير عمل واضح.</div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Shield className="mt-0.5 h-5 w-5 text-gold" />
+                <div>أمان وخصوصية وصلاحيات مناسبة للمكتب أو المنشأة.</div>
+              </div>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            <span className="text-gold">موازين</span>
-          </h1>
-          <p className="text-muted-foreground">انضم إلى نظام إدارة القضايا القانونية المتقدم</p>
         </div>
 
-        {/* Sign Up Card */}
-        <div className="bg-card text-card-foreground border rounded-xl shadow-sm p-6">
-          <div className="text-center pb-4">
-            <h2 className="text-2xl font-bold text-foreground">إنشاء حساب جديد</h2>
-            <p className="text-muted-foreground text-sm mt-2">
-              ابدأ رحلتك مع نظام موازين لإدارة القضايا
-            </p>
+        <div className="card-gold rounded-3xl p-6 sm:p-8">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-extrabold text-foreground">إنشاء حساب جديد</h1>
+              <p className="mt-1 text-sm text-muted-foreground">اختر الخطة وابدأ خلال دقائق</p>
+            </div>
+            <span className="h-12 w-12 overflow-hidden rounded-2xl border border-border/60 bg-card/60 lg:hidden">
+              <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
+            </span>
           </div>
 
-          <div className="mb-4">
+          <div className="mt-6">
             <button
               type="button"
-              onClick={() => {
-                const base = backendOrigin || "";
-                const redirectTarget =
-                  signupMode === "pay"
-                    ? `/payments?plan=${encodeURIComponent(formData.accountType)}`
-                    : "/dashboard";
-                window.location.href = `${base}/api/oauth/google?redirect=${encodeURIComponent(redirectTarget)}`;
-              }}
-              className="w-full border border-border/60 hover:border-gold/50 bg-transparent text-foreground font-semibold py-3 rounded-lg flex items-center justify-center gap-2"
+              onClick={handleGoogleSignUp}
+              disabled={googleLoading}
+              className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
             >
-              <Chrome className="h-4 w-4" />
-              متابعة باستخدام Google
+              <span className="flex items-center justify-center gap-2">
+                <Chrome className="h-4 w-4" />
+                {googleLoading ? "جاري إنشاء الحساب..." : "متابعة باستخدام Google"}
+              </span>
             </button>
           </div>
 
           {serverError ? (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
               {serverError}
             </div>
           ) : null}
 
-          <div className="mb-4">
+          <div className="mt-5">
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setSignupMode('trial')}
-                className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-2xl border px-4 py-2 text-sm font-medium transition-colors ${
                   signupMode === 'trial'
                     ? 'bg-gold text-black border-gold'
                     : 'bg-transparent text-foreground border-border/60 hover:border-gold/50'
@@ -193,7 +267,7 @@ export default function SignUp() {
               <button
                 type="button"
                 onClick={() => setSignupMode('pay')}
-                className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-2xl border px-4 py-2 text-sm font-medium transition-colors ${
                   signupMode === 'pay'
                     ? 'bg-gold text-black border-gold'
                     : 'bg-transparent text-foreground border-border/60 hover:border-gold/50'
@@ -203,8 +277,8 @@ export default function SignUp() {
               </button>
             </div>
           </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             {/* Account Type / Plan */}
             <div className="space-y-2">
               <label className="text-right flex items-center gap-2 text-sm font-medium">
@@ -279,7 +353,7 @@ export default function SignUp() {
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                className="w-full p-3 border rounded-lg text-right"
+                className="glass w-full rounded-2xl px-4 py-3 text-right"
                 dir="rtl"
               />
             </div>
@@ -298,7 +372,7 @@ export default function SignUp() {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full p-3 border rounded-lg text-right"
+                className="glass w-full rounded-2xl px-4 py-3 text-right"
                 dir="rtl"
               />
             </div>
@@ -317,7 +391,7 @@ export default function SignUp() {
                 value={formData.phone}
                 onChange={handleInputChange}
                 required
-                className="w-full p-3 border rounded-lg text-right"
+                className="glass w-full rounded-2xl px-4 py-3 text-right"
                 dir="rtl"
               />
             </div>
@@ -335,7 +409,7 @@ export default function SignUp() {
                 placeholder="اسم مكتب المحاماة أو الشركة"
                 value={formData.lawFirm}
                 onChange={handleInputChange}
-                className="w-full p-3 border rounded-lg text-right"
+                className="glass w-full rounded-2xl px-4 py-3 text-right"
                 dir="rtl"
               />
             </div>
@@ -354,12 +428,12 @@ export default function SignUp() {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  className="w-full p-3 pr-10 border rounded-lg text-right"
+                  className="glass w-full rounded-2xl px-4 py-3 pr-10 text-right"
                   dir="rtl"
                 />
                 <button
                   type="button"
-                  className="absolute left-0 top-0 h-full px-3"
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -374,7 +448,7 @@ export default function SignUp() {
             {/* Submit Button */}
             <button 
               type="submit" 
-              className="w-full bg-gold hover:bg-gold/90 text-black font-semibold py-3 rounded-lg flex items-center justify-center gap-2"
+              className="btn-gold w-full rounded-2xl px-4 py-3 text-sm font-semibold"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -403,28 +477,6 @@ export default function SignUp() {
               </button>
             </p>
           </div>
-
-          {/* Security Note */}
-          <div className="mt-6 p-4 bg-gold/5 rounded-lg border border-gold/20">
-            <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-gold mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-foreground font-medium mb-1">
-                  أمان وموثوقية
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  بياناتك محمية بأحدث تقنيات التشفير والخصوصية
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-xs text-muted-foreground">
-            © 2024 موازين. جميع الحقوق محفوظة.
-          </p>
         </div>
       </div>
     </div>

@@ -7,12 +7,13 @@ import api from '../services/api';
 
 const LoginSimple = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -45,6 +46,23 @@ const LoginSimple = () => {
       toast.error(error.response?.data?.message || 'خطأ في تسجيل الدخول');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+      toast.success('تم تسجيل الدخول بواسطة Google بنجاح');
+      navigate('/app/dashboard');
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          'فشل تسجيل الدخول بواسطة Google'
+      );
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -172,6 +190,30 @@ const LoginSimple = () => {
                     تسجيل الدخول
                     <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
                   </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={googleLoading}
+                className="w-full py-4 text-lg font-bold rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {googleLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-700 border-t-transparent"></div>
+                    جاري تسجيل الدخول بـ Google...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-3">
+                    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+                      <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.613 32.91 29.188 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.651-.389-3.917z"/>
+                      <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.97 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                      <path fill="#4CAF50" d="M24 44c5.082 0 9.793-1.946 13.312-5.121l-6.146-5.198C29.104 35.168 26.676 36 24 36c-5.166 0-9.577-3.066-11.282-7.438l-6.521 5.025C9.522 39.556 16.23 44 24 44z"/>
+                      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.812 2.29-2.394 4.23-4.137 5.681l.003-.002 6.146 5.198C36.69 39.364 44 34 44 24c0-1.341-.138-2.651-.389-3.917z"/>
+                    </svg>
+                    تسجيل الدخول بواسطة Google
+                  </div>
                 )}
               </button>
             </form>

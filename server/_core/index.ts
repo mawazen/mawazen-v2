@@ -9,10 +9,12 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { sdk } from "./sdk";
+import * as db from "../db";
 import { storagePut } from "../storage";
 import { startLegalCrawlerScheduler } from "../legalCrawler";
 import { startDocumentRemindersScheduler } from "../documentReminders";
 import { serveStatic, setupVite } from "./vite";
+import { getFirebaseAdmin } from "./firebaseAdmin";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -50,7 +52,13 @@ async function startServer() {
     const origin = req.headers.origin as string | undefined;
 
     // Allow specific origins or localhost for development
-    if (origin && (allowedOrigins.includes(origin) || origin.includes("localhost"))) {
+    if (
+      origin &&
+      (allowedOrigins.includes(origin) ||
+        origin.includes("localhost") ||
+        origin.endsWith(".up.railway.app") ||
+        origin.endsWith(".railway.internal"))
+    ) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header("Access-Control-Allow-Credentials", "true");
       res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -65,6 +73,60 @@ async function startServer() {
     }
 
     next();
+  });
+
+  app.post("/api/auth/firebase", async (req, res) => {
+    try {
+      const idToken = typeof req.body?.idToken === "string" ? req.body.idToken : "";
+      if (!idToken) {
+        return res.status(400).json({ success: false, message: "Missing idToken" });
+      }
+
+      const admin = getFirebaseAdmin();
+      const decoded = await admin.auth().verifyIdToken(idToken);
+
+      const uid = decoded.uid;
+      const name =
+        typeof (decoded as any)?.name === "string" && (decoded as any).name.trim()
+          ? (decoded as any).name.trim()
+          : "";
+      const email = typeof decoded.email === "string" ? decoded.email.trim().toLowerCase() : null;
+
+      const openId = `firebase-${uid}`;
+      const signedInAt = new Date();
+
+      await db.upsertUser({
+        openId,
+        name: name || null,
+        email,
+        loginMethod: "google",
+        lastSignedIn: signedInAt,
+        isActive: true,
+      });
+
+      const user = await db.getUserByOpenId(openId);
+      if (!user) {
+        return res.status(500).json({ success: false, message: "Failed to create user" });
+      }
+
+      const token = await sdk.createSessionToken(openId, {
+        name: user.name || name || "",
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          token,
+          user,
+        },
+      });
+    } catch (error) {
+      console.error("[Auth] Firebase login failed", error);
+      return res.status(401).json({
+        success: false,
+        message: "Firebase authentication failed",
+      });
+    }
   });
 
   app.post("/api/documents/upload", async (req, res) => {

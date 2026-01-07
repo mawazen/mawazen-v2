@@ -1,5 +1,6 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
+import { COOKIE_NAME } from "@shared/const";
 import { sdk } from "./sdk";
 
 export type TrpcContext = {
@@ -13,6 +14,21 @@ export async function createContext(
 ): Promise<TrpcContext> {
   console.log("[Context] Creating context for path:", opts.req.path);
   let user: User | null = null;
+
+  const authHeader = opts.req.headers.authorization;
+  const hasBearer = typeof authHeader === "string" && authHeader.startsWith("Bearer ");
+  const cookieHeader = opts.req.headers.cookie;
+  const hasSessionCookie =
+    typeof cookieHeader === "string" && cookieHeader.includes(`${COOKIE_NAME}=`);
+
+  if (!hasBearer && !hasSessionCookie) {
+    console.log("[Context] Context created with user:", false);
+    return {
+      req: opts.req,
+      res: opts.res,
+      user: null,
+    };
+  }
 
   try {
     console.log("[Context] Authenticating request...");

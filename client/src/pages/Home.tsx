@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLocation } from "wouter";
+import { cubicBezier, motion, useReducedMotion } from "framer-motion";
 import {
   Scale,
   Brain,
@@ -28,7 +29,6 @@ import {
   Star,
   Quote,
 } from "lucide-react";
-import { useEffect } from "react";
 
 const features = [
   {
@@ -242,14 +242,24 @@ const pricingTeaser = [
 ];
 
 export default function Home() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const reducedMotion = useReducedMotion();
+  const easePremium = cubicBezier(0.22, 1, 0.36, 1);
 
-  useEffect(() => {
-    if (isAuthenticated && !loading) {
-      setLocation("/dashboard");
-    }
-  }, [isAuthenticated, loading, setLocation]);
+  const fadeUpInitial = { opacity: 0, y: reducedMotion ? 0 : 18 };
+  const fadeUpAnimate = { opacity: 1, y: 0 };
+  const fadeUpTransition = {
+    duration: reducedMotion ? 0 : 0.7,
+    ease: easePremium,
+  };
+
+  const fadeInInitial = { opacity: 0 };
+  const fadeInAnimate = { opacity: 1 };
+  const fadeInTransition = {
+    duration: reducedMotion ? 0 : 0.7,
+    ease: easePremium,
+  };
 
   if (loading) {
     return (
@@ -260,87 +270,97 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-background to-background" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNEMkFGMzciIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+        <motion.div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/5 via-background to-background"
+          initial={fadeInInitial}
+          animate={fadeInAnimate}
+          transition={fadeInTransition}
+        />
+        <motion.div
+          className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNEMkFGMzciIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"
+          initial={fadeInInitial}
+          animate={fadeInAnimate}
+          transition={fadeInTransition}
+        />
         
         <div className="container relative pt-6 pb-20 lg:pt-10 lg:pb-28">
-          <div className="flex items-center justify-between gap-4 mb-10">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2"
-              onClick={() => setLocation("/")}
-            >
-              <Scale className="h-6 w-6 text-gold" />
-              <span className="font-bold text-foreground">موازين</span>
-            </button>
-
-            <div className="hidden md:flex items-center gap-2">
-              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/services")}
-              >
-                الخدمات
-              </Button>
-              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/pricing")}
-              >
-                الأسعار
-              </Button>
-              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/about")}
-              >
-                من نحن
-              </Button>
-              <Button variant="ghost" className="hover:bg-gold/5" onClick={() => setLocation("/contact")}
-              >
-                تواصل
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button variant="outline" className="border-gold/30 hover:border-gold/50 hover:bg-gold/5" onClick={() => setLocation("/login")}
-              >
-                تسجيل الدخول
-              </Button>
-              <Button className="btn-gold" onClick={() => setLocation("/signup?mode=trial")}
-              >
-                ابدأ الآن
-              </Button>
-            </div>
-          </div>
-
           <div className="flex flex-col lg:flex-row items-center gap-12">
             {/* Hero Content */}
             <div className="flex-1 text-center lg:text-right">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/20 mb-6">
+              <motion.div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/20 mb-6"
+                initial={fadeUpInitial}
+                animate={fadeUpAnimate}
+                transition={fadeUpTransition}
+              >
                 <Sparkles className="h-4 w-4 text-gold" />
                 <span className="text-sm text-gold">مدعوم بالذكاء الاصطناعي</span>
-              </div>
+              </motion.div>
               
-              <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-                <span className="text-gold">موازين</span>
+              <motion.h1
+                className="text-4xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight"
+                initial={fadeUpInitial}
+                animate={fadeUpAnimate}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.8,
+                  delay: reducedMotion ? 0 : 0.06,
+                  ease: easePremium,
+                }}
+              >
+                <span className="text-gold-gradient">موازين</span>
                 <br />
                 منصة إدارة المكتب القانوني
-              </h1>
+              </motion.h1>
               
-              <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              <motion.p
+                className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+                initial={fadeUpInitial}
+                animate={fadeUpAnimate}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.8,
+                  delay: reducedMotion ? 0 : 0.12,
+                  ease: easePremium,
+                }}
+              >
                 نظم قضاياك وعملاءك ومستنداتك وفواتيرك في نظام واحد. وفعّل بوابة عميل آمنة لمتابعة القضايا والمستندات المشتركة.
                 مع مساعد ذكي يساعدك في التحليل والصياغة والبحث في الأنظمة السعودية.
-              </p>
+              </motion.p>
 
-              <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-8">
+              <motion.div
+                className="flex flex-wrap gap-2 justify-center lg:justify-start mb-8"
+                initial={fadeUpInitial}
+                animate={fadeUpAnimate}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.7,
+                  delay: reducedMotion ? 0 : 0.18,
+                  ease: easePremium,
+                }}
+              >
                 <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">إدارة قضايا</Badge>
                 <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">بوابة عميل</Badge>
                 <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">مستندات وفواتير</Badge>
                 <Badge variant="secondary" className="bg-gold/10 text-gold border border-gold/20">ذكاء اصطناعي قانوني</Badge>
-              </div>
+              </motion.div>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                initial={fadeUpInitial}
+                animate={fadeUpAnimate}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.7,
+                  delay: reducedMotion ? 0 : 0.22,
+                  ease: easePremium,
+                }}
+              >
                 <Button
                   className="btn-gold text-lg px-8 py-6"
-                  onClick={() => setLocation("/signup?mode=trial")}
+                  onClick={() => setLocation(user ? "/dashboard" : "/signup?mode=trial")}
                 >
-                  ابدأ الآن مجاناً
+                  {user ? "لوحة التحكم" : "ابدأ الآن مجاناً"}
                   <ArrowLeft className="h-5 w-5 mr-2" />
                 </Button>
                 <Button
@@ -350,23 +370,35 @@ export default function Home() {
                 >
                   اكتشف المزيد
                 </Button>
-              </div>
+              </motion.div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
                 {outcomes.map((o, i) => (
-                  <Card key={i} className="bg-card/70 border-border/50">
-                    <CardContent className="px-6 py-5">
-                      <div className="flex items-center justify-between">
-                        <div className="text-right">
-                          <div className="text-sm text-muted-foreground">{o.label}</div>
-                          <div className="text-base font-semibold text-foreground">{o.value}</div>
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: reducedMotion ? 0 : 16, scale: reducedMotion ? 1 : 0.98 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    viewport={{ once: true, amount: 0.35 }}
+                    transition={{
+                      duration: reducedMotion ? 0 : 0.65,
+                      delay: reducedMotion ? 0 : 0.04 * i,
+                      ease: easePremium,
+                    }}
+                  >
+                    <Card className="card-gold">
+                      <CardContent className="px-6 py-5">
+                        <div className="flex items-center justify-between">
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">{o.label}</div>
+                            <div className="text-base font-semibold text-foreground">{o.value}</div>
+                          </div>
+                          <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <o.icon className="h-5 w-5 text-gold" />
+                          </div>
                         </div>
-                        <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
-                          <o.icon className="h-5 w-5 text-gold" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -375,10 +407,19 @@ export default function Home() {
             <div className="flex-1 relative">
               <div className="relative w-full max-w-lg mx-auto">
                 {/* Main Card */}
-                <div className="relative z-10 p-8 rounded-2xl bg-card border border-gold/20 shadow-2xl shadow-gold/5">
+                <motion.div
+                  className="relative z-10 p-8 rounded-2xl glass"
+                  initial={{ opacity: 0, y: reducedMotion ? 0 : 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: reducedMotion ? 0 : 0.85,
+                    delay: reducedMotion ? 0 : 0.18,
+                    ease: easePremium,
+                  }}
+                >
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-xl bg-gold/10 flex items-center justify-center">
-                      <Scale className="h-8 w-8 text-gold" />
+                    <div className="w-16 h-16 rounded-xl bg-gold/10 flex items-center justify-center overflow-hidden border border-gold/25">
+                      <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-foreground">موازين</h3>
@@ -417,7 +458,7 @@ export default function Home() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
                 
                 {/* Decorative Elements */}
                 <div className="absolute -top-4 -right-4 w-24 h-24 bg-gold/10 rounded-full blur-2xl" />

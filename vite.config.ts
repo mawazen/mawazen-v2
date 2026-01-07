@@ -6,7 +6,35 @@ import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 
-const plugins = [react(), tailwindcss(), vitePluginManusRuntime()];
+function copyClientLogoPlugin() {
+  const src = path.resolve(import.meta.dirname, "logo.png");
+  const destDir = path.resolve(import.meta.dirname, "client", "public");
+  const dest = path.resolve(destDir, "logo.png");
+
+  const copy = () => {
+    try {
+      if (!fs.existsSync(src)) return;
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+      fs.copyFileSync(src, dest);
+    } catch {
+    }
+  };
+
+  return {
+    name: "copy-client-logo",
+    buildStart() {
+      copy();
+    },
+    configureServer() {
+      copy();
+    },
+  };
+}
+
+
+const plugins = [react(), tailwindcss(), vitePluginManusRuntime(), copyClientLogoPlugin()];
 
 export default defineConfig({
   base: '/',

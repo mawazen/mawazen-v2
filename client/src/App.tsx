@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import SiteLayout from "@/components/SiteLayout";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -46,21 +47,46 @@ import LegalTools from "./pages/LegalTools";
 import PublicClientPortal from "./pages/PublicClientPortal";
 import OwnerDashboard from "./pages/OwnerDashboard";
 
+const withSiteLayout = (Component: React.ComponentType) => {
+  function Wrapped() {
+    return (
+      <SiteLayout>
+        <Component />
+      </SiteLayout>
+    );
+  }
+
+  return Wrapped;
+};
+
+const HomeWithLayout = withSiteLayout(Home);
+const LoginWithLayout = withSiteLayout(Login);
+const SignUpWithLayout = withSiteLayout(SignUp);
+const PublicServicesWithLayout = withSiteLayout(PublicServices);
+const AboutWithLayout = withSiteLayout(About);
+const PricingWithLayout = withSiteLayout(Pricing);
+const SiteTeamWithLayout = withSiteLayout(SiteTeam);
+const SitePracticesWithLayout = withSiteLayout(SitePractices);
+const SiteTestimonialsWithLayout = withSiteLayout(SiteTestimonials);
+const ContactUsWithLayout = withSiteLayout(ContactUs);
+const BlogWithLayout = withSiteLayout(Blog);
+const BlogPostWithLayout = withSiteLayout(BlogPost);
+
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/login"} component={Login} />
-      <Route path={"/signup"} component={SignUp} />
-      <Route path={"/services"} component={PublicServices} />
-      <Route path={"/about"} component={About} />
-      <Route path={"/pricing"} component={Pricing} />
-      <Route path={"/our-team"} component={SiteTeam} />
-      <Route path={"/practices"} component={SitePractices} />
-      <Route path={"/testimonials"} component={SiteTestimonials} />
-      <Route path={"/contact"} component={ContactUs} />
-      <Route path={"/blog/:slug"} component={BlogPost} />
-      <Route path={"/blog"} component={Blog} />
+      <Route path={"/"} component={HomeWithLayout} />
+      <Route path={"/login"} component={LoginWithLayout} />
+      <Route path={"/signup"} component={SignUpWithLayout} />
+      <Route path={"/services"} component={PublicServicesWithLayout} />
+      <Route path={"/about"} component={AboutWithLayout} />
+      <Route path={"/pricing"} component={PricingWithLayout} />
+      <Route path={"/our-team"} component={SiteTeamWithLayout} />
+      <Route path={"/practices"} component={SitePracticesWithLayout} />
+      <Route path={"/testimonials"} component={SiteTestimonialsWithLayout} />
+      <Route path={"/contact"} component={ContactUsWithLayout} />
+      <Route path={"/blog/:slug"} component={BlogPostWithLayout} />
+      <Route path={"/blog"} component={BlogWithLayout} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/cases/:id"} component={CaseDetails} />
       <Route path={"/cases"} component={Cases} />

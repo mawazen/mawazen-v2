@@ -209,13 +209,29 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
+const getValidOpenAiKey = () => {
+  const raw = ENV.openaiApiKey ? ENV.openaiApiKey.trim() : "";
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes("sk-your-") ||
+    lower.includes("your-openai-api-key") ||
+    lower.includes("sk-your-openai-api-key-here")
+  ) {
+    return "";
+  }
+  return raw;
+};
+
 const resolveApiUrl = () =>
-  ENV.openaiApiKey && ENV.openaiApiKey.trim().length > 0
+  getValidOpenAiKey().length > 0
     ? "https://api.openai.com/v1/chat/completions"
     : "https://forge.manus.im/v1/chat/completions";
 
 const assertApiKey = () => {
-  if (!ENV.openaiApiKey && !ENV.forgeApiKey) {
+  const openaiKey = getValidOpenAiKey();
+  const forgeKey = ENV.forgeApiKey ? ENV.forgeApiKey.trim() : "";
+  if (!openaiKey && !forgeKey) {
     throw new Error("Neither OPENAI_API_KEY nor FORGE_API_KEY is configured");
   }
 };
@@ -314,13 +330,16 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   const apiUrl = resolveApiUrl();
   console.log("[LLM] Calling API URL:", apiUrl);
-  console.log("[LLM] Using OpenAI key:", !!ENV.openaiApiKey);
+
+  const openaiKey = getValidOpenAiKey();
+  const forgeKey = ENV.forgeApiKey ? ENV.forgeApiKey.trim() : "";
+  console.log("[LLM] Using OpenAI key:", !!openaiKey);
 
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.openaiApiKey || ENV.forgeApiKey}`,
+      authorization: `Bearer ${openaiKey || forgeKey}`,
     },
     body: JSON.stringify(payload),
   });

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -47,7 +48,31 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const idToken = await result.user.getIdToken();
+
+    try {
+      const response = await api.post('/auth/firebase', { idToken });
+      if (response.data?.success) {
+        const { token, user: userData } = response.data.data;
+        login(token, userData);
+        return userData;
+      }
+      throw new Error(response.data?.message || 'فشل تسجيل الدخول عبر Google');
+    } catch (error) {
+      try {
+        await signOut(auth);
+      } catch {}
+      throw error;
+    }
+  };
+
   const logout = () => {
+    try {
+      signOut(auth);
+    } catch {}
     localStorage.removeItem('token');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
@@ -57,6 +82,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    loginWithGoogle,
     logout,
     isAuthenticated: !!user
   };

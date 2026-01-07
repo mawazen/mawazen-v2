@@ -130,6 +130,36 @@
   --chart-5: #780000;
 }
 
+:root[data-theme="gold_navy"] {
+  --gold: oklch(0.78 0.12 85);
+  --gold-light: oklch(0.88 0.1 85);
+  --gold-dark: oklch(0.65 0.14 85);
+  --primary: var(--gold);
+  --primary-foreground: #003049;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: var(--gold-light);
+  --chart-2: var(--gold);
+  --chart-3: #003049;
+  --chart-4: color-mix(in oklab, #003049 65%, #c1121f);
+  --chart-5: color-mix(in oklab, #003049 72%, #780000);
+}
+
+:root[data-theme="gold_burgundy"] {
+  --gold: oklch(0.78 0.12 85);
+  --gold-light: oklch(0.88 0.1 85);
+  --gold-dark: oklch(0.65 0.14 85);
+  --primary: var(--gold);
+  --primary-foreground: #003049;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: var(--gold-light);
+  --chart-2: var(--gold);
+  --chart-3: #780000;
+  --chart-4: #c1121f;
+  --chart-5: #003049;
+}
+
 :root[data-theme="burgundy"] {
   --gold: #c1121f;
   --gold-light: #fdf0d5;

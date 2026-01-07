@@ -39,16 +39,15 @@ export default function ContactUs() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-secondary/50 border-b border-border/50 py-10">
-        <div className="container">
-          <h1 className="text-3xl font-bold text-foreground">اتصل بنا</h1>
+    <div className="py-10">
+      <div className="container">
+        <div className="glass rounded-3xl p-6 sm:p-8">
+          <h1 className="text-3xl font-extrabold text-foreground">اتصل بنا</h1>
           <p className="text-muted-foreground mt-2">نستقبل استفساراتكم وطلباتكم.</p>
         </div>
-      </div>
 
-      <div className="container py-10">
-        <Card className="card-gold max-w-2xl">
+        <div className="mt-8">
+          <Card className="card-gold max-w-2xl">
           <CardHeader>
             <CardTitle>نموذج التواصل</CardTitle>
           </CardHeader>
@@ -78,7 +77,8 @@ export default function ContactUs() {
               {create.isPending ? "جاري الإرسال..." : "إرسال"}
             </Button>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
