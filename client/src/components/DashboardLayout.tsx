@@ -107,8 +107,8 @@ export default function DashboardLayout({
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           {/* Logo */}
           <div className="flex flex-col items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold-light to-gold-dark flex items-center justify-center shadow-lg border-gold-glow">
-              <Scale className="w-10 h-10 text-background" />
+            <div className="w-20 h-20 rounded-2xl bg-gold/10 flex items-center justify-center shadow-lg border-gold/30">
+              <Scale className="w-10 h-10 text-gold" />
             </div>
             <h1 className="text-3xl font-bold text-gold-gradient">موازين</h1>
           </div>
@@ -236,8 +236,8 @@ function DashboardLayoutContent({
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               {!isCollapsed ? (
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-light to-gold-dark flex items-center justify-center shrink-0">
-                    <Scale className="w-5 h-5 text-background" />
+                  <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0">
+                    <Scale className="w-5 h-5 text-gold" />
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-bold text-lg text-gold-gradient">
@@ -249,8 +249,8 @@ function DashboardLayoutContent({
                   </div>
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-light to-gold-dark flex items-center justify-center mx-auto">
-                  <Scale className="w-5 h-5 text-background" />
+                <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center mx-auto">
+                  <Scale className="w-5 h-5 text-gold" />
                 </div>
               )}
               <button
