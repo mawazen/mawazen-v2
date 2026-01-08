@@ -483,12 +483,14 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
-              <Card key={index}>
-                <CardContent className="px-6 py-6">
+              <Card key={index} className="card-gold p-0">
+                <CardContent className="p-6">
                   <div className="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-4">
                     <feature.icon className="h-7 w-7 text-gold" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-2">{feature.title}</h3>
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    {feature.title}
+                  </h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </CardContent>
               </Card>
@@ -497,7 +499,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 mw-animated-section">
+      <section className="py-20 section-animated">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">كيف يعمل موازين؟</h2>
@@ -506,7 +508,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((s, idx) => (
-              <Card key={idx}>
+              <Card key={idx} className="card-gold">
                 <CardHeader className="px-6">
                   <CardTitle className="text-right flex items-start justify-between gap-4">
                     <span className="leading-snug">{s.title}</span>
@@ -559,7 +561,8 @@ export default function Home() {
             
             <div className="flex-1">
               <div className="relative">
-                <div className="p-8 rounded-2xl bg-card border border-gold/20 shadow-xl">
+                <Card className="card-gold p-0">
+                  <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
                       <Gavel className="h-5 w-5 text-gold" />
@@ -571,14 +574,15 @@ export default function Home() {
                     {supportedSystems.map((system, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/50"
+                        className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
                       >
                         <BookOpen className="h-4 w-4 text-gold" />
                         <span className="text-sm text-foreground">{system}</span>
                       </div>
                     ))}
                   </div>
-                </div>
+                  </CardContent>
+                </Card>
                 
                 <div className="absolute -z-10 -top-4 -right-4 w-full h-full rounded-2xl bg-gold/5 border border-gold/10" />
               </div>

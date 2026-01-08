@@ -12,7 +12,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
       className={cn(
         disableGlass
           ? "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm"
-          : "card-gold text-card-foreground flex flex-col gap-6 rounded-2xl py-6 transition-all duration-300 hover:-translate-y-0.5",
+          : "glass text-card-foreground flex flex-col gap-6 rounded-2xl py-6",
         className
       )}
       {...props}

@@ -250,20 +250,21 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Tajawal', 'Cairo', 'Noto Kufi Arabic', system-ui, sans-serif;
-    background-image: 
-      radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, rgba(33, 150, 243, 0.05) 0%, transparent 50%);
-    animation: backgroundPulse 20s ease-in-out infinite;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
+    position: relative;
+    overflow-x: hidden;
   }
 
-  html.dark body {
-    background-image: 
-      radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, rgba(33, 150, 243, 0.05) 0%, transparent 50%);
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.10) 0%, transparent 55%),
+      radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.10) 0%, transparent 55%),
+      radial-gradient(circle at 50% 50%, rgba(33, 150, 243, 0.06) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+    animation: backgroundPulse 18s ease-in-out infinite;
   }
   
   button:not(:disabled),
@@ -344,22 +345,26 @@
   
   /* Pure glass card - No gradients, premium glass effect */
   .card-gold {
-    background: color-mix(in oklab, var(--card) 88%, transparent);
-    backdrop-filter: blur(var(--glass-blur)) saturate(165%) contrast(1.05);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%) contrast(1.05);
-    border: 1px solid color-mix(in oklab, var(--gold) 14%, var(--border));
+    background: rgba(10, 10, 26, 0.62);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 215, 0, 0.12);
     box-shadow:
-      0 16px 50px rgba(0, 0, 0, 0.10),
-      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      0 18px 60px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    position: relative;
     overflow: hidden;
+    transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease;
+    will-change: transform, box-shadow;
   }
 
   .card-gold:hover {
-    border-color: color-mix(in oklab, var(--gold) 28%, var(--border));
+    transform: translateY(-6px);
+    border-color: rgba(255, 215, 0, 0.28);
     box-shadow:
-      0 22px 70px rgba(0, 0, 0, 0.14),
-      0 10px 30px color-mix(in oklab, var(--gold) 14%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      0 26px 80px rgba(0, 0, 0, 0.55),
+      0 0 60px rgba(255, 215, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   /* Premium button styles - Enhanced */
@@ -407,11 +412,13 @@
   
   /* Glass morphism effect */
   .glass {
-    background: linear-gradient(135deg, var(--glass-bg), var(--glass-bg-2));
-    backdrop-filter: blur(var(--glass-blur)) saturate(165%) contrast(1.05);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(165%) contrast(1.05);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow), var(--glass-inner);
+    background: rgba(10, 10, 26, 0.62);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    box-shadow:
+      0 18px 60px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
     position: relative;
     overflow: hidden;
     transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease;
@@ -419,13 +426,20 @@
   }
 
   .glass:hover {
-    border-color: color-mix(in srgb, var(--gold) 18%, var(--glass-border));
-    box-shadow: 0 30px 90px rgba(0, 48, 73, 0.16), var(--glass-inner);
+    transform: translateY(-6px);
+    border-color: rgba(255, 215, 0, 0.28);
+    box-shadow:
+      0 26px 80px rgba(0, 0, 0, 0.55),
+      0 0 60px rgba(255, 215, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .glass:focus-within {
-    border-color: color-mix(in srgb, var(--gold) 28%, var(--glass-border));
-    box-shadow: 0 34px 100px rgba(0, 48, 73, 0.18), var(--glass-inner);
+    border-color: rgba(255, 215, 0, 0.34);
+    box-shadow:
+      0 30px 92px rgba(0, 0, 0, 0.60),
+      0 0 70px rgba(255, 215, 0, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10);
   }
 
   .glass::before,
@@ -460,49 +474,33 @@
     animation: gold-shimmer 3s linear infinite;
   }
 
-  /* Animated Background for 'كيف يعمل موازين؟' Section */
-  .mw-animated-section {
+  .section-animated {
     position: relative;
     overflow: hidden;
+    z-index: 0;
   }
 
-  .mw-animated-section::before {
+  .section-animated::before {
     content: "";
     position: absolute;
-    inset: -25%;
+    inset: -60%;
     background:
-      radial-gradient(circle at 20% 30%, color-mix(in oklab, var(--gold) 18%, transparent) 0%, transparent 52%),
-      radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.09) 0%, transparent 55%),
-      radial-gradient(circle at 55% 45%, rgba(33, 150, 243, 0.06) 0%, transparent 55%);
-    filter: blur(2px);
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-    animation: mw-bg-float 18s ease-in-out infinite;
+      radial-gradient(circle, rgba(255, 215, 0, 0.06) 0%, transparent 70%),
+      radial-gradient(circle at 80% 20%, rgba(156, 39, 176, 0.05) 0%, transparent 55%),
+      radial-gradient(circle at 30% 80%, rgba(33, 150, 243, 0.04) 0%, transparent 55%);
+    animation: heroGlow 16s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
   }
 
-  .mw-animated-section::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.10) 0%, transparent 55%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .mw-animated-section .container {
+  .section-animated > * {
     position: relative;
     z-index: 1;
   }
-}
 
-@keyframes mw-bg-float {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(3%, -2%, 0) scale(1.02);
+  @keyframes heroGlow {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(10%, 10%) rotate(180deg); }
   }
 }
 
