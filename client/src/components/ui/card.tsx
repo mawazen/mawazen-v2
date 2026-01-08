@@ -3,9 +3,6 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 function Card({ className, ...props }: React.ComponentProps<"div">) {
-  const hasPremiumSurface =
-    typeof className === "string" && /(\s|^)(glass|card-gold)(\s|$)/.test(className);
-
   const disableGlass =
     typeof className === "string" && /(\s|^)(no-glass|card-flat)(\s|$)/.test(className);
 
@@ -15,9 +12,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
       className={cn(
         disableGlass
           ? "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm"
-          : hasPremiumSurface
-            ? "text-card-foreground flex flex-col gap-6 rounded-2xl py-6"
-            : "glass text-card-foreground flex flex-col gap-6 rounded-2xl py-6 transition-all duration-300 hover:-translate-y-0.5",
+          : "card-gold text-card-foreground flex flex-col gap-6 rounded-2xl py-6 transition-all duration-300 hover:-translate-y-0.5",
         className
       )}
       {...props}

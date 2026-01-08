@@ -483,26 +483,21 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
-              <div
-                key={index}
-                className="p-6 rounded-2xl bg-card border border-border/50 hover:border-gold/30 transition-all group"
-              >
-                <div className="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-4 group-hover:bg-gold/20 transition-colors">
-                  <feature.icon className="h-7 w-7 text-gold" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
+              <Card key={index}>
+                <CardContent className="px-6 py-6">
+                  <div className="w-14 h-14 rounded-xl bg-gold/10 flex items-center justify-center mb-4">
+                    <feature.icon className="h-7 w-7 text-gold" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20">
+      <section className="py-20 mw-animated-section">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">كيف يعمل موازين؟</h2>
@@ -511,7 +506,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((s, idx) => (
-              <Card key={idx} className="border-border/50 hover:border-gold/30 transition-colors">
+              <Card key={idx}>
                 <CardHeader className="px-6">
                   <CardTitle className="text-right flex items-start justify-between gap-4">
                     <span className="leading-snug">{s.title}</span>
