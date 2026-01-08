@@ -1,13 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield, Chrome } from "lucide-react";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield } from "lucide-react";
+import {
+  GoogleAuthProvider,
+  RecaptchaVerifier,
+  signInWithEmailAndPassword,
+  signInWithPhoneNumber,
+  signInWithPopup,
+} from "firebase/auth";
 import { getFirebaseAuth } from "@/_core/firebase";
+
+function GmailIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="#EA4335"
+        d="M20 6.5V18a2 2 0 0 1-2 2h-2V10.5L12 13.5 8 10.5V20H6a2 2 0 0 1-2-2V6.5A2.5 2.5 0 0 1 6.5 4h.5l5 3.75L17 4h.5A2.5 2.5 0 0 1 20 6.5Z"
+        opacity="0.15"
+      />
+      <path
+        fill="#EA4335"
+        d="M6 20a2 2 0 0 1-2-2V6.5A2.5 2.5 0 0 1 6.5 4H6v16Z"
+      />
+      <path
+        fill="#34A853"
+        d="M18 20a2 2 0 0 0 2-2V6h-.5A2.5 2.5 0 0 0 17 4h-1v16Z"
+      />
+      <path
+        fill="#4285F4"
+        d="M12 13.5 16 10.5V4l-4 3-4-3v6.5l4 3Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M8 4v6.5l4 3 4-3V4l-4 3-4-3Z"
+        opacity="0.7"
+      />
+    </svg>
+  );
+}
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneStep, setPhoneStep] = useState<"idle" | "code_sent">("idle");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [smsCode, setSmsCode] = useState("");
+  const [phoneConfirmation, setPhoneConfirmation] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string>("");
   const backendOrigin = import.meta.env.VITE_BACKEND_ORIGIN ?? "";
@@ -29,47 +74,57 @@ export default function Login() {
     }
   }, []);
 
+  const apiUrl = useMemo(() => {
+    const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+    return apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
+  }, []);
+
+  const normalizePhone = (raw: string) => {
+    const v = (raw ?? "").trim();
+    if (!v) return "";
+    if (v.startsWith("+")) return v;
+    return v;
+  };
+
+  const exchangeFirebaseToken = async (idToken: string, profile?: { name?: string; phone?: string }) => {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ idToken, profile }),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+      const message = data?.message || "فشل تسجيل الدخول";
+      throw new Error(message);
+    }
+
+    const token = data?.data?.token;
+    if (typeof token !== "string" || !token) {
+      throw new Error("فشل تسجيل الدخول");
+    }
+    localStorage.setItem("auth_token", token);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     console.log('[Login] Submitting form with data:', { name: formData.name, email: formData.email });
 
     try {
-      // Create a form element and submit it to handle the redirect properly
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `${backendOrigin}/api/local-login`;
-      
-      // Add form data
-      const nameField = document.createElement('input');
-      nameField.type = 'hidden';
-      nameField.name = 'name';
-      nameField.value = formData.name;
-      form.appendChild(nameField);
-      
-      const emailField = document.createElement('input');
-      emailField.type = 'hidden';
-      emailField.name = 'email';
-      emailField.value = formData.email;
-      form.appendChild(emailField);
-      
-      const passwordField = document.createElement('input');
-      passwordField.type = 'hidden';
-      passwordField.name = 'password';
-      passwordField.value = formData.password;
-      form.appendChild(passwordField);
-      
-      console.log('[Login] Submitting form to:', form.action);
-      
-      // Submit the form
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-      
+      const auth = await getFirebaseAuth();
+      const result = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const idToken = await result.user.getIdToken();
+      await exchangeFirebaseToken(idToken, { name: formData.name });
+      setLocation("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      setIsLoading(false);
+      setServerError(error instanceof Error ? error.message : "فشل تسجيل الدخول");
     }
+
+    setIsLoading(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,29 +144,7 @@ export default function Login() {
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
 
-      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
-      const url = apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ idToken }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.success) {
-        const message = data?.message || "فشل تسجيل الدخول بواسطة Google";
-        throw new Error(message);
-      }
-
-      const token = data?.data?.token;
-      if (typeof token !== "string" || !token) {
-        throw new Error("فشل تسجيل الدخول بواسطة Google");
-      }
-
-      localStorage.setItem("auth_token", token);
+      await exchangeFirebaseToken(idToken, { name: formData.name });
       setLocation("/dashboard");
     } catch (error) {
       console.error("Google login error:", error);
@@ -127,6 +160,52 @@ export default function Login() {
       }
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const getOrCreateRecaptcha = async () => {
+    const auth = await getFirebaseAuth();
+    const w = window as any;
+    if (!w.__mawazenRecaptchaLogin) {
+      w.__mawazenRecaptchaLogin = new RecaptchaVerifier(auth, "recaptcha-container-login", {
+        size: "invisible",
+      });
+    }
+    return w.__mawazenRecaptchaLogin as RecaptchaVerifier;
+  };
+
+  const handleSendSms = async () => {
+    setPhoneLoading(true);
+    try {
+      const phone = normalizePhone(phoneNumber);
+      if (!phone || !phone.startsWith("+")) {
+        throw new Error("اكتب رقم الجوال بصيغة دولية تبدأ بـ + (مثال: +9665xxxxxxx)");
+      }
+      const auth = await getFirebaseAuth();
+      const verifier = await getOrCreateRecaptcha();
+      const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
+      setPhoneConfirmation(confirmation);
+      setPhoneStep("code_sent");
+      setServerError("");
+    } catch (e) {
+      setServerError(e instanceof Error ? e.message : "فشل إرسال رمز التحقق");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleVerifySms = async () => {
+    setPhoneLoading(true);
+    try {
+      if (!phoneConfirmation) throw new Error("اطلب رمز التحقق أولاً");
+      const result = await phoneConfirmation.confirm(smsCode);
+      const idToken = await result.user.getIdToken();
+      await exchangeFirebaseToken(idToken, { name: formData.name, phone: normalizePhone(phoneNumber) });
+      setLocation("/dashboard");
+    } catch (e) {
+      setServerError(e instanceof Error ? e.message : "فشل التحقق من الرمز");
+    } finally {
+      setPhoneLoading(false);
     }
   };
 
@@ -183,10 +262,52 @@ export default function Login() {
               className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
             >
               <span className="flex items-center justify-center gap-2">
-                <Chrome className="h-4 w-4" />
-                {googleLoading ? "جاري تسجيل الدخول..." : "متابعة باستخدام Google"}
+                <GmailIcon className="h-4 w-4" />
+                {googleLoading ? "جاري تسجيل الدخول..." : "دخول بواسطة Gmail"}
               </span>
             </button>
+          </div>
+
+          <div className="mt-3">
+            <div id="recaptcha-container-login" />
+
+            {phoneStep === "idle" ? (
+              <div className="space-y-2">
+                <input
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="رقم الجوال بصيغة دولية مثال: +9665xxxxxxx"
+                  className="glass w-full rounded-2xl px-4 py-3 text-right"
+                  dir="rtl"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendSms}
+                  disabled={phoneLoading}
+                  className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
+                >
+                  {phoneLoading ? "جاري الإرسال..." : "دخول برقم الجوال"}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  value={smsCode}
+                  onChange={(e) => setSmsCode(e.target.value)}
+                  placeholder="رمز التحقق"
+                  className="glass w-full rounded-2xl px-4 py-3 text-right"
+                  dir="rtl"
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifySms}
+                  disabled={phoneLoading}
+                  className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
+                >
+                  {phoneLoading ? "جاري التحقق..." : "تأكيد الرمز"}
+                </button>
+              </div>
+            )}
           </div>
 
           {serverError ? (

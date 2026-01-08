@@ -11,15 +11,59 @@ import {
   Phone,
   Building,
   CheckCircle2,
-  Chrome,
 } from "lucide-react";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  RecaptchaVerifier,
+  createUserWithEmailAndPassword,
+  signInWithPhoneNumber,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
 import { getFirebaseAuth } from "@/_core/firebase";
+
+function GmailIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="#EA4335"
+        d="M20 6.5V18a2 2 0 0 1-2 2h-2V10.5L12 13.5 8 10.5V20H6a2 2 0 0 1-2-2V6.5A2.5 2.5 0 0 1 6.5 4h.5l5 3.75L17 4h.5A2.5 2.5 0 0 1 20 6.5Z"
+        opacity="0.15"
+      />
+      <path
+        fill="#EA4335"
+        d="M6 20a2 2 0 0 1-2-2V6.5A2.5 2.5 0 0 1 6.5 4H6v16Z"
+      />
+      <path
+        fill="#34A853"
+        d="M18 20a2 2 0 0 0 2-2V6h-.5A2.5 2.5 0 0 0 17 4h-1v16Z"
+      />
+      <path
+        fill="#4285F4"
+        d="M12 13.5 16 10.5V4l-4 3-4-3v6.5l4 3Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M8 4v6.5l4 3 4-3V4l-4 3-4-3Z"
+        opacity="0.7"
+      />
+    </svg>
+  );
+}
 
 export default function SignUp() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneStep, setPhoneStep] = useState<"idle" | "code_sent">("idle");
+  const [smsCode, setSmsCode] = useState("");
+  const [phoneConfirmation, setPhoneConfirmation] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [signupMode, setSignupMode] = useState<"trial" | "pay">("trial");
   const [serverError, setServerError] = useState<string>("");
@@ -55,6 +99,94 @@ export default function SignUp() {
         "تفعيل الاشتراك في بيئة الإنتاج يتم عبر القنوات المعتمدة",
       ],
     },
+  };
+
+  const normalizePhone = (raw: string) => {
+    const v = (raw ?? "").trim();
+    if (!v) return "";
+    if (v.startsWith("+")) return v;
+    return v;
+  };
+
+  const getOrCreateRecaptcha = async () => {
+    const auth = await getFirebaseAuth();
+    const w = window as any;
+    if (!w.__mawazenRecaptchaSignUp) {
+      w.__mawazenRecaptchaSignUp = new RecaptchaVerifier(auth, "recaptcha-container-signup", {
+        size: "invisible",
+      });
+    }
+    return w.__mawazenRecaptchaSignUp as RecaptchaVerifier;
+  };
+
+  const handleSendSms = async () => {
+    setPhoneLoading(true);
+    try {
+      const phone = normalizePhone(formData.phone);
+      if (!phone || !phone.startsWith("+")) {
+        throw new Error("اكتب رقم الجوال بصيغة دولية تبدأ بـ + (مثال: +9665xxxxxxx)");
+      }
+      const auth = await getFirebaseAuth();
+      const verifier = await getOrCreateRecaptcha();
+      const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
+      setPhoneConfirmation(confirmation);
+      setPhoneStep("code_sent");
+      setServerError("");
+    } catch (e) {
+      setServerError(e instanceof Error ? e.message : "فشل إرسال رمز التحقق");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleVerifySms = async () => {
+    setPhoneLoading(true);
+    try {
+      if (!phoneConfirmation) throw new Error("اطلب رمز التحقق أولاً");
+      const result = await phoneConfirmation.confirm(smsCode);
+      const idToken = await result.user.getIdToken();
+
+      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+      const url = apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idToken,
+          profile: {
+            name: formData.name,
+            phone: normalizePhone(formData.phone),
+            organizationName: formData.lawFirm,
+          },
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        const message = data?.message || "فشل إنشاء الحساب";
+        throw new Error(message);
+      }
+
+      const token = data?.data?.token;
+      if (typeof token !== "string" || !token) {
+        throw new Error("فشل إنشاء الحساب");
+      }
+
+      localStorage.setItem("auth_token", token);
+
+      const redirectTarget =
+        signupMode === "pay"
+          ? `/payments?plan=${encodeURIComponent(formData.accountType)}`
+          : "/dashboard";
+      setLocation(redirectTarget);
+    } catch (e) {
+      setServerError(e instanceof Error ? e.message : "فشل التحقق من الرمز");
+    } finally {
+      setPhoneLoading(false);
+    }
   };
 
   const [formData, setFormData] = useState({
@@ -95,41 +227,53 @@ export default function SignUp() {
     });
 
     try {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `${backendOrigin}/api/local-signup`;
+      const auth = await getFirebaseAuth();
+      const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      await updateProfile(result.user, { displayName: formData.name });
+      const idToken = await result.user.getIdToken();
 
-      const addHiddenField = (name: string, value: string) => {
-        const field = document.createElement('input');
-        field.type = 'hidden';
-        field.name = name;
-        field.value = value;
-        form.appendChild(field);
-      };
+      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+      const url = apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
 
-      addHiddenField('name', formData.name);
-      addHiddenField('email', formData.email);
-      addHiddenField('password', formData.password);
-      addHiddenField('phone', formData.phone);
-      addHiddenField('lawFirm', formData.lawFirm);
-      addHiddenField('accountType', formData.accountType);
-      addHiddenField('mode', signupMode);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idToken,
+          profile: {
+            name: formData.name,
+            phone: formData.phone,
+            organizationName: formData.lawFirm,
+          },
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        const message = data?.message || "فشل إنشاء الحساب";
+        throw new Error(message);
+      }
+
+      const token = data?.data?.token;
+      if (typeof token !== "string" || !token) {
+        throw new Error("فشل إنشاء الحساب");
+      }
+
+      localStorage.setItem("auth_token", token);
+
       const redirectTarget =
-        signupMode === 'pay'
+        signupMode === "pay"
           ? `/payments?plan=${encodeURIComponent(formData.accountType)}`
-          : '/dashboard';
-      addHiddenField('redirect', redirectTarget);
-
-      console.log('[SignUp] Submitting form to:', form.action);
-
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-      
+          : "/dashboard";
+      setLocation(redirectTarget);
     } catch (error) {
       console.error("Sign up error:", error);
-      setIsLoading(false);
+      setServerError(error instanceof Error ? error.message : "فشل إنشاء الحساب");
     }
+
+    setIsLoading(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,7 +301,14 @@ export default function SignUp() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({
+          idToken,
+          profile: {
+            name: formData.name,
+            phone: formData.phone,
+            organizationName: formData.lawFirm,
+          },
+        }),
       });
 
       const data = await res.json().catch(() => null);
@@ -249,10 +400,42 @@ export default function SignUp() {
               className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
             >
               <span className="flex items-center justify-center gap-2">
-                <Chrome className="h-4 w-4" />
-                {googleLoading ? "جاري إنشاء الحساب..." : "متابعة باستخدام Google"}
+                <GmailIcon className="h-4 w-4" />
+                {googleLoading ? "جاري إنشاء الحساب..." : "تسجيل بواسطة Gmail"}
               </span>
             </button>
+          </div>
+
+          <div className="mt-3">
+            <div id="recaptcha-container-signup" />
+            {phoneStep === "idle" ? (
+              <button
+                type="button"
+                onClick={handleSendSms}
+                disabled={phoneLoading}
+                className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
+              >
+                {phoneLoading ? "جاري الإرسال..." : "تسجيل برقم الجوال"}
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  value={smsCode}
+                  onChange={(e) => setSmsCode(e.target.value)}
+                  placeholder="رمز التحقق"
+                  className="glass w-full rounded-2xl px-4 py-3 text-right"
+                  dir="rtl"
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifySms}
+                  disabled={phoneLoading}
+                  className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
+                >
+                  {phoneLoading ? "جاري التحقق..." : "تأكيد الرمز"}
+                </button>
+              </div>
+            )}
           </div>
 
           {serverError ? (

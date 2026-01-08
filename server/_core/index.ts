@@ -91,15 +91,35 @@ async function startServer() {
         return res.status(400).json({ success: false, message: "Missing idToken" });
       }
 
+      const profileName = typeof req.body?.profile?.name === "string" ? req.body.profile.name.trim() : "";
+      const profilePhone = typeof req.body?.profile?.phone === "string" ? req.body.profile.phone.trim() : "";
+      const profileOrganizationName =
+        typeof req.body?.profile?.organizationName === "string"
+          ? req.body.profile.organizationName.trim()
+          : "";
+
       const admin = getFirebaseAdmin();
       const decoded = await admin.auth().verifyIdToken(idToken);
 
       const uid = decoded.uid;
+      const signInProvider = (decoded as any)?.firebase?.sign_in_provider as string | undefined;
+      const loginMethod =
+        signInProvider === "google.com"
+          ? "google"
+          : signInProvider === "password"
+            ? "email"
+            : signInProvider === "phone"
+              ? "phone"
+              : "firebase";
       const name =
         typeof (decoded as any)?.name === "string" && (decoded as any).name.trim()
           ? (decoded as any).name.trim()
-          : "";
+          : profileName;
       const email = typeof decoded.email === "string" ? decoded.email.trim().toLowerCase() : null;
+      const phone =
+        typeof (decoded as any)?.phone_number === "string" && (decoded as any).phone_number.trim()
+          ? (decoded as any).phone_number.trim()
+          : profilePhone || null;
 
       const openId = `firebase-${uid}`;
       const signedInAt = new Date();
@@ -108,9 +128,15 @@ async function startServer() {
         openId,
         name: name || null,
         email,
-        loginMethod: "google",
+        phone,
+        loginMethod,
         lastSignedIn: signedInAt,
         isActive: true,
+      });
+
+      await db.ensureUserHasOrganization({
+        openId,
+        defaultOrganizationName: profileOrganizationName || name || null,
       });
 
       const user = await db.getUserByOpenId(openId);
