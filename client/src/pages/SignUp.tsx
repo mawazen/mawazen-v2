@@ -14,9 +14,7 @@ import {
 } from "lucide-react";
 import {
   GoogleAuthProvider,
-  RecaptchaVerifier,
   createUserWithEmailAndPassword,
-  signInWithPhoneNumber,
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
@@ -60,10 +58,6 @@ export default function SignUp() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [phoneLoading, setPhoneLoading] = useState(false);
-  const [phoneStep, setPhoneStep] = useState<"idle" | "code_sent">("idle");
-  const [smsCode, setSmsCode] = useState("");
-  const [phoneConfirmation, setPhoneConfirmation] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [signupMode, setSignupMode] = useState<"trial" | "pay">("trial");
   const [serverError, setServerError] = useState<string>("");
@@ -106,87 +100,6 @@ export default function SignUp() {
     if (!v) return "";
     if (v.startsWith("+")) return v;
     return v;
-  };
-
-  const getOrCreateRecaptcha = async () => {
-    const auth = await getFirebaseAuth();
-    const w = window as any;
-    if (!w.__mawazenRecaptchaSignUp) {
-      w.__mawazenRecaptchaSignUp = new RecaptchaVerifier(auth, "recaptcha-container-signup", {
-        size: "invisible",
-      });
-    }
-    return w.__mawazenRecaptchaSignUp as RecaptchaVerifier;
-  };
-
-  const handleSendSms = async () => {
-    setPhoneLoading(true);
-    try {
-      const phone = normalizePhone(formData.phone);
-      if (!phone || !phone.startsWith("+")) {
-        throw new Error("اكتب رقم الجوال بصيغة دولية تبدأ بـ + (مثال: +9665xxxxxxx)");
-      }
-      const auth = await getFirebaseAuth();
-      const verifier = await getOrCreateRecaptcha();
-      const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
-      setPhoneConfirmation(confirmation);
-      setPhoneStep("code_sent");
-      setServerError("");
-    } catch (e) {
-      setServerError(e instanceof Error ? e.message : "فشل إرسال رمز التحقق");
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
-  const handleVerifySms = async () => {
-    setPhoneLoading(true);
-    try {
-      if (!phoneConfirmation) throw new Error("اطلب رمز التحقق أولاً");
-      const result = await phoneConfirmation.confirm(smsCode);
-      const idToken = await result.user.getIdToken();
-
-      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
-      const url = apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idToken,
-          profile: {
-            name: formData.name,
-            phone: normalizePhone(formData.phone),
-            organizationName: formData.lawFirm,
-          },
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.success) {
-        const message = data?.message || "فشل إنشاء الحساب";
-        throw new Error(message);
-      }
-
-      const token = data?.data?.token;
-      if (typeof token !== "string" || !token) {
-        throw new Error("فشل إنشاء الحساب");
-      }
-
-      localStorage.setItem("auth_token", token);
-
-      const redirectTarget =
-        signupMode === "pay"
-          ? `/payments?plan=${encodeURIComponent(formData.accountType)}`
-          : "/dashboard";
-      setLocation(redirectTarget);
-    } catch (e) {
-      setServerError(e instanceof Error ? e.message : "فشل التحقق من الرمز");
-    } finally {
-      setPhoneLoading(false);
-    }
   };
 
   const [formData, setFormData] = useState({
@@ -244,7 +157,7 @@ export default function SignUp() {
           idToken,
           profile: {
             name: formData.name,
-            phone: formData.phone,
+            phone: normalizePhone(formData.phone),
             organizationName: formData.lawFirm,
           },
         }),
@@ -407,35 +320,9 @@ export default function SignUp() {
           </div>
 
           <div className="mt-3">
-            <div id="recaptcha-container-signup" />
-            {phoneStep === "idle" ? (
-              <button
-                type="button"
-                onClick={handleSendSms}
-                disabled={phoneLoading}
-                className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
-              >
-                {phoneLoading ? "جاري الإرسال..." : "تسجيل برقم الجوال"}
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <input
-                  value={smsCode}
-                  onChange={(e) => setSmsCode(e.target.value)}
-                  placeholder="رمز التحقق"
-                  className="glass w-full rounded-2xl px-4 py-3 text-right"
-                  dir="rtl"
-                />
-                <button
-                  type="button"
-                  onClick={handleVerifySms}
-                  disabled={phoneLoading}
-                  className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
-                >
-                  {phoneLoading ? "جاري التحقق..." : "تأكيد الرمز"}
-                </button>
-              </div>
-            )}
+            <div className="text-center text-xs text-muted-foreground">
+              أو
+            </div>
           </div>
 
           {serverError ? (
@@ -583,7 +470,6 @@ export default function SignUp() {
                 placeholder="أدخل رقم هاتفك"
                 value={formData.phone}
                 onChange={handleInputChange}
-                required
                 className="glass w-full rounded-2xl px-4 py-3 text-right"
                 dir="rtl"
               />

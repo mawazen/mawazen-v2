@@ -3,9 +3,7 @@ import { useLocation } from "wouter";
 import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield } from "lucide-react";
 import {
   GoogleAuthProvider,
-  RecaptchaVerifier,
   signInWithEmailAndPassword,
-  signInWithPhoneNumber,
   signInWithPopup,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/_core/firebase";
@@ -48,11 +46,6 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [phoneLoading, setPhoneLoading] = useState(false);
-  const [phoneStep, setPhoneStep] = useState<"idle" | "code_sent">("idle");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [smsCode, setSmsCode] = useState("");
-  const [phoneConfirmation, setPhoneConfirmation] = useState<any>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string>("");
   const backendOrigin = import.meta.env.VITE_BACKEND_ORIGIN ?? "";
@@ -78,13 +71,6 @@ export default function Login() {
     const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
     return apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
   }, []);
-
-  const normalizePhone = (raw: string) => {
-    const v = (raw ?? "").trim();
-    if (!v) return "";
-    if (v.startsWith("+")) return v;
-    return v;
-  };
 
   const exchangeFirebaseToken = async (idToken: string, profile?: { name?: string; phone?: string }) => {
     const res = await fetch(apiUrl, {
@@ -163,52 +149,6 @@ export default function Login() {
     }
   };
 
-  const getOrCreateRecaptcha = async () => {
-    const auth = await getFirebaseAuth();
-    const w = window as any;
-    if (!w.__mawazenRecaptchaLogin) {
-      w.__mawazenRecaptchaLogin = new RecaptchaVerifier(auth, "recaptcha-container-login", {
-        size: "invisible",
-      });
-    }
-    return w.__mawazenRecaptchaLogin as RecaptchaVerifier;
-  };
-
-  const handleSendSms = async () => {
-    setPhoneLoading(true);
-    try {
-      const phone = normalizePhone(phoneNumber);
-      if (!phone || !phone.startsWith("+")) {
-        throw new Error("اكتب رقم الجوال بصيغة دولية تبدأ بـ + (مثال: +9665xxxxxxx)");
-      }
-      const auth = await getFirebaseAuth();
-      const verifier = await getOrCreateRecaptcha();
-      const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
-      setPhoneConfirmation(confirmation);
-      setPhoneStep("code_sent");
-      setServerError("");
-    } catch (e) {
-      setServerError(e instanceof Error ? e.message : "فشل إرسال رمز التحقق");
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
-  const handleVerifySms = async () => {
-    setPhoneLoading(true);
-    try {
-      if (!phoneConfirmation) throw new Error("اطلب رمز التحقق أولاً");
-      const result = await phoneConfirmation.confirm(smsCode);
-      const idToken = await result.user.getIdToken();
-      await exchangeFirebaseToken(idToken, { name: formData.name, phone: normalizePhone(phoneNumber) });
-      setLocation("/dashboard");
-    } catch (e) {
-      setServerError(e instanceof Error ? e.message : "فشل التحقق من الرمز");
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
   console.log('[Login] Login page rendered');
 
   return (
@@ -266,48 +206,6 @@ export default function Login() {
                 {googleLoading ? "جاري تسجيل الدخول..." : "دخول بواسطة Gmail"}
               </span>
             </button>
-          </div>
-
-          <div className="mt-3">
-            <div id="recaptcha-container-login" />
-
-            {phoneStep === "idle" ? (
-              <div className="space-y-2">
-                <input
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="رقم الجوال بصيغة دولية مثال: +9665xxxxxxx"
-                  className="glass w-full rounded-2xl px-4 py-3 text-right"
-                  dir="rtl"
-                />
-                <button
-                  type="button"
-                  onClick={handleSendSms}
-                  disabled={phoneLoading}
-                  className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
-                >
-                  {phoneLoading ? "جاري الإرسال..." : "دخول برقم الجوال"}
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <input
-                  value={smsCode}
-                  onChange={(e) => setSmsCode(e.target.value)}
-                  placeholder="رمز التحقق"
-                  className="glass w-full rounded-2xl px-4 py-3 text-right"
-                  dir="rtl"
-                />
-                <button
-                  type="button"
-                  onClick={handleVerifySms}
-                  disabled={phoneLoading}
-                  className="glass w-full rounded-2xl px-4 py-3 text-sm font-semibold text-foreground hover:border-gold/40"
-                >
-                  {phoneLoading ? "جاري التحقق..." : "تأكيد الرمز"}
-                </button>
-              </div>
-            )}
           </div>
 
           {serverError ? (
