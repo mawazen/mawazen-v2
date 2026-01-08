@@ -99,7 +99,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
       },
       {
         key: "example",
-        label: "Example (Step)",
+        label: "Cinematic Glass",
         nextTheme: "dark" as const,
         nextPalette: "example" as const,
       },
