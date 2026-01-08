@@ -115,7 +115,16 @@ export default function Login() {
       setLocation("/dashboard");
     } catch (error) {
       console.error("Google login error:", error);
-      setServerError(error instanceof Error ? error.message : "فشل تسجيل الدخول بواسطة Google");
+      const err = error as any;
+      if (err?.code === "auth/unauthorized-domain") {
+        const host = typeof window !== "undefined" ? window.location.hostname : "";
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        setServerError(
+          `الدومين غير مُصرّح به في Firebase: ${host || origin}. أضف هذا الدومين إلى Authorized domains ثم أعد المحاولة.`
+        );
+      } else {
+        setServerError(error instanceof Error ? error.message : "فشل تسجيل الدخول بواسطة Gmail");
+      }
     } finally {
       setGoogleLoading(false);
     }
