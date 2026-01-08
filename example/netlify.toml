@@ -1,0 +1,5 @@
+[[headers]]
+  for = "/apk/*.apk"
+  [headers.values]
+    Content-Type = "application/vnd.android.package-archive"
+    X-Content-Type-Options = "nosniff"
