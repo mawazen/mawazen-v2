@@ -56,6 +56,32 @@ export default function Verify() {
     return v;
   };
 
+  const firebaseErrorMessage = (e: unknown) => {
+    const err = e as any;
+    const code = typeof err?.code === "string" ? err.code : "";
+
+    if (code === "auth/billing-not-enabled") {
+      return "لا يمكن تفعيل الحساب عبر SMS لأن Billing غير مُفعّل في Firebase. فعّل خطة Blaze من Firebase Console أو اختر التفعيل عبر البريد الإلكتروني.";
+    }
+    if (code === "auth/credential-already-in-use" || code === "auth/phone-number-already-exists") {
+      return "هذا رقم الجوال مستخدم بالفعل بحساب آخر. استخدم رقمًا آخر أو اختر التفعيل عبر البريد الإلكتروني.";
+    }
+    if (code === "auth/provider-already-linked") {
+      return "تم تفعيل رقم الجوال بالفعل لهذا الحساب.";
+    }
+    if (code === "auth/invalid-verification-code") {
+      return "رمز التحقق غير صحيح.";
+    }
+    if (code === "auth/code-expired") {
+      return "انتهت صلاحية الرمز. اطلب رمزًا جديدًا.";
+    }
+    if (code === "auth/too-many-requests") {
+      return "تم إرسال محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.";
+    }
+
+    return e instanceof Error ? e.message : "حدث خطأ غير متوقع";
+  };
+
   const finalizeSession = async () => {
     const auth = await getFirebaseAuth();
     const user = auth.currentUser;
@@ -93,10 +119,14 @@ export default function Verify() {
 
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.success) {
-      const message =
-        typeof data?.message === "string" && data.message
-          ? data.message
-          : "لم يتم تفعيل الحساب بعد";
+      if (res.status === 409 && (data?.code === "PHONE_ALREADY_IN_USE" || data?.code === "EMAIL_ALREADY_IN_USE")) {
+        throw new Error(typeof data?.message === "string" && data.message ? data.message : "هذه البيانات مستخدمة بالفعل");
+      }
+      if (res.status === 403 && data?.code === "EMAIL_NOT_VERIFIED") {
+        throw new Error(typeof data?.message === "string" && data.message ? data.message : "لم يتم تفعيل الحساب بعد");
+      }
+
+      const message = typeof data?.message === "string" && data.message ? data.message : "لم يتم تفعيل الحساب بعد";
       throw new Error(message);
     }
 
@@ -138,7 +168,7 @@ export default function Verify() {
       await sendEmailVerification(user);
       setStatus("تم إرسال رسالة التفعيل إلى بريدك.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "فشل إرسال رسالة التفعيل");
+      setError(firebaseErrorMessage(e));
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +191,7 @@ export default function Verify() {
       }
       await finalizeSession();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "فشل التحقق");
+      setError(firebaseErrorMessage(e));
     } finally {
       setIsLoading(false);
     }
@@ -190,7 +220,11 @@ export default function Verify() {
       setSmsStep("code_sent");
       setStatus("تم إرسال رمز التحقق إلى جوالك.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "فشل إرسال رمز التحقق");
+      const msg = firebaseErrorMessage(e);
+      setError(msg);
+      if ((e as any)?.code === "auth/billing-not-enabled") {
+        setMode("email");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -205,7 +239,7 @@ export default function Verify() {
       await phoneConfirmation.confirm(smsCode);
       await finalizeSession();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "فشل التحقق من الرمز");
+      setError(firebaseErrorMessage(e));
     } finally {
       setIsLoading(false);
     }

@@ -165,7 +165,17 @@ export default function SignUp() {
       setLocation(`/verify?next=${encodeURIComponent(redirectTarget)}`);
     } catch (error) {
       console.error("Sign up error:", error);
-      setServerError(error instanceof Error ? error.message : "فشل إنشاء الحساب");
+      const err = error as any;
+      const code = typeof err?.code === "string" ? err.code : "";
+      if (code === "auth/email-already-in-use") {
+        setServerError("هذا البريد الإلكتروني مستخدم بالفعل. سجّل الدخول بدل إنشاء حساب جديد.");
+      } else if (code === "auth/invalid-email") {
+        setServerError("البريد الإلكتروني غير صحيح.");
+      } else if (code === "auth/weak-password") {
+        setServerError("كلمة المرور ضعيفة. اختر كلمة مرور أقوى.");
+      } else {
+        setServerError(error instanceof Error ? error.message : "فشل إنشاء الحساب");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -234,6 +244,8 @@ export default function SignUp() {
         setServerError(
           `الدومين غير مُصرّح به في Firebase: ${host || origin}. أضف هذا الدومين إلى Authorized domains ثم أعد المحاولة.`
         );
+      } else if (err?.code === "auth/account-exists-with-different-credential") {
+        setServerError("هذا البريد الإلكتروني مرتبط بطريقة تسجيل دخول أخرى. جرّب تسجيل الدخول بدل إنشاء حساب جديد.");
       } else {
         setServerError(error instanceof Error ? error.message : "فشل إنشاء الحساب بواسطة Gmail");
       }
