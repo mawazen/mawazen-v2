@@ -1,23 +1,24 @@
+// Firebase client configuration
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-let firebaseConfig: any = null;
+// Direct Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBruN5zEgWK9I1YdDhJ-fHtrDl4iMTPTFg",
+  authDomain: "mawazen-b6541.firebaseapp.com",
+  projectId: "mawazen-b6541",
+  storageBucket: "mawazen-b6541.firebasestorage.app",
+  messagingSenderId: "370573201852",
+  appId: "1:370573201852:web:eb5953ce0378b50ee39bb9",
+  measurementId: "G-MPRKHJ017W"
+};
+
 let app: any = null;
 let auth: any = null;
 
-async function getFirebaseConfig() {
-  if (!firebaseConfig) {
-    const res = await fetch("/api/public/firebase-config");
-    if (!res.ok) throw new Error("Failed to fetch Firebase config");
-    firebaseConfig = await res.json();
-  }
-  return firebaseConfig;
-}
-
 export async function getFirebaseApp() {
   if (!app) {
-    const config = await getFirebaseConfig();
-    app = initializeApp(config);
+    app = initializeApp(firebaseConfig);
   }
   return app;
 }
