@@ -15,6 +15,8 @@ import {
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
@@ -143,6 +145,9 @@ export default function SignUp() {
       const auth = await getFirebaseAuth();
       const result = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       await updateProfile(result.user, { displayName: formData.name });
+
+      await sendEmailVerification(result.user);
+
       const idToken = await result.user.getIdToken();
 
       const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -165,6 +170,12 @@ export default function SignUp() {
 
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.success) {
+        if (res.status === 403 && data?.code === "EMAIL_NOT_VERIFIED") {
+          await signOut(auth);
+          setServerError("تم إنشاء الحساب. تم إرسال رسالة تفعيل إلى بريدك — فعّل البريد ثم سجّل الدخول.");
+          return;
+        }
+
         const message = data?.message || "فشل إنشاء الحساب";
         throw new Error(message);
       }
@@ -184,9 +195,9 @@ export default function SignUp() {
     } catch (error) {
       console.error("Sign up error:", error);
       setServerError(error instanceof Error ? error.message : "فشل إنشاء الحساب");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -116,6 +116,7 @@ async function startServer() {
           ? (decoded as any).name.trim()
           : profileName;
       const email = typeof decoded.email === "string" ? decoded.email.trim().toLowerCase() : null;
+      const emailVerified = (decoded as any)?.email_verified === true;
       const phone =
         typeof (decoded as any)?.phone_number === "string" && (decoded as any).phone_number.trim()
           ? (decoded as any).phone_number.trim()
@@ -142,6 +143,14 @@ async function startServer() {
       const user = await db.getUserByOpenId(openId);
       if (!user) {
         return res.status(500).json({ success: false, message: "Failed to create user" });
+      }
+
+      if (signInProvider === "password" && email && !emailVerified) {
+        return res.status(403).json({
+          success: false,
+          code: "EMAIL_NOT_VERIFIED",
+          message: "يجب تفعيل البريد الإلكتروني أولاً. تم إرسال رسالة التفعيل إلى بريدك.",
+        });
       }
 
       const token = await sdk.createSessionToken(openId, {

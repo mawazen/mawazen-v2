@@ -3,7 +3,9 @@ import { useLocation } from "wouter";
 import { Scale, Sparkles, Eye, EyeOff, Mail, User, Shield } from "lucide-react";
 import {
   GoogleAuthProvider,
+  sendEmailVerification,
   signInWithEmailAndPassword,
+  signOut,
   signInWithPopup,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/_core/firebase";
@@ -83,6 +85,9 @@ export default function Login() {
 
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.success) {
+      if (res.status === 403 && data?.code === "EMAIL_NOT_VERIFIED") {
+        throw new Error(typeof data?.message === "string" && data.message ? data.message : "يجب تفعيل البريد الإلكتروني أولاً");
+      }
       const message = data?.message || "فشل تسجيل الدخول";
       throw new Error(message);
     }
@@ -102,15 +107,24 @@ export default function Login() {
     try {
       const auth = await getFirebaseAuth();
       const result = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      await result.user.reload();
+
+      if (!result.user.emailVerified) {
+        await sendEmailVerification(result.user);
+        await signOut(auth);
+        setServerError("تم إرسال رسالة تفعيل إلى بريدك — فعّل البريد ثم سجّل الدخول.");
+        return;
+      }
+
       const idToken = await result.user.getIdToken();
       await exchangeFirebaseToken(idToken, { name: formData.name });
       setLocation("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       setServerError(error instanceof Error ? error.message : "فشل تسجيل الدخول");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
