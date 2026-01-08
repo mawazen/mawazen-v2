@@ -1,4 +1,5 @@
-import * as admin from "firebase-admin";
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
 type ServiceAccount = {
   project_id: string;
@@ -33,10 +34,16 @@ function parseServiceAccount(): ServiceAccount {
 export function getFirebaseAdmin() {
   if (!initialized) {
     const serviceAccount = parseServiceAccount();
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-    });
+    if (getApps().length === 0) {
+      initializeApp({
+        credential: cert(serviceAccount as any),
+      });
+    }
     initialized = true;
   }
-  return admin;
+
+  // Keep compatibility with existing call sites: getFirebaseAdmin().auth().verifyIdToken(...)
+  return {
+    auth: () => getAuth(),
+  } as any;
 }
