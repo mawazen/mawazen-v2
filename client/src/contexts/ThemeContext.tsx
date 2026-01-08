@@ -2,7 +2,14 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 type ThemeMode = "light" | "dark";
 
-type ThemePalette = "gold" | "gold_burgundy" | "gold_navy" | "burgundy" | "navy" | "sky";
+type ThemePalette =
+  | "gold"
+  | "gold_burgundy"
+  | "gold_navy"
+  | "burgundy"
+  | "navy"
+  | "sky"
+  | "example";
 
 const THEME_PALETTES: ThemePalette[] = [
   "gold",
@@ -11,6 +18,7 @@ const THEME_PALETTES: ThemePalette[] = [
   "burgundy",
   "navy",
   "sky",
+  "example",
 ];
 
 const isThemeMode = (value: string | null): value is ThemeMode =>
@@ -22,7 +30,8 @@ const isThemePalette = (value: string | null): value is ThemePalette =>
   value === "gold_burgundy" ||
   value === "burgundy" ||
   value === "navy" ||
-  value === "sky";
+  value === "sky" ||
+  value === "example";
 
 interface ThemeContextType {
   theme: ThemeMode;

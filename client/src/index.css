@@ -205,6 +205,21 @@
   --chart-5: #780000;
 }
 
+:root[data-theme="example"] {
+  --gold: #ffd700;
+  --gold-light: #ffed4e;
+  --gold-dark: #ffb300;
+  --primary: var(--gold);
+  --primary-foreground: #0a0a1a;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: #ffd700;
+  --chart-2: #9c27b0;
+  --chart-3: #ff6b9d;
+  --chart-4: #673ab7;
+  --chart-5: #2196f3;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -238,6 +253,28 @@
   --glass-blur: 22px;
 }
 
+:root.dark[data-theme="example"] {
+  --background: #0a0a1a;
+  --foreground: #ffffff;
+  --card: #0f0f23;
+  --card-foreground: #ffffff;
+  --popover: rgba(10, 10, 26, 0.95);
+  --popover-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #ffffff;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: rgba(255, 255, 255, 0.78);
+  --accent: rgba(255, 255, 255, 0.08);
+  --accent-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.14);
+  --input: rgba(255, 255, 255, 0.16);
+  --sidebar: rgba(10, 10, 26, 0.92);
+  --sidebar-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.07);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -259,12 +296,20 @@
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.10) 0%, transparent 55%),
-      radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.10) 0%, transparent 55%),
-      radial-gradient(circle at 50% 50%, rgba(33, 150, 243, 0.06) 0%, transparent 60%);
+      radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.10) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.10) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(33, 150, 243, 0.06) 0%, transparent 55%);
     z-index: -1;
     pointer-events: none;
-    animation: backgroundPulse 18s ease-in-out infinite;
+    animation: backgroundPulse 20s ease-in-out infinite, backgroundDrift 26s ease-in-out infinite;
+  }
+
+  html.dark[data-theme="example"] body::before {
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.14) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.14) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(33, 150, 243, 0.08) 0%, transparent 55%),
+      radial-gradient(circle at 70% 15%, rgba(255, 107, 157, 0.10) 0%, transparent 55%);
   }
   
   button:not(:disabled),
@@ -345,7 +390,7 @@
   
   /* Pure glass card - No gradients, premium glass effect */
   .card-gold {
-    background: rgba(8, 8, 16, 0.72);
+    background: rgba(8, 8, 16, 0.82);
     backdrop-filter: blur(30px) saturate(160%);
     -webkit-backdrop-filter: blur(30px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -354,18 +399,21 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.07);
     position: relative;
     z-index: 0;
-    overflow: hidden;
+    overflow: visible;
+    isolation: isolate;
     transition: transform 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 420ms ease;
     will-change: transform, box-shadow;
   }
 
   .card-gold:hover {
+    background: rgba(8, 8, 16, 0.88);
     transform: translateY(-10px) scale(1.01);
     border-color: rgba(255, 215, 0, 0.20);
     box-shadow:
       0 28px 90px rgba(0, 0, 0, 0.70),
       0 0 70px rgba(255, 215, 0, 0.12),
       inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 55px rgba(255, 215, 0, 0.16));
   }
 
   /* Premium button styles - Enhanced */
@@ -413,7 +461,7 @@
   
   /* Glass morphism effect */
   .glass {
-    background: rgba(8, 8, 16, 0.72);
+    background: rgba(8, 8, 16, 0.82);
     backdrop-filter: blur(30px) saturate(160%);
     -webkit-backdrop-filter: blur(30px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -422,18 +470,21 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.07);
     position: relative;
     z-index: 0;
-    overflow: hidden;
+    overflow: visible;
+    isolation: isolate;
     transition: transform 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 420ms ease;
     will-change: transform, box-shadow;
   }
 
   .glass:hover {
+    background: rgba(8, 8, 16, 0.88);
     transform: translateY(-10px) scale(1.01);
     border-color: rgba(255, 215, 0, 0.20);
     box-shadow:
       0 28px 90px rgba(0, 0, 0, 0.70),
       0 0 70px rgba(255, 215, 0, 0.12),
       inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 55px rgba(255, 215, 0, 0.16));
   }
 
   .glass:focus-within {
@@ -461,11 +512,14 @@
   .card-gold::after {
     content: "";
     position: absolute;
-    inset: -60%;
-    background: rgba(255, 215, 0, 0.10);
-    filter: blur(55px);
+    width: 160px;
+    height: 160px;
+    right: -80px;
+    top: -90px;
+    background: rgba(255, 215, 0, 0.22);
+    filter: blur(70px);
     opacity: 0;
-    transform: translate3d(-8%, 10%, 0);
+    transform: translate3d(-12px, 18px, 0);
     transition: opacity 520ms ease, transform 520ms ease;
     pointer-events: none;
     z-index: -1;
@@ -474,7 +528,7 @@
   .glass:hover::after,
   .card-gold:hover::after {
     opacity: 1;
-    transform: translate3d(8%, -10%, 0);
+    transform: translate3d(18px, -18px, 0);
   }
   
   /* Animated gold shimmer */
@@ -527,6 +581,11 @@
 @keyframes backgroundPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+@keyframes backgroundDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -2%, 0) scale(1.02); }
 }
 
 /* LTR override for specific elements */

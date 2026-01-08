@@ -98,6 +98,12 @@ export default function SiteLayout({ children }: PropsWithChildren) {
         nextPalette: "gold_navy" as const,
       },
       {
+        key: "example",
+        label: "Example (Step)",
+        nextTheme: "dark" as const,
+        nextPalette: "example" as const,
+      },
+      {
         key: "gold_burgundy",
         label: "Gold + Burgundy",
         nextTheme: "dark" as const,
@@ -115,6 +121,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
   const activePresetKey = useMemo(() => {
     if (theme === "light" && palette === "gold") return "gold_minimal_light";
+    if (theme === "dark" && palette === "example") return "example";
     if (theme === "dark" && palette === "gold_navy") return "gold_navy";
     if (theme === "dark" && palette === "gold_burgundy") return "gold_burgundy";
     return "custom";
