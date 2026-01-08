@@ -117,10 +117,11 @@ async function startServer() {
           : profileName;
       const email = typeof decoded.email === "string" ? decoded.email.trim().toLowerCase() : null;
       const emailVerified = (decoded as any)?.email_verified === true;
-      const phone =
+      const linkedPhone =
         typeof (decoded as any)?.phone_number === "string" && (decoded as any).phone_number.trim()
           ? (decoded as any).phone_number.trim()
-          : profilePhone || null;
+          : null;
+      const phone = linkedPhone || profilePhone || null;
 
       const openId = `firebase-${uid}`;
       const signedInAt = new Date();
@@ -145,11 +146,11 @@ async function startServer() {
         return res.status(500).json({ success: false, message: "Failed to create user" });
       }
 
-      if (signInProvider === "password" && email && !emailVerified) {
+      if (signInProvider === "password" && email && !emailVerified && !linkedPhone) {
         return res.status(403).json({
           success: false,
           code: "EMAIL_NOT_VERIFIED",
-          message: "يجب تفعيل البريد الإلكتروني أولاً. تم إرسال رسالة التفعيل إلى بريدك.",
+          message: "يجب تفعيل الحساب أولاً عبر البريد الإلكتروني أو رقم الجوال.",
         });
       }
 
@@ -166,6 +167,23 @@ async function startServer() {
       });
     } catch (error) {
       console.error("[Auth] Firebase login failed", error);
+
+      const errMessage = error instanceof Error ? error.message : "";
+      if (errMessage === "PHONE_ALREADY_IN_USE") {
+        return res.status(409).json({
+          success: false,
+          code: "PHONE_ALREADY_IN_USE",
+          message: "هذا رقم الجوال مستخدم بالفعل. استخدم رقمًا آخر أو سجّل الدخول بالحساب المرتبط به.",
+        });
+      }
+      if (errMessage === "EMAIL_ALREADY_IN_USE") {
+        return res.status(409).json({
+          success: false,
+          code: "EMAIL_ALREADY_IN_USE",
+          message: "هذا البريد الإلكتروني مستخدم بالفعل. سجّل الدخول بدل إنشاء حساب جديد.",
+        });
+      }
+
       return res.status(401).json({
         success: false,
         message: "Firebase authentication failed",

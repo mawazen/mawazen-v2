@@ -5,7 +5,6 @@ import {
   GoogleAuthProvider,
   sendEmailVerification,
   signInWithEmailAndPassword,
-  signOut,
   signInWithPopup,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/_core/firebase";
@@ -86,7 +85,17 @@ export default function Login() {
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.success) {
       if (res.status === 403 && data?.code === "EMAIL_NOT_VERIFIED") {
-        throw new Error(typeof data?.message === "string" && data.message ? data.message : "يجب تفعيل البريد الإلكتروني أولاً");
+        const err = new Error(
+          typeof data?.message === "string" && data.message ? data.message : "يجب تفعيل الحساب أولاً"
+        ) as any;
+        err.code = "EMAIL_NOT_VERIFIED";
+        throw err;
+      }
+      if (res.status === 409 && data?.code === "PHONE_ALREADY_IN_USE") {
+        throw new Error(typeof data?.message === "string" && data.message ? data.message : "هذا رقم الجوال مستخدم بالفعل");
+      }
+      if (res.status === 409 && data?.code === "EMAIL_ALREADY_IN_USE") {
+        throw new Error(typeof data?.message === "string" && data.message ? data.message : "هذا البريد الإلكتروني مستخدم بالفعل");
       }
       const message = data?.message || "فشل تسجيل الدخول";
       throw new Error(message);
@@ -111,8 +120,16 @@ export default function Login() {
 
       if (!result.user.emailVerified) {
         await sendEmailVerification(result.user);
-        await signOut(auth);
-        setServerError("تم إرسال رسالة تفعيل إلى بريدك — فعّل البريد ثم سجّل الدخول.");
+        try {
+          sessionStorage.setItem(
+            "pending_verification_profile",
+            JSON.stringify({
+              name: formData.name,
+            })
+          );
+        } catch {}
+
+        setLocation(`/verify?next=${encodeURIComponent("/dashboard")}`);
         return;
       }
 
@@ -121,6 +138,11 @@ export default function Login() {
       setLocation("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
+      const err = error as any;
+      if (err?.code === "EMAIL_NOT_VERIFIED") {
+        setLocation(`/verify?next=${encodeURIComponent("/dashboard")}`);
+        return;
+      }
       setServerError(error instanceof Error ? error.message : "فشل تسجيل الدخول");
     } finally {
       setIsLoading(false);

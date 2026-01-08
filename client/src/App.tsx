@@ -8,6 +8,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import Verify from "./pages/Verify";
 import Dashboard from "./pages/Dashboard";
 import Cases from "./pages/Cases";
 import CaseDetails from "./pages/CaseDetails";
@@ -62,6 +63,7 @@ const withSiteLayout = (Component: React.ComponentType) => {
 const HomeWithLayout = withSiteLayout(Home);
 const LoginWithLayout = withSiteLayout(Login);
 const SignUpWithLayout = withSiteLayout(SignUp);
+const VerifyWithLayout = withSiteLayout(Verify);
 const PublicServicesWithLayout = withSiteLayout(PublicServices);
 const AboutWithLayout = withSiteLayout(About);
 const PricingWithLayout = withSiteLayout(Pricing);
@@ -78,6 +80,7 @@ function Router() {
       <Route path={"/"} component={HomeWithLayout} />
       <Route path={"/login"} component={LoginWithLayout} />
       <Route path={"/signup"} component={SignUpWithLayout} />
+      <Route path={"/verify"} component={VerifyWithLayout} />
       <Route path={"/services"} component={PublicServicesWithLayout} />
       <Route path={"/about"} component={AboutWithLayout} />
       <Route path={"/pricing"} component={PricingWithLayout} />

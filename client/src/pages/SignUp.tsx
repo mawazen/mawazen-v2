@@ -16,7 +16,6 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  signOut,
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
@@ -147,51 +146,23 @@ export default function SignUp() {
       await updateProfile(result.user, { displayName: formData.name });
 
       await sendEmailVerification(result.user);
-
-      const idToken = await result.user.getIdToken();
-
-      const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
-      const url = apiBase ? `${apiBase}/api/auth/firebase` : "/api/auth/firebase";
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idToken,
-          profile: {
-            name: formData.name,
-            phone: normalizePhone(formData.phone),
-            organizationName: formData.lawFirm,
-          },
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.success) {
-        if (res.status === 403 && data?.code === "EMAIL_NOT_VERIFIED") {
-          await signOut(auth);
-          setServerError("تم إنشاء الحساب. تم إرسال رسالة تفعيل إلى بريدك — فعّل البريد ثم سجّل الدخول.");
-          return;
-        }
-
-        const message = data?.message || "فشل إنشاء الحساب";
-        throw new Error(message);
-      }
-
-      const token = data?.data?.token;
-      if (typeof token !== "string" || !token) {
-        throw new Error("فشل إنشاء الحساب");
-      }
-
-      localStorage.setItem("auth_token", token);
-
       const redirectTarget =
         signupMode === "pay"
           ? `/payments?plan=${encodeURIComponent(formData.accountType)}`
           : "/dashboard";
-      setLocation(redirectTarget);
+
+      try {
+        sessionStorage.setItem(
+          "pending_verification_profile",
+          JSON.stringify({
+            name: formData.name,
+            phone: normalizePhone(formData.phone),
+            organizationName: formData.lawFirm,
+          })
+        );
+      } catch {}
+
+      setLocation(`/verify?next=${encodeURIComponent(redirectTarget)}`);
     } catch (error) {
       console.error("Sign up error:", error);
       setServerError(error instanceof Error ? error.message : "فشل إنشاء الحساب");
@@ -229,7 +200,7 @@ export default function SignUp() {
           idToken,
           profile: {
             name: formData.name,
-            phone: formData.phone,
+            phone: normalizePhone(formData.phone),
             organizationName: formData.lawFirm,
           },
         }),
