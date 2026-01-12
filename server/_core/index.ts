@@ -78,7 +78,24 @@ async function startServer() {
 
   app.get("/api/public/firebase-config", (req, res) => {
     try {
-      res.json(firebaseWebConfig);
+      const forwardedHostHeader = req.headers["x-forwarded-host"];
+      const forwardedHost = Array.isArray(forwardedHostHeader)
+        ? forwardedHostHeader[0]
+        : forwardedHostHeader;
+
+      const host =
+        typeof forwardedHost === "string" && forwardedHost.trim()
+          ? forwardedHost.trim().split(",")[0]!.trim().toLowerCase()
+          : typeof req.hostname === "string"
+            ? req.hostname.toLowerCase()
+            : "";
+      const shouldUseCustomAuthDomain =
+        host === "mawazenco.com" || host === "www.mawazenco.com" || host.endsWith(".mawazenco.com");
+
+      res.json({
+        ...firebaseWebConfig,
+        authDomain: shouldUseCustomAuthDomain ? "mawazenco.com" : firebaseWebConfig.authDomain,
+      });
     } catch (err) {
       res.status(500).json({ success: false, message: "Failed to load Firebase config" });
     }

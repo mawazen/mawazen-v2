@@ -5,7 +5,7 @@
 [build.environment]
   NODE_VERSION = "20.19.0"
   PNPM_VERSION = "10.4.1"
-  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyBruN5zEgWK9I1YdDhJ-fHtrDl4iMTPTFg"
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyDZkfzWCQSg4XFbwCQv29HvDI4vIxBw7lA"
   VITE_API_BASE_URL = ""
   VITE_BACKEND_ORIGIN = ""
   VITE_OAUTH_PORTAL_URL = ""
@@ -32,6 +32,12 @@
 [[redirects]]
   from = "/api/*"
   to = "https://mawazen-production.up.railway.app/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/__/auth/*"
+  to = "https://mawzenco.firebaseapp.com/__/auth/:splat"
   status = 200
   force = true
 
