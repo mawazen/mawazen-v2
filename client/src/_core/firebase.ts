@@ -3,17 +3,9 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 // Direct Firebase configuration
-const resolvedAuthDomain =
-  typeof window !== "undefined" &&
-  (window.location.hostname === "mawazenco.com" ||
-    window.location.hostname === "www.mawazenco.com" ||
-    window.location.hostname.endsWith(".mawazenco.com"))
-    ? "mawazenco.com"
-    : "mawzenco.firebaseapp.com";
-
 const firebaseConfig = {
   apiKey: "AIzaSyDZkfzWCQSg4XFbwCQv29HvDI4vIxBw7lA",
-  authDomain: resolvedAuthDomain,
+  authDomain: "mawzenco.firebaseapp.com",
   projectId: "mawzenco",
   storageBucket: "mawzenco.firebasestorage.app",
   messagingSenderId: "888669754968",
