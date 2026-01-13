@@ -261,6 +261,7 @@ function isAllowedWebFallbackHost(hostname: string): boolean {
   const h = hostname.toLowerCase();
   if (h === "laws.boe.gov.sa") return true;
   if (h.endsWith(".boe.gov.sa")) return true;
+  if (h === "mohr.gov.sa" || h.endsWith(".mohr.gov.sa")) return true;
   if (h === "almrj3.com" || h.endsWith(".almrj3.com")) return true;
   if (h === "elmokhtarlaw.com" || h.endsWith(".elmokhtarlaw.com")) return true;
   if (h === "saudi-lawyers.net" || h.endsWith(".saudi-lawyers.net")) return true;
@@ -382,6 +383,7 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
 
   const queries = [
     `site:laws.boe.gov.sa ${baseNeedle} نص`,
+    ...(laborLawQuery ? [`site:mohr.gov.sa ${baseNeedle} نظام العمل نص`] : []),
     `${q} ${baseNeedle}`,
   ];
 
@@ -440,7 +442,7 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
           const link = typeof it?.link === "string" ? it.link.trim() : "";
           const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
           if (!link || !snippet) continue;
-          if (laborLawQuery && !link.includes(BOE_LABOR_LAW_ID)) continue;
+          if (laborLawQuery && !isLaborLawOfficialUrl(link)) continue;
           if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: n, boeLabel })) continue;
           return {
             text: snippet.slice(0, 4000),
@@ -467,7 +469,7 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
         }
         if (!u.startsWith("http://") && !u.startsWith("https://")) continue;
         if (!isAllowedWebFallbackHost(host)) continue;
-        if (laborLawQuery && !u.includes(BOE_LABOR_LAW_ID)) continue;
+        if (laborLawQuery && !isLaborLawOfficialUrl(u)) continue;
 
         const pageRes = await withTimeout(
           httpGetText(u, {
@@ -547,7 +549,7 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
         const link = typeof it?.link === "string" ? it.link.trim() : "";
         const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
         if (!link || !snippet) continue;
-        if (laborLawQuery && !link.includes(BOE_LABOR_LAW_ID)) continue;
+        if (laborLawQuery && !isLaborLawOfficialUrl(link)) continue;
         if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: params.articleNumber, boeLabel })) continue;
         return {
           text: snippet.slice(0, 4000),
@@ -790,6 +792,20 @@ function scoreTextByTerms(text: string, terms: string[]) {
 
 const BOE_LABOR_LAW_URL = "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1";
 const BOE_LABOR_LAW_ID = "08381293-6388-48e2-8ad2-a9a700f2aa94";
+
+function isLaborLawOfficialUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const h = u.hostname.toLowerCase();
+    if (h === "laws.boe.gov.sa" || h.endsWith(".boe.gov.sa")) {
+      return url.includes(BOE_LABOR_LAW_ID);
+    }
+    if (h === "mohr.gov.sa" || h.endsWith(".mohr.gov.sa")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 function getStaticBoeLaborLawSnippet(articleNumber: number): RetrievedLegalSnippet | null {
   if (articleNumber === 1) {
