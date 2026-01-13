@@ -262,10 +262,10 @@ function looksLikeRequestedArticleText(params: { text: string; articleNumber: nu
   const boeLabel = params.boeLabel;
   if (boeLabel) {
     const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
-    const re = new RegExp(`المادة\\s+${labelPattern}`);
+    const re = new RegExp(`المادة\\s*(?:[\\(\\[]\\s*)?${labelPattern}(?:\\s*[\\)\\]])?`);
     if (re.test(text)) return true;
   }
-  const reNum = new RegExp(`المادة\\s*${n}(?:\\s*[:：])?`);
+  const reNum = new RegExp(`المادة\\s*(?:[\\(\\[]\\s*)?${n}(?:\\s*[\\)\\]])?(?:\\s*[:：])?`);
   return reNum.test(text);
 }
 
@@ -423,9 +423,9 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
         const patterns: RegExp[] = [];
         if (boeLabel) {
           const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
-          patterns.push(new RegExp(`المادة\\s+${labelPattern}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+          patterns.push(new RegExp(`المادة\\s*(?:[\(\[]\\s*)?${labelPattern}(?:\\s*[\)\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\(\[]\\s*)?|$)`));
         }
-        patterns.push(new RegExp(`المادة\\s*${n}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+        patterns.push(new RegExp(`المادة\\s*(?:[\(\[]\\s*)?${n}(?:\\s*[\)\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\(\[]\\s*)?|$)`));
 
         for (const re of patterns) {
           const m = plain.match(re);
@@ -514,9 +514,9 @@ async function googleSearchArticleSnippet(params: { query: string; articleNumber
       const patterns: RegExp[] = [];
       if (boeLabel) {
         const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
-        patterns.push(new RegExp(`المادة\\s+${labelPattern}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+        patterns.push(new RegExp(`المادة\\s*(?:[\(\[]\\s*)?${labelPattern}(?:\\s*[\)\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\(\[]\\s*)?|$)`));
       }
-      patterns.push(new RegExp(`المادة\\s*${n}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+      patterns.push(new RegExp(`المادة\\s*(?:[\(\[]\\s*)?${n}(?:\\s*[\)\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\(\[]\\s*)?|$)`));
 
       for (const re of patterns) {
         const m = plain.match(re);
@@ -598,9 +598,17 @@ async function webSearchArticleSnippet(params: { query: string; articleNumber: n
       const patterns: RegExp[] = [];
       if (boeLabel) {
         const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
-        patterns.push(new RegExp(`المادة\\s+${labelPattern}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+        patterns.push(
+          new RegExp(
+            `المادة\\s*(?:[\\(\\[]\\s*)?${labelPattern}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
+          )
+        );
       }
-      patterns.push(new RegExp(`المادة\\s*${n}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+      patterns.push(
+        new RegExp(
+          `المادة\\s*(?:[\\(\\[]\\s*)?${n}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
+        )
+      );
 
       for (const re of patterns) {
         const m = plain.match(re);
@@ -723,8 +731,21 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
       .trim();
 
     const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
-    const re = new RegExp(`المادة\\s+${labelPattern}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`);
-    const match = plain.match(re);
+    const patterns: RegExp[] = [
+      new RegExp(
+        `المادة\\s*(?:[\\(\\[]\\s*)?${labelPattern}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
+      ),
+      new RegExp(
+        `المادة\\s*(?:[\\(\\[]\\s*)?${params.articleNumber}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
+      ),
+    ];
+
+    let match: RegExpMatchArray | null = null;
+    for (const re of patterns) {
+      match = plain.match(re);
+      if (match?.[0]) break;
+    }
+
     if (!match?.[0]) return getStaticBoeLaborLawSnippet(params.articleNumber);
     const snippetText = match[0].trim().slice(0, 1600);
     if (snippetText.length < 40) return getStaticBoeLaborLawSnippet(params.articleNumber);
