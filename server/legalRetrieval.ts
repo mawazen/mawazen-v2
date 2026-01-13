@@ -255,6 +255,20 @@ function isAllowedWebFallbackHost(hostname: string): boolean {
   return false;
 }
 
+function looksLikeRequestedArticleText(params: { text: string; articleNumber: number; boeLabel: string | null }) {
+  const text = String(params.text ?? "");
+  if (!text.trim()) return false;
+  const n = params.articleNumber;
+  const boeLabel = params.boeLabel;
+  if (boeLabel) {
+    const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
+    const re = new RegExp(`المادة\\s+${labelPattern}`);
+    if (re.test(text)) return true;
+  }
+  const reNum = new RegExp(`المادة\\s*${n}(?:\\s*[:：])?`);
+  return reNum.test(text);
+}
+
 function extractDuckDuckGoResultUrls(html: string): string[] {
   const urls: string[] = [];
   const seen = new Set<string>();
@@ -736,6 +750,10 @@ export async function retrieveLegalSnippets(params: {
   const topK = params.topK ?? 6;
   const scanLimit = params.scanLimit ?? 400;
 
+  const requestedArticleNumber = extractArticleNumber(params.query);
+  const wantsArticleText = requestedArticleNumber !== null && isArticleTextQuery(params.query);
+  const requestedBoeLabel = requestedArticleNumber !== null ? articleLabelBoeStyle(requestedArticleNumber) : null;
+
   const terms = buildKeywordTerms(params.query);
 
   if (ENV.openaiApiKey && ENV.openaiApiKey.trim().length > 0) {
@@ -762,7 +780,17 @@ export async function retrieveLegalSnippets(params: {
           .sort((a, b) => b.score - a.score)
           .slice(0, topK);
 
-        if (scored.length > 0 && scored[0]!.score >= 0.2) {
+        if (
+          scored.length > 0 &&
+          scored[0]!.score >= 0.2 &&
+          (!wantsArticleText ||
+            (requestedArticleNumber !== null &&
+              looksLikeRequestedArticleText({
+                text: scored[0]!.text,
+                articleNumber: requestedArticleNumber,
+                boeLabel: requestedBoeLabel,
+              })))
+        ) {
           return scored;
         }
       }
@@ -788,11 +816,22 @@ export async function retrieveLegalSnippets(params: {
       .filter((x) => x.text.trim().length > 0 && x.url.trim().length > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, topK);
-    if (scored.length > 0) return scored;
+    if (
+      scored.length > 0 &&
+      (!wantsArticleText ||
+        (requestedArticleNumber !== null &&
+          looksLikeRequestedArticleText({
+            text: scored[0]!.text,
+            articleNumber: requestedArticleNumber,
+            boeLabel: requestedBoeLabel,
+          })))
+    ) {
+      return scored;
+    }
   } catch {
   }
 
-  const n = extractArticleNumber(params.query);
+  const n = requestedArticleNumber;
   if (n !== null && (/نظام\s*العمل/.test(params.query) || /مكتب\s*العمل/.test(params.query))) {
     const live = await fetchBoeLaborArticleSnippet({ articleNumber: n });
     if (live) return [live];
