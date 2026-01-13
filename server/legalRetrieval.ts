@@ -872,3 +872,23 @@ export async function retrieveLegalSnippets(params: {
 
   return [];
 }
+
+export function formatSnippetsForPrompt(snippets: RetrievedLegalSnippet[]): string {
+  if (snippets.length === 0) {
+    return "لا توجد مقتطفات متاحة حالياً من قاعدة المعرفة الرسمية.";
+  }
+
+  const lines: string[] = [];
+  lines.push(
+    "مقتطفات من مصادر رسمية (قاعدة صارمة: عند ذكر مادة/نص/تاريخ/تعريف نظامي يجب أن يكون موجوداً حرفياً داخل مقتطف واحد على الأقل. عند الاستشهاد استخدم رقم المقتطف بين أقواس مربعة مثل [1] ثم ضع الروابط في قسم (المصادر).):"
+  );
+
+  snippets.forEach((s, idx) => {
+    const title = s.title ? ` | ${s.title}` : "";
+    lines.push(`\n[${idx + 1}] المصدر: ${s.source}${title}`);
+    lines.push(`الرابط: ${s.url}`);
+    lines.push(`المقتطف:\n${s.text}`);
+  });
+
+  return lines.join("\n");
+}
