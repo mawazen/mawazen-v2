@@ -775,6 +775,15 @@ export async function retrieveLegalSnippets(params: {
   const wantsArticleText = requestedArticleNumber !== null && isArticleTextQuery(params.query);
   const requestedBoeLabel = requestedArticleNumber !== null ? articleLabelBoeStyle(requestedArticleNumber) : null;
 
+  // =================================================================
+  // HOTFIX: Force Serper search for article text queries to bypass
+  // the unreliable internal DB search for this critical feature.
+  // =================================================================
+  if (wantsArticleText && requestedArticleNumber) {
+    const serperSnippet = await serperSearchArticleSnippet({ query: params.query, articleNumber: requestedArticleNumber });
+    if (serperSnippet) return [serperSnippet];
+  }
+
   const terms = buildKeywordTerms(params.query);
 
   if (ENV.openaiApiKey && ENV.openaiApiKey.trim().length > 0) {
