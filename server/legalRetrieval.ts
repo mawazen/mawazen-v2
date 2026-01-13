@@ -19,6 +19,18 @@ type SimpleHttpResponse = {
   text: () => Promise<string>;
 };
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let t: any;
+  const timeout = new Promise<T>((_, reject) => {
+    t = setTimeout(() => reject(new Error(`timeout:${label}:${ms}`)), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (t) clearTimeout(t);
+  }
+}
+
 function isInsecureTlsAllowedForUrl(url: string): boolean {
   try {
     const host = new URL(url).hostname.toLowerCase();
@@ -357,7 +369,10 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
   const q = String(params.query ?? "").trim();
   if (!q) return null;
   if (!isArticleTextQuery(q)) return null;
-  if (!ENV.serperApiKey || !ENV.serperApiKey.trim()) return null;
+  if (!ENV.serperApiKey || !ENV.serperApiKey.trim()) {
+    console.warn("[LegalRetrieval] SERPER_API_KEY missing");
+    return null;
+  }
 
   const n = params.articleNumber;
   const boeLabel = articleLabelBoeStyle(n);
@@ -370,22 +385,75 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
 
   for (const expandedQuery of queries) {
     try {
-      const res = await axios.post(
-        "https://google.serper.dev/search",
-        { q: expandedQuery },
-        {
-          headers: {
-            "X-API-KEY": ENV.serperApiKey,
-            "Content-Type": "application/json",
-          },
-          timeout: 12000,
-          maxBodyLength: Infinity,
-          validateStatus: () => true,
-        }
+      const res = await withTimeout(
+        axios.post(
+          "https://google.serper.dev/search",
+          { q: expandedQuery },
+          {
+            headers: {
+              "X-API-KEY": ENV.serperApiKey,
+              "Content-Type": "application/json",
+            },
+            timeout: 12000,
+            maxBodyLength: Infinity,
+            validateStatus: () => true,
+          }
+        ),
+        15000,
+        "serper.search"
       );
 
       if (!(res.status >= 200 && res.status < 300)) continue;
+
+      try {
+        const data = res.data as any;
+        const answerBoxText =
+          typeof data?.answerBox?.answer === "string"
+            ? data.answerBox.answer
+            : typeof data?.answerBox?.snippet === "string"
+              ? data.answerBox.snippet
+              : typeof data?.answerBox?.snippetHighlighted === "string"
+                ? data.answerBox.snippetHighlighted
+                : "";
+        if (
+          answerBoxText &&
+          looksLikeRequestedArticleText({
+            text: answerBoxText,
+            articleNumber: n,
+            boeLabel,
+          })
+        ) {
+          return {
+            text: answerBoxText.trim().slice(0, 1600),
+            score: 0.72,
+            source: "SERPER",
+            url: "https://google.com",
+            title: null,
+            meta: { law: "unknown", article: n, provider: "serper_answerbox" },
+          };
+        }
+
+        const organic = Array.isArray(data?.organic) ? data.organic : [];
+        for (const it of organic) {
+          const link = typeof it?.link === "string" ? it.link.trim() : "";
+          const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
+          if (!link || !snippet) continue;
+          if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: n, boeLabel })) continue;
+          return {
+            text: snippet.slice(0, 1600),
+            score: 0.55,
+            source: toHostLabel(link),
+            url: link,
+            title: null,
+            meta: { law: "unknown", article: n, provider: "serper_organic_snippet" },
+          };
+        }
+      } catch {
+      }
+
       const candidates = extractSerperResultUrls(res.data);
+
+      if (candidates.length === 0) continue;
 
       for (const u of candidates) {
         let host = "";
@@ -394,12 +462,17 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
         } catch {
           continue;
         }
+        if (!u.startsWith("http://") && !u.startsWith("https://")) continue;
         if (!isAllowedWebFallbackHost(host)) continue;
 
-        const pageRes = await httpGetText(u, {
+        const pageRes = await withTimeout(
+          httpGetText(u, {
           accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "user-agent": ENV.legalCrawlerUserAgent,
-        });
+        }),
+          15000,
+          "serper.page"
+        );
         if (!pageRes.ok) continue;
         const pageHtml = await pageRes.text();
         const plain = pageHtml
@@ -444,6 +517,44 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
       }
     } catch {
     }
+  }
+
+  try {
+    const res = await withTimeout(
+      axios.post(
+        "https://google.serper.dev/search",
+        { q },
+        {
+          headers: {
+            "X-API-KEY": ENV.serperApiKey,
+            "Content-Type": "application/json",
+          },
+          timeout: 12000,
+          maxBodyLength: Infinity,
+          validateStatus: () => true,
+        }
+      ),
+      15000,
+      "serper.search.fallback"
+    );
+    if (res.status >= 200 && res.status < 300) {
+      const organic = Array.isArray((res.data as any)?.organic) ? (res.data as any).organic : [];
+      for (const it of organic) {
+        const link = typeof it?.link === "string" ? it.link.trim() : "";
+        const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
+        if (!link || !snippet) continue;
+        if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: params.articleNumber, boeLabel })) continue;
+        return {
+          text: snippet.slice(0, 1600),
+          score: 0.5,
+          source: toHostLabel(link),
+          url: link,
+          title: null,
+          meta: { law: "unknown", article: n, provider: "serper_snippet" },
+        };
+      }
+    }
+  } catch {
   }
 
   return null;
@@ -775,12 +886,31 @@ export async function retrieveLegalSnippets(params: {
   const wantsArticleText = requestedArticleNumber !== null && isArticleTextQuery(params.query);
   const requestedBoeLabel = requestedArticleNumber !== null ? articleLabelBoeStyle(requestedArticleNumber) : null;
 
+  if (wantsArticleText && requestedArticleNumber) {
+    console.log("[LegalRetrieval] article_query", {
+      article: requestedArticleNumber,
+      hasSerperKey: !!ENV.serperApiKey,
+      query: params.query,
+    });
+  }
+
+  if (wantsArticleText && requestedArticleNumber && /نظام\s*العمل|مكتب\s*العمل/.test(params.query)) {
+    const boeSnippet = await withTimeout(fetchBoeLaborArticleSnippet({ articleNumber: requestedArticleNumber }), 18000, "boe.labor");
+    if (boeSnippet && looksLikeRequestedArticleText({ text: boeSnippet.text, articleNumber: requestedArticleNumber, boeLabel: requestedBoeLabel })) {
+      return [boeSnippet];
+    }
+  }
+
   // =================================================================
   // HOTFIX: Force Serper search for article text queries to bypass
   // the unreliable internal DB search for this critical feature.
   // =================================================================
   if (wantsArticleText && requestedArticleNumber) {
-    const serperSnippet = await serperSearchArticleSnippet({ query: params.query, articleNumber: requestedArticleNumber });
+    const serperSnippet = await withTimeout(
+      serperSearchArticleSnippet({ query: params.query, articleNumber: requestedArticleNumber }),
+      20000,
+      "serper.orchestrator"
+    );
     if (serperSnippet) return [serperSnippet];
   }
 
