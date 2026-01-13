@@ -374,6 +374,8 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
     return null;
   }
 
+  const laborLawQuery = /نظام\s*العمل|مكتب\s*العمل/.test(q);
+
   const n = params.articleNumber;
   const boeLabel = articleLabelBoeStyle(n);
   const baseNeedle = boeLabel ? `المادة ${boeLabel}` : `المادة ${n}`;
@@ -438,9 +440,10 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
           const link = typeof it?.link === "string" ? it.link.trim() : "";
           const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
           if (!link || !snippet) continue;
+          if (laborLawQuery && !link.includes(BOE_LABOR_LAW_ID)) continue;
           if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: n, boeLabel })) continue;
           return {
-            text: snippet.slice(0, 1600),
+            text: snippet.slice(0, 4000),
             score: 0.55,
             source: toHostLabel(link),
             url: link,
@@ -464,6 +467,7 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
         }
         if (!u.startsWith("http://") && !u.startsWith("https://")) continue;
         if (!isAllowedWebFallbackHost(host)) continue;
+        if (laborLawQuery && !u.includes(BOE_LABOR_LAW_ID)) continue;
 
         const pageRes = await withTimeout(
           httpGetText(u, {
@@ -503,7 +507,7 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
         for (const re of patterns) {
           const m = plain.match(re);
           if (!m?.[0]) continue;
-          const snippetText = String(m[0]).trim().slice(0, 1600);
+          const snippetText = String(m[0]).trim().slice(0, 4000);
           if (snippetText.length < 40) continue;
           return {
             text: snippetText,
@@ -543,9 +547,10 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
         const link = typeof it?.link === "string" ? it.link.trim() : "";
         const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
         if (!link || !snippet) continue;
+        if (laborLawQuery && !link.includes(BOE_LABOR_LAW_ID)) continue;
         if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: params.articleNumber, boeLabel })) continue;
         return {
-          text: snippet.slice(0, 1600),
+          text: snippet.slice(0, 4000),
           score: 0.5,
           source: toHostLabel(link),
           url: link,
@@ -655,6 +660,8 @@ async function webSearchArticleSnippet(params: { query: string; articleNumber: n
   if (!q) return null;
   if (!isArticleTextQuery(q)) return null;
 
+  const laborLawQuery = /نظام\s*العمل|مكتب\s*العمل/.test(q);
+
   const n = params.articleNumber;
   const boeLabel = articleLabelBoeStyle(n);
   const expandedQuery =
@@ -681,6 +688,7 @@ async function webSearchArticleSnippet(params: { query: string; articleNumber: n
         continue;
       }
       if (!isAllowedWebFallbackHost(host)) continue;
+      if (laborLawQuery && !u.includes(BOE_LABOR_LAW_ID)) continue;
 
       const pageRes = await httpGetText(u, {
         accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -724,7 +732,7 @@ async function webSearchArticleSnippet(params: { query: string; articleNumber: n
       for (const re of patterns) {
         const m = plain.match(re);
         if (!m?.[0]) continue;
-        const snippetText = String(m[0]).trim().slice(0, 1600);
+        const snippetText = String(m[0]).trim().slice(0, 4000);
         if (snippetText.length < 40) continue;
         return {
           text: snippetText,
@@ -781,6 +789,7 @@ function scoreTextByTerms(text: string, terms: string[]) {
 }
 
 const BOE_LABOR_LAW_URL = "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1";
+const BOE_LABOR_LAW_ID = "08381293-6388-48e2-8ad2-a9a700f2aa94";
 
 function getStaticBoeLaborLawSnippet(articleNumber: number): RetrievedLegalSnippet | null {
   if (articleNumber === 1) {
@@ -851,14 +860,18 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
       ),
     ];
 
-    let match: RegExpMatchArray | null = null;
-    for (const re of patterns) {
-      match = plain.match(re);
-      if (match?.[0]) break;
+    let bestText: string | null = null;
+    for (const re0 of patterns) {
+      const re = new RegExp(re0.source, re0.flags.includes("g") ? re0.flags : `${re0.flags}g`);
+      for (const m of plain.matchAll(re)) {
+        const t = String(m?.[0] ?? "").trim();
+        if (t.length < 40) continue;
+        if (!bestText || t.length > bestText.length) bestText = t;
+      }
     }
 
-    if (!match?.[0]) return getStaticBoeLaborLawSnippet(params.articleNumber);
-    const snippetText = match[0].trim().slice(0, 1600);
+    if (!bestText) return getStaticBoeLaborLawSnippet(params.articleNumber);
+    const snippetText = bestText.slice(0, 4000);
     if (snippetText.length < 40) return getStaticBoeLaborLawSnippet(params.articleNumber);
 
     return {
