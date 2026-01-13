@@ -852,46 +852,23 @@ export async function retrieveLegalSnippets(params: {
   } catch {
   }
 
-  const n = requestedArticleNumber;
-  if (n !== null && (/نظام\s*العمل/.test(params.query) || /مكتب\s*العمل/.test(params.query))) {
-    const live = await fetchBoeLaborArticleSnippet({ articleNumber: n });
-    if (live) return [live];
-  }
+  if (wantsArticleText && requestedArticleNumber) {
+    const n = requestedArticleNumber;
 
-  if (n !== null && ENV.googleApiKey.trim().length > 0 && ENV.googleCseId.trim().length > 0) {
-    const web = await googleSearchArticleSnippet({ query: params.query, articleNumber: n });
-    if (web) return [web];
-  }
+    const serperSnippet = await serperSearchArticleSnippet({ query: params.query, articleNumber: n });
+    if (serperSnippet) return [serperSnippet];
 
-  if (n !== null && ENV.serperApiKey.trim().length > 0) {
-    const web = await serperSearchArticleSnippet({ query: params.query, articleNumber: n });
-    if (web) return [web];
-  }
+    if (/نظام\s*العمل|مكتب\s*العمل/.test(params.query)) {
+      const boeSnippet = await fetchBoeLaborArticleSnippet({ articleNumber: n });
+      if (boeSnippet) return [boeSnippet];
+    }
 
-  if (n !== null) {
-    const web = await webSearchArticleSnippet({ query: params.query, articleNumber: n });
-    if (web) return [web];
+    const googleSnippet = await googleSearchArticleSnippet({ query: params.query, articleNumber: n });
+    if (googleSnippet) return [googleSnippet];
+
+    const duckduckgoSnippet = await webSearchArticleSnippet({ query: params.query, articleNumber: n });
+    if (duckduckgoSnippet) return [duckduckgoSnippet];
   }
 
   return [];
-}
-
-export function formatSnippetsForPrompt(snippets: RetrievedLegalSnippet[]) {
-  if (snippets.length === 0) {
-    return "لا توجد مقتطفات متاحة حالياً من قاعدة المعرفة الرسمية.";
-  }
-
-  const lines: string[] = [];
-  lines.push(
-    "مقتطفات من مصادر رسمية (قاعدة صارمة: عند ذكر مادة/نص/تاريخ/تعريف نظامي يجب أن يكون موجوداً حرفياً داخل مقتطف واحد على الأقل. عند الاستشهاد استخدم رقم المقتطف بين أقواس مربعة مثل [1] ثم ضع الروابط في قسم (المصادر).):"
-  );
-
-  snippets.forEach((s, idx) => {
-    const title = s.title ? ` | ${s.title}` : "";
-    lines.push(`\n[${idx + 1}] المصدر: ${s.source}${title}`);
-    lines.push(`الرابط: ${s.url}`);
-    lines.push(`المقتطف:\n${s.text}`);
-  });
-
-  return lines.join("\n");
 }
