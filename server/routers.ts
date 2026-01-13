@@ -2145,8 +2145,9 @@ export const appRouter = router({
           });
         }
 
+        let snippets: Awaited<ReturnType<typeof retrieveLegalSnippets>> = [];
         try {
-          const snippets = await retrieveLegalSnippets({ query: input.message });
+          snippets = await retrieveLegalSnippets({ query: input.message });
           if (ENV.legalRetrievalDebug) {
             console.log("[AI] Retrieval debug", {
               snippetsLength: Array.isArray(snippets) ? snippets.length : 0,
