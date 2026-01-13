@@ -137,6 +137,15 @@ function normalizeDigits(input: string) {
   });
 }
 
+function isArticleTextQuery(query: string): boolean {
+  const q = normalizeDigits(String(query ?? ""))
+    .replace(/[\u200f\u200e]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return /(نص\s*المادة|تنص\s*المادة|(?:ال)?ماد(?:ة|ه)\s*\d{1,4}|لماد(?:ة|ه)\s*\d{1,4})/.test(q);
+}
+
 function extractArticleNumber(query: string): number | null {
   const q = normalizeDigits(String(query ?? ""));
   const m = q.match(/(?:المادة|ماده|مادة|لمادة)\s*(?:رقم\s*)?[:(\[]?\s*([0-9]{1,4})/);
@@ -313,10 +322,123 @@ function extractGoogleResultUrls(jsonText: string): string[] {
   }
 }
 
+function extractSerperResultUrls(payload: unknown): string[] {
+  const urls: string[] = [];
+  try {
+    const data = payload as any;
+    const organic = Array.isArray(data?.organic) ? data.organic : [];
+    for (const it of organic) {
+      const link = typeof it?.link === "string" ? it.link.trim() : "";
+      if (!link) continue;
+      urls.push(link);
+      if (urls.length >= 8) break;
+    }
+  } catch {
+    return [];
+  }
+  return urls;
+}
+
+async function serperSearchArticleSnippet(params: { query: string; articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
+  const q = String(params.query ?? "").trim();
+  if (!q) return null;
+  if (!isArticleTextQuery(q)) return null;
+  if (!ENV.serperApiKey || !ENV.serperApiKey.trim()) return null;
+
+  const n = params.articleNumber;
+  const boeLabel = articleLabelBoeStyle(n);
+  const baseNeedle = boeLabel ? `المادة ${boeLabel}` : `المادة ${n}`;
+
+  const queries = [
+    `site:laws.boe.gov.sa ${baseNeedle} نص`,
+    `${q} ${baseNeedle}`,
+  ];
+
+  for (const expandedQuery of queries) {
+    try {
+      const res = await axios.post(
+        "https://google.serper.dev/search",
+        { q: expandedQuery },
+        {
+          headers: {
+            "X-API-KEY": ENV.serperApiKey,
+            "Content-Type": "application/json",
+          },
+          timeout: 12000,
+          maxBodyLength: Infinity,
+          validateStatus: () => true,
+        }
+      );
+
+      if (!(res.status >= 200 && res.status < 300)) continue;
+      const candidates = extractSerperResultUrls(res.data);
+
+      for (const u of candidates) {
+        let host = "";
+        try {
+          host = new URL(u).hostname;
+        } catch {
+          continue;
+        }
+        if (!isAllowedWebFallbackHost(host)) continue;
+
+        const pageRes = await httpGetText(u, {
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "user-agent": ENV.legalCrawlerUserAgent,
+        });
+        if (!pageRes.ok) continue;
+        const pageHtml = await pageRes.text();
+        const plain = pageHtml
+          .replace(/<script[\s\S]*?<\/script>/gi, " ")
+          .replace(/<style[\s\S]*?<\/style>/gi, " ")
+          .replace(/<\s*br\s*\/?\s*>/gi, "\n")
+          .replace(/<\s*\/?p\s*>/gi, "\n")
+          .replace(/<\s*\/?div\s*>/gi, "\n")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/\s+\n/g, "\n")
+          .replace(/\n\s+/g, "\n")
+          .replace(/\n{3,}/g, "\n\n")
+          .replace(/[\t\r]+/g, " ")
+          .replace(/ {2,}/g, " ")
+          .trim();
+
+        const patterns: RegExp[] = [];
+        if (boeLabel) {
+          const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
+          patterns.push(new RegExp(`المادة\\s+${labelPattern}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+        }
+        patterns.push(new RegExp(`المادة\\s*${n}\\s*:?([\\s\\S]*?)(?=\\n\\s*المادة\\s+|$)`));
+
+        for (const re of patterns) {
+          const m = plain.match(re);
+          if (!m?.[0]) continue;
+          const snippetText = String(m[0]).trim().slice(0, 1600);
+          if (snippetText.length < 40) continue;
+          return {
+            text: snippetText,
+            score: 0.66,
+            source: toHostLabel(u),
+            url: u,
+            title: null,
+            meta: { law: "unknown", article: n, provider: "serper" },
+          };
+        }
+      }
+    } catch {
+    }
+  }
+
+  return null;
+}
+
 async function googleSearchArticleSnippet(params: { query: string; articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
   const q = String(params.query ?? "").trim();
   if (!q) return null;
-  if (!/(نص\s*المادة|تنص\s*المادة|المادة\s*\d+)/.test(q)) return null;
+  if (!isArticleTextQuery(q)) return null;
   if (!ENV.googleApiKey || !ENV.googleCseId) return null;
 
   const n = params.articleNumber;
@@ -406,7 +528,7 @@ async function googleSearchArticleSnippet(params: { query: string; articleNumber
 async function webSearchArticleSnippet(params: { query: string; articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
   const q = String(params.query ?? "").trim();
   if (!q) return null;
-  if (!/(نص\s*المادة|تنص\s*المادة|المادة\s*\d+)/.test(q)) return null;
+  if (!isArticleTextQuery(q)) return null;
 
   const n = params.articleNumber;
   const boeLabel = articleLabelBoeStyle(n);
@@ -678,6 +800,11 @@ export async function retrieveLegalSnippets(params: {
 
   if (n !== null && ENV.googleApiKey.trim().length > 0 && ENV.googleCseId.trim().length > 0) {
     const web = await googleSearchArticleSnippet({ query: params.query, articleNumber: n });
+    if (web) return [web];
+  }
+
+  if (n !== null && ENV.serperApiKey.trim().length > 0) {
+    const web = await serperSearchArticleSnippet({ query: params.query, articleNumber: n });
     if (web) return [web];
   }
 

@@ -2170,7 +2170,7 @@ export const appRouter = router({
           .trim();
 
         const wantsVerbatimArticleText =
-          /(نص\s*المادة|تنص\s*المادة|المادة\s*\d+)/.test(normalizedMsg) &&
+          /(نص\s*المادة|تنص\s*المادة|(?:ال)?ماد(?:ة|ه)\s*\d+|لماد(?:ة|ه)\s*\d+)/.test(normalizedMsg) &&
           /\d{1,4}/.test(normalizedMsg) &&
           !/(شرح|فسر|وضّح|وضح|ملخص|تلخيص|تحليل)/.test(normalizedMsg);
 
@@ -2261,6 +2261,34 @@ export const appRouter = router({
         return {
           sessionId,
           message: assistantMessage,
+        };
+      }),
+
+    debugRetrieve: ownerProcedure
+      .input(
+        z.object({
+          query: z.string().min(1),
+          topK: z.number().int().min(1).max(20).optional(),
+          scanLimit: z.number().int().min(50).max(5000).optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        const snippets = await retrieveLegalSnippets({
+          query: input.query,
+          topK: input.topK ?? 8,
+          scanLimit: input.scanLimit ?? 900,
+        });
+
+        return {
+          count: snippets.length,
+          snippets: snippets.map((s) => ({
+            score: s.score,
+            source: s.source,
+            url: s.url,
+            title: s.title,
+            text: s.text,
+            meta: s.meta,
+          })),
         };
       }),
     

@@ -43,7 +43,13 @@ function extractDdgsUrls(html: string): string[] {
 }
 
 async function main() {
-  const query = "نص المادة 1 من نظام العمل";
+  const argv = process.argv.slice(2);
+  const query =
+    (typeof argv[0] === "string" && argv[0].trim() ? argv[0].trim() : "") ||
+    (typeof process.env.LEGAL_QUERY === "string" && process.env.LEGAL_QUERY.trim()
+      ? process.env.LEGAL_QUERY.trim()
+      : "") ||
+    "نص المادة 1 من نظام العمل";
   // Basic runtime diagnostics (no secrets)
   const hasFetch = typeof (globalThis as any).fetch === "function";
   console.log("[smoke] node", process.version);
