@@ -262,6 +262,7 @@ function isAllowedWebFallbackHost(hostname: string): boolean {
   if (h === "laws.boe.gov.sa") return true;
   if (h.endsWith(".boe.gov.sa")) return true;
   if (h === "mohr.gov.sa" || h.endsWith(".mohr.gov.sa")) return true;
+  if (h === "hrsd.gov.sa" || h.endsWith(".hrsd.gov.sa")) return true;
   if (h === "almrj3.com" || h.endsWith(".almrj3.com")) return true;
   if (h === "elmokhtarlaw.com" || h.endsWith(".elmokhtarlaw.com")) return true;
   if (h === "saudi-lawyers.net" || h.endsWith(".saudi-lawyers.net")) return true;
@@ -384,6 +385,7 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
   const queries = [
     `site:laws.boe.gov.sa ${baseNeedle} نص`,
     ...(laborLawQuery ? [`site:mohr.gov.sa ${baseNeedle} نظام العمل نص`] : []),
+    ...(laborLawQuery ? [`site:hrsd.gov.sa ${baseNeedle} نظام العمل نص`] : []),
     `${q} ${baseNeedle}`,
   ];
 
@@ -408,6 +410,25 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
       );
 
       if (!(res.status >= 200 && res.status < 300)) continue;
+
+      if (ENV.legalRetrievalDebug) {
+        try {
+          const data = res.data as any;
+          const organic = Array.isArray(data?.organic) ? data.organic : [];
+          const topLinks = organic
+            .map((it: any) => (typeof it?.link === "string" ? it.link.trim() : ""))
+            .filter(Boolean)
+            .slice(0, 3);
+          console.log("[LegalRetrieval] serper", {
+            q: expandedQuery,
+            status: res.status,
+            organicCount: organic.length,
+            topLinks,
+            hasAnswerBox: !!data?.answerBox,
+          });
+        } catch {
+        }
+      }
 
       try {
         const data = res.data as any;
@@ -801,6 +822,7 @@ function isLaborLawOfficialUrl(url: string): boolean {
       return url.includes(BOE_LABOR_LAW_ID);
     }
     if (h === "mohr.gov.sa" || h.endsWith(".mohr.gov.sa")) return true;
+    if (h === "hrsd.gov.sa" || h.endsWith(".hrsd.gov.sa")) return true;
     return false;
   } catch {
     return false;
@@ -941,6 +963,14 @@ export async function retrieveLegalSnippets(params: {
       "serper.orchestrator"
     );
     if (serperSnippet) return [serperSnippet];
+  }
+
+  if (wantsArticleText && requestedArticleNumber) {
+    console.warn("[LegalRetrieval] no_snippet", {
+      article: requestedArticleNumber,
+      query: params.query,
+      hasSerperKey: !!ENV.serperApiKey,
+    });
   }
 
   const terms = buildKeywordTerms(params.query);
