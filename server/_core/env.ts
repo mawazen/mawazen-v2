@@ -14,7 +14,7 @@ export const ENV = {
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
   llmProvider: process.env.LLM_PROVIDER ?? "",
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
-  geminiModel: process.env.GEMINI_MODEL ?? "gemini-1.5-flash",
+  geminiModel: process.env.GEMINI_MODEL ?? "gemini-1.5-flash-latest",
   legalRetrievalDebug: process.env.LEGAL_RETRIEVAL_DEBUG === "true",
   legalRetrievalInsecureTls: process.env.LEGAL_RETRIEVAL_INSECURE_TLS === "true",
   googleApiKey: process.env.GOOGLE_API_KEY ?? "",

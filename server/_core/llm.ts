@@ -47,16 +47,66 @@ const buildGeminiPrompt = (messages: Message[]): string => {
     .join("\n\n");
 };
 
-const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
-  assertGeminiKey();
+const isGeminiModelNotFound = (status: number, bodyText: string) => {
+  if (status !== 404) return false;
+  const lower = (bodyText || "").toLowerCase();
+  return lower.includes("models/") && (lower.includes("not found") || lower.includes("listmodels"));
+};
 
-  const model = (ENV.geminiModel ?? "gemini-1.5-flash").trim() || "gemini-1.5-flash";
-  const apiKey = ENV.geminiApiKey.trim();
+const normalizeGeminiModelId = (raw: string) => {
+  const m = (raw ?? "").trim();
+  if (!m) return "";
+  return m.startsWith("models/") ? m.slice("models/".length) : m;
+};
+
+const listGeminiModels = async (apiKey: string) => {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
+    apiKey
+  )}`;
+  const res = await fetch(url, { method: "GET" });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Gemini ListModels failed: ${res.status} ${res.statusText} – ${text}`);
+  }
+  try {
+    return JSON.parse(text) as any;
+  } catch {
+    throw new Error(`Gemini ListModels returned non-JSON response: ${text}`);
+  }
+};
+
+const pickGeminiModelFromList = (listResponse: any): string => {
+  const models: any[] = Array.isArray(listResponse?.models) ? listResponse.models : [];
+  const candidates = models
+    .filter((m) => Array.isArray(m?.supportedGenerationMethods))
+    .filter((m) => (m.supportedGenerationMethods as string[]).includes("generateContent"));
+
+  const score = (name: string) => {
+    const id = normalizeGeminiModelId(name).toLowerCase();
+    if (id.includes("1.5") && id.includes("flash")) return 100;
+    if (id.includes("1.5") && id.includes("pro")) return 90;
+    if (id === "gemini-pro") return 80;
+    if (id.startsWith("gemini")) return 70;
+    return 0;
+  };
+
+  const best = candidates
+    .map((m) => String(m?.name || ""))
+    .filter(Boolean)
+    .sort((a, b) => score(b) - score(a))[0];
+
+  return normalizeGeminiModelId(best || "");
+};
+
+const callGeminiGenerateContent = async (args: {
+  apiKey: string;
+  modelId: string;
+  prompt: string;
+}): Promise<{ text: string; usedModelId: string }> => {
+  const { apiKey, modelId, prompt } = args;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-    model
+    modelId
   )}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-  const prompt = buildGeminiPrompt(params.messages);
 
   const body = {
     contents: [
@@ -78,23 +128,78 @@ const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
     body: JSON.stringify(body),
   });
 
+  const bodyText = await response.text();
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini invoke failed: ${response.status} ${response.statusText} – ${errorText}`);
+    const error = new Error(
+      `Gemini invoke failed: ${response.status} ${response.statusText} – ${bodyText}`
+    ) as Error & { status?: number; bodyText?: string };
+    error.status = response.status;
+    error.bodyText = bodyText;
+    throw error;
   }
 
-  const data = (await response.json()) as any;
+  const data = JSON.parse(bodyText) as any;
   const text =
     data?.candidates?.[0]?.content?.parts
       ?.map((p: any) => (typeof p?.text === "string" ? p.text : ""))
       .filter(Boolean)
       .join("\n") ?? "";
 
+  return { text, usedModelId: modelId };
+};
+
+const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
+  assertGeminiKey();
+
+  const apiKey = ENV.geminiApiKey.trim();
+  const configuredModelId = normalizeGeminiModelId(ENV.geminiModel ?? "");
+  const prompt = buildGeminiPrompt(params.messages);
+
+  const modelAttempts = [
+    configuredModelId,
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro-latest",
+    "gemini-1.5-pro",
+    "gemini-pro",
+  ].map(normalizeGeminiModelId);
+
+  let usedModelId = "";
+  let text = "";
+
+  for (const modelId of modelAttempts) {
+    if (!modelId) continue;
+    try {
+      const out = await callGeminiGenerateContent({ apiKey, modelId, prompt });
+      usedModelId = out.usedModelId;
+      text = out.text;
+      break;
+    } catch (e) {
+      const err = e as any;
+      const status = typeof err?.status === "number" ? err.status : 0;
+      const bodyText = typeof err?.bodyText === "string" ? err.bodyText : String(err?.message || "");
+      if (!isGeminiModelNotFound(status, bodyText)) {
+        throw e;
+      }
+    }
+  }
+
+  if (!usedModelId) {
+    const list = await listGeminiModels(apiKey);
+    const picked = pickGeminiModelFromList(list);
+    if (!picked) {
+      throw new Error("Gemini ListModels did not return any model supporting generateContent");
+    }
+    const out = await callGeminiGenerateContent({ apiKey, modelId: picked, prompt });
+    usedModelId = out.usedModelId;
+    text = out.text;
+  }
+
   const created = Math.floor(Date.now() / 1000);
   return {
     id: `gemini_${created}`,
     created,
-    model,
+    model: usedModelId,
     choices: [
       {
         index: 0,
