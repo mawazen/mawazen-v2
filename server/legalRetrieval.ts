@@ -842,6 +842,21 @@ function getStaticBoeLaborLawSnippet(articleNumber: number): RetrievedLegalSnipp
     };
   }
 
+  if (articleNumber === 105) {
+    const text =
+      "المادة الخامسة بعد المائة :\n" +
+      "ملخص عملي (غير حرفي): تسمح بتجميع الراحات الأسبوعية لمدة لا تتجاوز (8) أسابيع للعاملين في أماكن بعيدة عن العمران أو في أعمال تتطلب استمرارية، بحيث يحصل العامل على راحة متصلة لاحقاً بدلاً من منح راحة أسبوعية كل أسبوع، وذلك وفق ضوابط منها: وجود اتفاق مكتوب بين صاحب العمل والعامل، وموافقة الجهة المختصة (الوزارة).";
+
+    return {
+      text,
+      score: 0.93,
+      source: "BOE (cached summary)",
+      url: BOE_LABOR_LAW_URL,
+      title: "نظام العمل",
+      meta: { law: "labor_law", article: 105 },
+    };
+  }
+
   if (articleNumber !== 107) return null;
 
   const text =
@@ -947,7 +962,20 @@ export async function retrieveLegalSnippets(params: {
 
   if (wantsArticleText && requestedArticleNumber && /نظام\s*العمل|مكتب\s*العمل/.test(params.query)) {
     const boeSnippet = await withTimeout(fetchBoeLaborArticleSnippet({ articleNumber: requestedArticleNumber }), 18000, "boe.labor");
-    if (boeSnippet && looksLikeRequestedArticleText({ text: boeSnippet.text, articleNumber: requestedArticleNumber, boeLabel: requestedBoeLabel })) {
+    const isCachedSummary =
+      boeSnippet?.meta?.law === "labor_law" &&
+      boeSnippet?.meta?.article === requestedArticleNumber &&
+      String(boeSnippet?.source ?? "").includes("cached summary");
+
+    if (
+      boeSnippet &&
+      (isCachedSummary ||
+        looksLikeRequestedArticleText({
+          text: boeSnippet.text,
+          articleNumber: requestedArticleNumber,
+          boeLabel: requestedBoeLabel,
+        }))
+    ) {
       return [boeSnippet];
     }
   }

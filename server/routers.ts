@@ -2170,7 +2170,7 @@ export const appRouter = router({
           .trim();
 
         const wantsVerbatimArticleText =
-          /(نص\s*المادة|تنص\s*المادة|(?:ال)?ماد(?:ة|ه)\s*\d+|لماد(?:ة|ه)\s*\d+)/.test(normalizedMsg) &&
+          /(نص\s*المادة|تنص\s*المادة)/.test(normalizedMsg) &&
           /\d{1,4}/.test(normalizedMsg) &&
           !/(شرح|فسر|وضّح|وضح|ملخص|تلخيص|تحليل)/.test(normalizedMsg);
 
@@ -2179,6 +2179,33 @@ export const appRouter = router({
             wantsVerbatimArticleText,
             normalizedMsg,
           });
+        }
+
+        if (!wantsVerbatimArticleText && snippets.length > 0) {
+          const cached105 = (snippets as any[]).find(
+            (s) =>
+              s?.meta?.law === "labor_law" &&
+              s?.meta?.article === 105 &&
+              typeof s?.text === "string" &&
+              String(s?.source ?? "").includes("cached summary")
+          );
+
+          if (cached105?.text) {
+            const assistantMessage = `${String(cached105.text).trim()}\n\n(المصادر)\n- ${String(cached105.url || "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1").trim()}`;
+
+            await db.createAiChatMessage({
+              userId: ctx.user.id,
+              sessionId,
+              caseId: input.caseId ?? null,
+              role: "assistant",
+              content: assistantMessage,
+            });
+
+            return {
+              sessionId,
+              message: assistantMessage,
+            };
+          }
         }
 
         if (snippets.length > 0 && wantsVerbatimArticleText) {
@@ -2222,7 +2249,7 @@ export const appRouter = router({
           messages.push({
             role: "system",
             content:
-              "تنبيه: لم يتم العثور على مقتطفات كافية من قاعدة المعرفة الرسمية لهذا السؤال. لا تذكر أرقام مواد ولا تنسب نصوصاً/سوابق. قدّم توجيهاً عملياً مباشراً بدون تهرّب وبدون عبارات مثل (استشر محامياً) — المستخدم يستعملك كمساعد قانوني. إذا كان السؤال عن (مادة رقم X): اذكر أن بعض مواد BOE تظهر بصيغة (السابعة بعد المائة) بدل (107) وهكذا، وحاول الوصول للنص تلقائياً من بوابة هيئة الخبراء. إذا تعذر عليك الوصول للنص بسبب قيود تقنية/اتصال فصرّح بذلك بوضوح ثم ضع رابط BOE الرسمي المناسب. مثال (نظام العمل): https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1",
+              "تنبيه: لم يتم العثور على مقتطفات كافية من قاعدة المعرفة الرسمية لهذا السؤال. قدّم إجابة عملية مباشرة بدون تهرّب وبدون عبارات مثل (استشر محامياً). إذا كان السؤال عن (مادة رقم X): قدّم ملخصاً/شرحاً غير حرفي لما تتناوله المادة (إن أمكن) مع التنبيه أنه ملخص غير منسوب نصاً حرفياً. إذا تعذر الوصول للنص بسبب قيود تقنية/اتصال فصرّح بذلك بوضوح ثم ضع رابط BOE الرسمي المناسب. مثال (نظام العمل): https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/08381293-6388-48e2-8ad2-a9a700f2aa94/1",
           });
         }
 
