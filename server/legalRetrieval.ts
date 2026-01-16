@@ -635,6 +635,47 @@ function getStaticBoeLaborLawSnippet(articleNumber: number): RetrievedLegalSnipp
   };
 }
 
+function extractBoeArticleBlockFromPlain(params: {
+  plain: string;
+  boeLabel: string;
+  articleNumber: number;
+}): string | null {
+  const plain = params.plain;
+  const labelPattern = escapeRegex(params.boeLabel).replace(/\s+/g, "\\s+");
+
+  const headingLabel = new RegExp(
+    `(?:^|\\n)\\s*المادة\\s*(?:[\\(\\[]\\s*)?${labelPattern}(?:\\s*[\\)\\]])?\\s*[:：]`,
+    "g"
+  );
+  const headingNum = new RegExp(
+    `(?:^|\\n)\\s*المادة\\s*(?:[\\(\\[]\\s*)?${params.articleNumber}(?:\\s*[\\)\\]])?\\s*[:：]`,
+    "g"
+  );
+
+  const matches: { idx: number; len: number }[] = [];
+  for (const re of [headingLabel, headingNum]) {
+    re.lastIndex = 0;
+    const m = re.exec(plain);
+    if (m?.index != null) matches.push({ idx: m.index, len: String(m[0]).length });
+  }
+  if (matches.length === 0) return null;
+
+  matches.sort((a, b) => a.idx - b.idx);
+  const start = matches[0]!.idx;
+
+  const nextHeading = new RegExp(
+    `(?:^|\\n)\\s*المادة\\s*(?:[\\(\\[]\\s*)?(?:[0-9]{1,4}|[اأإآء-ي][اأإآء-ي\\s]{1,80})(?:\\s*[\\)\\]])?\\s*[:：]`,
+    "g"
+  );
+  nextHeading.lastIndex = start + matches[0]!.len;
+
+  const next = nextHeading.exec(plain);
+  const end = next?.index != null ? next.index : plain.length;
+  const block = plain.slice(start, end).trim();
+  if (block.length < 40) return null;
+  return block;
+}
+
 async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
   const boeLabel = articleLabelBoeStyle(params.articleNumber);
   if (!boeLabel) return getStaticBoeLaborLawSnippet(params.articleNumber);
@@ -665,23 +706,31 @@ async function fetchBoeLaborArticleSnippet(params: { articleNumber: number }): P
       .replace(/ {2,}/g, " ")
       .trim();
 
-    const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
-    const patterns: RegExp[] = [
-      new RegExp(
-        `المادة\\s*(?:[\\(\\[]\\s*)?${labelPattern}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
-      ),
-      new RegExp(
-        `المادة\\s*(?:[\\(\\[]\\s*)?${params.articleNumber}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
-      ),
-    ];
+    const extracted = extractBoeArticleBlockFromPlain({
+      plain,
+      boeLabel,
+      articleNumber: params.articleNumber,
+    });
 
-    let bestText: string | null = null;
-    for (const re0 of patterns) {
-      const re = new RegExp(re0.source, re0.flags.includes("g") ? re0.flags : `${re0.flags}g`);
-      for (const m of plain.matchAll(re)) {
-        const t = String(m?.[0] ?? "").trim();
-        if (t.length < 40) continue;
-        if (!bestText || t.length > bestText.length) bestText = t;
+    let bestText = extracted;
+    if (!bestText) {
+      const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
+      const patterns: RegExp[] = [
+        new RegExp(
+          `المادة\\s*(?:[\\(\\[]\\s*)?${labelPattern}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
+        ),
+        new RegExp(
+          `المادة\\s*(?:[\\(\\[]\\s*)?${params.articleNumber}(?:\\s*[\\)\\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\\(\\[]\\s*)?|$)`
+        ),
+      ];
+
+      for (const re0 of patterns) {
+        const re = new RegExp(re0.source, re0.flags.includes("g") ? re0.flags : `${re0.flags}g`);
+        for (const m of plain.matchAll(re)) {
+          const t = String(m?.[0] ?? "").trim();
+          if (t.length < 40) continue;
+          if (!bestText || t.length > bestText.length) bestText = t;
+        }
       }
     }
 
