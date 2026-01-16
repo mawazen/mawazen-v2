@@ -350,246 +350,6 @@ function extractGoogleResultUrls(jsonText: string): string[] {
   }
 }
 
-function extractSerperResultUrls(payload: unknown): string[] {
-  const urls: string[] = [];
-  try {
-    const data = payload as any;
-    const organic = Array.isArray(data?.organic) ? data.organic : [];
-    for (const it of organic) {
-      const link = typeof it?.link === "string" ? it.link.trim() : "";
-      if (!link) continue;
-      urls.push(link);
-      if (urls.length >= 8) break;
-    }
-  } catch {
-    return [];
-  }
-  return urls;
-}
-
-async function serperSearchArticleSnippet(params: { query: string; articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
-  const q = String(params.query ?? "").trim();
-  if (!q) return null;
-  if (!isArticleTextQuery(q)) return null;
-  if (!ENV.serperApiKey || !ENV.serperApiKey.trim()) {
-    if (ENV.legalRetrievalDebug) {
-      console.warn("[LegalRetrieval] SERPER_API_KEY missing");
-    }
-    return null;
-  }
-
-  const laborLawQuery = /نظام\s*العمل|مكتب\s*العمل/.test(q);
-
-  const n = params.articleNumber;
-  const boeLabel = articleLabelBoeStyle(n);
-  const baseNeedle = boeLabel ? `المادة ${boeLabel}` : `المادة ${n}`;
-
-  const queries = [
-    `site:laws.boe.gov.sa ${baseNeedle} نص`,
-    ...(laborLawQuery ? [`site:mohr.gov.sa ${baseNeedle} نظام العمل نص`] : []),
-    ...(laborLawQuery ? [`site:hrsd.gov.sa ${baseNeedle} نظام العمل نص`] : []),
-    `${q} ${baseNeedle}`,
-  ];
-
-  for (const expandedQuery of queries) {
-    try {
-      const res = await withTimeout(
-        axios.post(
-          "https://google.serper.dev/search",
-          { q: expandedQuery },
-          {
-            headers: {
-              "X-API-KEY": ENV.serperApiKey,
-              "Content-Type": "application/json",
-            },
-            timeout: 12000,
-            maxBodyLength: Infinity,
-            validateStatus: () => true,
-          }
-        ),
-        15000,
-        "serper.search"
-      );
-
-      if (!(res.status >= 200 && res.status < 300)) continue;
-
-      if (ENV.legalRetrievalDebug) {
-        try {
-          const data = res.data as any;
-          const organic = Array.isArray(data?.organic) ? data.organic : [];
-          const topLinks = organic
-            .map((it: any) => (typeof it?.link === "string" ? it.link.trim() : ""))
-            .filter(Boolean)
-            .slice(0, 3);
-          console.log("[LegalRetrieval] serper", {
-            q: expandedQuery,
-            status: res.status,
-            organicCount: organic.length,
-            topLinks,
-            hasAnswerBox: !!data?.answerBox,
-          });
-        } catch {
-        }
-      }
-
-      try {
-        const data = res.data as any;
-        const answerBoxText =
-          typeof data?.answerBox?.answer === "string"
-            ? data.answerBox.answer
-            : typeof data?.answerBox?.snippet === "string"
-              ? data.answerBox.snippet
-              : typeof data?.answerBox?.snippetHighlighted === "string"
-                ? data.answerBox.snippetHighlighted
-                : "";
-        if (
-          answerBoxText &&
-          looksLikeRequestedArticleText({
-            text: answerBoxText,
-            articleNumber: n,
-            boeLabel,
-          })
-        ) {
-          return {
-            text: answerBoxText.trim().slice(0, 1600),
-            score: 0.72,
-            source: "SERPER",
-            url: "https://google.com",
-            title: null,
-            meta: { law: "unknown", article: n, provider: "serper_answerbox" },
-          };
-        }
-
-        const organic = Array.isArray(data?.organic) ? data.organic : [];
-        for (const it of organic) {
-          const link = typeof it?.link === "string" ? it.link.trim() : "";
-          const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
-          if (!link || !snippet) continue;
-          if (laborLawQuery && !isLaborLawOfficialUrl(link)) continue;
-          if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: n, boeLabel })) continue;
-          return {
-            text: snippet.slice(0, 4000),
-            score: 0.55,
-            source: toHostLabel(link),
-            url: link,
-            title: null,
-            meta: { law: "unknown", article: n, provider: "serper_organic_snippet" },
-          };
-        }
-      } catch {
-      }
-
-      const candidates = extractSerperResultUrls(res.data);
-
-      if (candidates.length === 0) continue;
-
-      for (const u of candidates) {
-        let host = "";
-        try {
-          host = new URL(u).hostname;
-        } catch {
-          continue;
-        }
-        if (!u.startsWith("http://") && !u.startsWith("https://")) continue;
-        if (!isAllowedWebFallbackHost(host)) continue;
-        if (laborLawQuery && !isLaborLawOfficialUrl(u)) continue;
-
-        const pageRes = await withTimeout(
-          httpGetText(u, {
-          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "user-agent": ENV.legalCrawlerUserAgent,
-        }),
-          15000,
-          "serper.page"
-        );
-        if (!pageRes.ok) continue;
-        const pageHtml = await pageRes.text();
-        const plain = pageHtml
-          .replace(/<script[\s\S]*?<\/script>/gi, " ")
-          .replace(/<style[\s\S]*?<\/style>/gi, " ")
-          .replace(/<\s*br\s*\/?\s*>/gi, "\n")
-          .replace(/<\s*\/?p\s*>/gi, "\n")
-          .replace(/<\s*\/?div\s*>/gi, "\n")
-          .replace(/<[^>]+>/g, " ")
-          .replace(/&nbsp;/g, " ")
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/\s+\n/g, "\n")
-          .replace(/\n\s+/g, "\n")
-          .replace(/\n{3,}/g, "\n\n")
-          .replace(/[\t\r]+/g, " ")
-          .replace(/ {2,}/g, " ")
-          .trim();
-
-        const patterns: RegExp[] = [];
-        if (boeLabel) {
-          const labelPattern = escapeRegex(boeLabel).replace(/\s+/g, "\\s+");
-          patterns.push(new RegExp(`المادة\\s*(?:[\(\[]\\s*)?${labelPattern}(?:\\s*[\)\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\(\[]\\s*)?|$)`));
-        }
-        patterns.push(new RegExp(`المادة\\s*(?:[\(\[]\\s*)?${n}(?:\\s*[\)\]])?\\s*:?([\\s\\S]*?)(?=\\s*المادة\\s*(?:[\(\[]\\s*)?|$)`));
-
-        for (const re of patterns) {
-          const m = plain.match(re);
-          if (!m?.[0]) continue;
-          const snippetText = String(m[0]).trim().slice(0, 4000);
-          if (snippetText.length < 40) continue;
-          return {
-            text: snippetText,
-            score: 0.66,
-            source: toHostLabel(u),
-            url: u,
-            title: null,
-            meta: { law: "unknown", article: n, provider: "serper" },
-          };
-        }
-      }
-    } catch {
-    }
-  }
-
-  try {
-    const res = await withTimeout(
-      axios.post(
-        "https://google.serper.dev/search",
-        { q },
-        {
-          headers: {
-            "X-API-KEY": ENV.serperApiKey,
-            "Content-Type": "application/json",
-          },
-          timeout: 12000,
-          maxBodyLength: Infinity,
-          validateStatus: () => true,
-        }
-      ),
-      15000,
-      "serper.search.fallback"
-    );
-    if (res.status >= 200 && res.status < 300) {
-      const organic = Array.isArray((res.data as any)?.organic) ? (res.data as any).organic : [];
-      for (const it of organic) {
-        const link = typeof it?.link === "string" ? it.link.trim() : "";
-        const snippet = typeof it?.snippet === "string" ? it.snippet.trim() : "";
-        if (!link || !snippet) continue;
-        if (laborLawQuery && !isLaborLawOfficialUrl(link)) continue;
-        if (!looksLikeRequestedArticleText({ text: snippet, articleNumber: params.articleNumber, boeLabel })) continue;
-        return {
-          text: snippet.slice(0, 4000),
-          score: 0.5,
-          source: toHostLabel(link),
-          url: link,
-          title: null,
-          meta: { law: "unknown", article: n, provider: "serper_snippet" },
-        };
-      }
-    }
-  } catch {
-  }
-
-  return null;
-}
-
 async function googleSearchArticleSnippet(params: { query: string; articleNumber: number }): Promise<RetrievedLegalSnippet | null> {
   const q = String(params.query ?? "").trim();
   if (!q) return null;
@@ -957,7 +717,6 @@ export async function retrieveLegalSnippets(params: {
   if (wantsArticleText && requestedArticleNumber) {
     console.log("[LegalRetrieval] article_query", {
       article: requestedArticleNumber,
-      hasSerperKey: !!ENV.serperApiKey,
       query: params.query,
     });
   }
@@ -982,24 +741,10 @@ export async function retrieveLegalSnippets(params: {
     }
   }
 
-  // =================================================================
-  // HOTFIX: Force Serper search for article text queries to bypass
-  // the unreliable internal DB search for this critical feature.
-  // =================================================================
-  if (wantsArticleText && requestedArticleNumber) {
-    const serperSnippet = await withTimeout(
-      serperSearchArticleSnippet({ query: params.query, articleNumber: requestedArticleNumber }),
-      20000,
-      "serper.orchestrator"
-    );
-    if (serperSnippet) return [serperSnippet];
-  }
-
   if (wantsArticleText && requestedArticleNumber) {
     console.warn("[LegalRetrieval] no_snippet", {
       article: requestedArticleNumber,
       query: params.query,
-      hasSerperKey: !!ENV.serperApiKey,
     });
   }
 
@@ -1083,9 +828,6 @@ export async function retrieveLegalSnippets(params: {
   if (wantsArticleText && requestedArticleNumber) {
     const n = requestedArticleNumber;
 
-    const serperSnippet = await serperSearchArticleSnippet({ query: params.query, articleNumber: n });
-    if (serperSnippet) return [serperSnippet];
-
     if (/نظام\s*العمل|مكتب\s*العمل/.test(params.query)) {
       const boeSnippet = await fetchBoeLaborArticleSnippet({ articleNumber: n });
       if (boeSnippet) return [boeSnippet];
@@ -1108,7 +850,7 @@ export function formatSnippetsForPrompt(snippets: RetrievedLegalSnippet[]): stri
 
   const lines: string[] = [];
   lines.push(
-    "مقتطفات من مصادر رسمية (قاعدة صارمة: عند ذكر مادة/نص/تاريخ/تعريف نظامي يجب أن يكون موجوداً حرفياً داخل مقتطف واحد على الأقل. عند الاستشهاد استخدم رقم المقتطف بين أقواس مربعة مثل [1] ثم ضع الروابط في قسم (المصادر).):"
+    "مقتطفات رسمية (قاعدة صارمة: عند ذكر مادة/نص/تاريخ/تعريف نظامي يجب أن يكون موجوداً حرفياً داخل مقتطف واحد على الأقل. استخدم أرقام المقتطفات مثل [1] عند الاستشهاد.):"
   );
 
   snippets.forEach((s, idx) => {

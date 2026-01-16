@@ -19,7 +19,6 @@ export const ENV = {
   legalRetrievalInsecureTls: process.env.LEGAL_RETRIEVAL_INSECURE_TLS === "true",
   googleApiKey: process.env.GOOGLE_API_KEY ?? "",
   googleCseId: process.env.GOOGLE_CSE_ID ?? "",
-  serperApiKey: process.env.SERPER_API_KEY ?? "",
   googleOAuthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID ?? "",
   googleOAuthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? "",
   moyasarSecretKey: process.env.MOYASAR_SECRET_KEY ?? "",

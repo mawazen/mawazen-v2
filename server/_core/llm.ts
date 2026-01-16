@@ -18,6 +18,9 @@ export type ImageContent = {
 type LlmProvider = "openai" | "forge" | "gemini";
 
 const resolveProvider = (): LlmProvider => {
+  const geminiKey = ENV.geminiApiKey ? ENV.geminiApiKey.trim() : "";
+  if (geminiKey) return "gemini";
+
   const p = (ENV.llmProvider ?? "").trim().toLowerCase();
   if (p === "gemini") return "gemini";
   if (p === "forge") return "forge";
