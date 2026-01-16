@@ -238,9 +238,11 @@ const BusinessLayout = () => {
           {sidebarOpen && (
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className={`w-10 h-10 bg-gradient-to-br ${businessInfo.color} rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/20`}>
-                  <BusinessIcon className="w-6 h-6 text-white" />
-                </div>
+                <img 
+                  src="/images/logo.png" 
+                  alt={businessInfo.name} 
+                  className="w-10 h-10 rounded-xl object-cover shadow-lg ring-2 ring-white/20"
+                />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-gray-900"></div>
               </div>
               <div>
@@ -366,6 +368,17 @@ const BusinessLayout = () => {
             >
               <Menu size={20} />
             </button>
+
+            <Link
+              to="/app/dashboard"
+              className="flex items-center justify-center w-10 h-10"
+            >
+              <img
+                src="/images/logo.png"
+                alt={businessInfo.name}
+                className="w-9 h-9 rounded-xl object-cover shadow-sm ring-1 ring-gray-200"
+              />
+            </Link>
             
             <div className="relative hidden sm:block">
               <Search className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400`} />

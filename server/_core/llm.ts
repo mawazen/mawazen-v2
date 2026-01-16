@@ -15,6 +15,100 @@ export type ImageContent = {
   };
 };
 
+type LlmProvider = "openai" | "forge" | "gemini";
+
+const resolveProvider = (): LlmProvider => {
+  const p = (ENV.llmProvider ?? "").trim().toLowerCase();
+  if (p === "gemini") return "gemini";
+  if (p === "forge") return "forge";
+  if (p === "openai") return "openai";
+
+  const openaiKey = getValidOpenAiKey();
+  if (openaiKey.length > 0) return "openai";
+  return "forge";
+};
+
+const assertGeminiKey = () => {
+  const k = ENV.geminiApiKey ? ENV.geminiApiKey.trim() : "";
+  if (!k) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+};
+
+const buildGeminiPrompt = (messages: Message[]): string => {
+  return messages
+    .map((m) => {
+      const content = ensureArray(m.content)
+        .map((p) => (typeof p === "string" ? p : p.type === "text" ? p.text : ""))
+        .filter(Boolean)
+        .join("\n");
+      return `[${m.role}]\n${content}`.trim();
+    })
+    .join("\n\n");
+};
+
+const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
+  assertGeminiKey();
+
+  const model = (ENV.geminiModel ?? "gemini-1.5-flash").trim() || "gemini-1.5-flash";
+  const apiKey = ENV.geminiApiKey.trim();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    model
+  )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  const prompt = buildGeminiPrompt(params.messages);
+
+  const body = {
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.2,
+    },
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini invoke failed: ${response.status} ${response.statusText} – ${errorText}`);
+  }
+
+  const data = (await response.json()) as any;
+  const text =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p: any) => (typeof p?.text === "string" ? p.text : ""))
+      .filter(Boolean)
+      .join("\n") ?? "";
+
+  const created = Math.floor(Date.now() / 1000);
+  return {
+    id: `gemini_${created}`,
+    created,
+    model,
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: text || "عذراً، حدث خطأ في معالجة طلبك.",
+        },
+        finish_reason: "stop",
+      },
+    ],
+    usage: undefined,
+  };
+};
+
 export type FileContent = {
   type: "file_url";
   file_url: {
@@ -223,16 +317,28 @@ const getValidOpenAiKey = () => {
   return raw;
 };
 
-const resolveApiUrl = () =>
-  getValidOpenAiKey().length > 0
+const resolveApiUrl = (provider: LlmProvider) =>
+  provider === "openai"
     ? "https://api.openai.com/v1/chat/completions"
     : "https://forge.manus.im/v1/chat/completions";
 
-const assertApiKey = () => {
+const assertApiKey = (provider: LlmProvider) => {
+  if (provider === "gemini") {
+    assertGeminiKey();
+    return;
+  }
+
   const openaiKey = getValidOpenAiKey();
   const forgeKey = ENV.forgeApiKey ? ENV.forgeApiKey.trim() : "";
-  if (!openaiKey && !forgeKey) {
-    throw new Error("Neither OPENAI_API_KEY nor FORGE_API_KEY is configured");
+
+  if (provider === "openai") {
+    if (!openaiKey) throw new Error("OPENAI_API_KEY is not configured");
+    return;
+  }
+
+  if (provider === "forge") {
+    if (!forgeKey) throw new Error("FORGE_API_KEY is not configured");
+    return;
   }
 };
 
@@ -283,8 +389,15 @@ const normalizeResponseFormat = ({
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   console.log("[LLM] Starting invokeLLM");
-  assertApiKey();
+
+  const provider = resolveProvider();
+  assertApiKey(provider);
   console.log("[LLM] API key check passed");
+
+  if (provider === "gemini") {
+    console.log("[LLM] Provider: gemini");
+    return invokeGemini(params);
+  }
 
   const {
     messages,
@@ -328,18 +441,19 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const apiUrl = resolveApiUrl();
+  const apiUrl = resolveApiUrl(provider);
   console.log("[LLM] Calling API URL:", apiUrl);
 
   const openaiKey = getValidOpenAiKey();
   const forgeKey = ENV.forgeApiKey ? ENV.forgeApiKey.trim() : "";
   console.log("[LLM] Using OpenAI key:", !!openaiKey);
+  console.log("[LLM] Provider:", provider);
 
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${openaiKey || forgeKey}`,
+      authorization: `Bearer ${provider === "openai" ? openaiKey : forgeKey}`,
     },
     body: JSON.stringify(payload),
   });
