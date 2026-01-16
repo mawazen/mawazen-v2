@@ -47,6 +47,20 @@ const buildGeminiPrompt = (messages: Message[]): string => {
     .join("\n\n");
 };
 
+const fetchWithTimeout = async (
+  url: string,
+  init: RequestInit,
+  timeoutMs: number
+) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 const isGeminiModelNotFound = (status: number, bodyText: string) => {
   if (status !== 404) return false;
   const lower = (bodyText || "").toLowerCase();
@@ -63,7 +77,7 @@ const listGeminiModels = async (apiKey: string) => {
   const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
     apiKey
   )}`;
-  const res = await fetch(url, { method: "GET" });
+  const res = await fetchWithTimeout(url, { method: "GET" }, 15000);
   const text = await res.text();
   if (!res.ok) {
     throw new Error(`Gemini ListModels failed: ${res.status} ${res.statusText} – ${text}`);
@@ -120,13 +134,17 @@ const callGeminiGenerateContent = async (args: {
     },
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+    20000
+  );
 
   const bodyText = await response.text();
   if (!response.ok) {
@@ -164,20 +182,26 @@ const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
     "gemini-pro",
   ].map(normalizeGeminiModelId);
 
+  console.log("[LLM][Gemini] configuredModelId:", configuredModelId || "(empty)");
+  console.log("[LLM][Gemini] modelAttempts:", modelAttempts.filter(Boolean));
+
   let usedModelId = "";
   let text = "";
 
   for (const modelId of modelAttempts) {
     if (!modelId) continue;
     try {
+      console.log("[LLM][Gemini] trying model:", modelId);
       const out = await callGeminiGenerateContent({ apiKey, modelId, prompt });
       usedModelId = out.usedModelId;
       text = out.text;
+      console.log("[LLM][Gemini] success model:", usedModelId);
       break;
     } catch (e) {
       const err = e as any;
       const status = typeof err?.status === "number" ? err.status : 0;
       const bodyText = typeof err?.bodyText === "string" ? err.bodyText : String(err?.message || "");
+      console.warn("[LLM][Gemini] model failed:", modelId, "status:", status);
       if (!isGeminiModelNotFound(status, bodyText)) {
         throw e;
       }
@@ -185,11 +209,13 @@ const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
   }
 
   if (!usedModelId) {
+    console.warn("[LLM][Gemini] all preset models failed; calling ListModels...");
     const list = await listGeminiModels(apiKey);
     const picked = pickGeminiModelFromList(list);
     if (!picked) {
       throw new Error("Gemini ListModels did not return any model supporting generateContent");
     }
+    console.log("[LLM][Gemini] picked model from ListModels:", picked);
     const out = await callGeminiGenerateContent({ apiKey, modelId: picked, prompt });
     usedModelId = out.usedModelId;
     text = out.text;
