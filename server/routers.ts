@@ -2095,6 +2095,19 @@ export const appRouter = router({
         console.log("[AI] Message:", input.message);
         
         const sessionId = input.sessionId || nanoid();
+
+        const normalizedMsg = input.message
+          .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+          .replace(/\s+/g, " ")
+          .trim();
+
+        const isSmallTalk =
+          /^(كيف\s*حالك|كيف\s*حال(?:ك|كم)|السلام\s*عليكم|وعليكم\s*السلام|مرحبا|أهلا|اهلاً|هلا|هاي|hello|hi|صباح\s*الخير|مساء\s*الخير|تمام|شكرا|شكرًا|شكراً)\b/i.test(
+            normalizedMsg
+          ) &&
+          !/(مادة|المادة|نظام|لائحة|عقد|دعوى|محكمة|استئناف|تنفيذ|فسخ|تعويض|عمل|عمال|موظف|إنهاء|استقالة|فصل|مخالفة|غرامة|بلاغ|شكوى)/.test(
+            normalizedMsg
+          );
         
         // Save user message
         console.log("[AI] Saving user message to database...");
@@ -2106,6 +2119,24 @@ export const appRouter = router({
           content: input.message,
         });
         console.log("[AI] User message saved successfully");
+
+        if (isSmallTalk) {
+          const assistantMessage =
+            "أهلاً! تمام الحمدلله.\n\nقلّي سؤالك القانوني بالتفصيل (مثلاً: نظام العمل، فسخ عقد، شكوى، تعويض…) وأنا أعطيك جواب واضح وخطوات عملية.";
+
+          await db.createAiChatMessage({
+            userId: ctx.user.id,
+            sessionId,
+            caseId: input.caseId ?? null,
+            role: "assistant",
+            content: assistantMessage,
+          });
+
+          return {
+            sessionId,
+            message: assistantMessage,
+          };
+        }
         
         // Get chat history for context
         console.log("[AI] Getting chat history...");
@@ -2163,11 +2194,6 @@ export const appRouter = router({
         } catch (e) {
           console.warn("[AI] Retrieval failed", e);
         }
-
-        const normalizedMsg = input.message
-          .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
-          .replace(/\s+/g, " ")
-          .trim();
 
         const wantsVerbatimArticleText =
           /(نص\s*المادة|تنص\s*المادة)/.test(normalizedMsg) &&

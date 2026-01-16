@@ -372,7 +372,9 @@ async function serperSearchArticleSnippet(params: { query: string; articleNumber
   if (!q) return null;
   if (!isArticleTextQuery(q)) return null;
   if (!ENV.serperApiKey || !ENV.serperApiKey.trim()) {
-    console.warn("[LegalRetrieval] SERPER_API_KEY missing");
+    if (ENV.legalRetrievalDebug) {
+      console.warn("[LegalRetrieval] SERPER_API_KEY missing");
+    }
     return null;
   }
 

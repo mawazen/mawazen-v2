@@ -67,6 +67,8 @@ const isGeminiModelNotFound = (status: number, bodyText: string) => {
   return lower.includes("models/") && (lower.includes("not found") || lower.includes("listmodels"));
 };
 
+let cachedGeminiModelId: string | null = null;
+
 const normalizeGeminiModelId = (raw: string) => {
   const m = (raw ?? "").trim();
   if (!m) return "";
@@ -210,49 +212,32 @@ const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
   const configuredModelId = normalizeGeminiModelId(ENV.geminiModel ?? "");
   const prompt = buildGeminiPrompt(params.messages);
 
+  const cachedModelId = cachedGeminiModelId ? normalizeGeminiModelId(cachedGeminiModelId) : "";
+
+  const presetModels = [
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro-latest",
+    "gemini-1.5-pro",
+    "gemini-pro",
+  ];
+
   const modelAttempts = Array.from(
     new Set(
-      [
-        configuredModelId,
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro-latest",
-        "gemini-1.5-pro",
-        "gemini-pro",
-      ]
+      [configuredModelId, cachedModelId, ...(configuredModelId ? presetModels : [])]
         .map(normalizeGeminiModelId)
         .filter(Boolean)
     )
   );
 
   console.log("[LLM][Gemini] configuredModelId:", configuredModelId || "(empty)");
+  console.log("[LLM][Gemini] cachedModelId:", cachedModelId || "(empty)");
   console.log("[LLM][Gemini] modelAttempts:", modelAttempts.filter(Boolean));
 
   let usedModelId = "";
   let text = "";
 
-  for (const modelId of modelAttempts) {
-    if (!modelId) continue;
-    try {
-      console.log("[LLM][Gemini] trying model:", modelId);
-      const out = await callGeminiGenerateContent({ apiKey, modelId, prompt });
-      usedModelId = out.usedModelId;
-      text = out.text;
-      console.log("[LLM][Gemini] success model:", usedModelId);
-      break;
-    } catch (e) {
-      const err = e as any;
-      const status = typeof err?.status === "number" ? err.status : 0;
-      const bodyText = typeof err?.bodyText === "string" ? err.bodyText : String(err?.message || "");
-      console.warn("[LLM][Gemini] model failed:", modelId, "status:", status);
-      if (!isGeminiModelNotFound(status, bodyText)) {
-        throw e;
-      }
-    }
-  }
-
-  if (!usedModelId) {
-    console.warn("[LLM][Gemini] all preset models failed; calling ListModels...");
+  if (!configuredModelId && !cachedModelId) {
     const list = await listGeminiModels(apiKey);
     const picked = pickGeminiModelFromList(list);
     const pickedCandidates = pickGeminiModelCandidatesFromList(list, 6);
@@ -270,6 +255,7 @@ const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
         const out = await callGeminiGenerateContent({ apiKey, modelId, prompt });
         usedModelId = out.usedModelId;
         text = out.text;
+        cachedGeminiModelId = usedModelId;
         console.log("[LLM][Gemini] success ListModels model:", usedModelId);
         lastError = undefined;
         break;
@@ -278,7 +264,78 @@ const invokeGemini = async (params: InvokeParams): Promise<InvokeResult> => {
         const err = e as any;
         const status = typeof err?.status === "number" ? err.status : 0;
         const bodyText = typeof err?.bodyText === "string" ? err.bodyText : String(err?.message || "");
-        console.warn("[LLM][Gemini] ListModels model failed:", modelId, "status:", status);
+        if (!isGeminiModelNotFound(status, bodyText)) {
+          throw e;
+        }
+      }
+    }
+
+    if (!usedModelId) {
+      throw lastError instanceof Error ? lastError : new Error("Gemini invoke failed after ListModels fallback");
+    }
+  }
+
+  for (const modelId of modelAttempts) {
+    if (!modelId) continue;
+    try {
+      console.log("[LLM][Gemini] trying model:", modelId);
+      const out = await callGeminiGenerateContent({ apiKey, modelId, prompt });
+      usedModelId = out.usedModelId;
+      text = out.text;
+      cachedGeminiModelId = usedModelId;
+      console.log("[LLM][Gemini] success model:", usedModelId);
+      break;
+    } catch (e) {
+      const err = e as any;
+      const status = typeof err?.status === "number" ? err.status : 0;
+      const bodyText = typeof err?.bodyText === "string" ? err.bodyText : String(err?.message || "");
+      if (isGeminiModelNotFound(status, bodyText)) {
+        if (cachedGeminiModelId && normalizeGeminiModelId(modelId) === normalizeGeminiModelId(cachedGeminiModelId)) {
+          cachedGeminiModelId = null;
+        }
+        console.log("[LLM][Gemini] model not found:", modelId, "status:", status);
+      } else {
+        console.warn("[LLM][Gemini] model failed:", modelId, "status:", status);
+      }
+      if (!isGeminiModelNotFound(status, bodyText)) {
+        throw e;
+      }
+    }
+  }
+
+  if (!usedModelId) {
+    console.log("[LLM][Gemini] all preset models failed; calling ListModels...");
+    const list = await listGeminiModels(apiKey);
+    const picked = pickGeminiModelFromList(list);
+    const pickedCandidates = pickGeminiModelCandidatesFromList(list, 6);
+    const listCandidates = Array.from(new Set([picked, ...pickedCandidates].filter(Boolean)));
+    if (listCandidates.length === 0) {
+      throw new Error("Gemini ListModels did not return any model supporting generateContent");
+    }
+
+    console.log("[LLM][Gemini] ListModels candidates:", listCandidates);
+
+    let lastError: unknown;
+    for (const modelId of listCandidates) {
+      try {
+        console.log("[LLM][Gemini] trying ListModels model:", modelId);
+        const out = await callGeminiGenerateContent({ apiKey, modelId, prompt });
+        usedModelId = out.usedModelId;
+        text = out.text;
+        cachedGeminiModelId = usedModelId;
+        console.log("[LLM][Gemini] success ListModels model:", usedModelId);
+        lastError = undefined;
+        break;
+      } catch (e) {
+        lastError = e;
+        const err = e as any;
+        const status = typeof err?.status === "number" ? err.status : 0;
+        const bodyText = typeof err?.bodyText === "string" ? err.bodyText : String(err?.message || "");
+        if (isGeminiModelNotFound(status, bodyText)) {
+          console.log("[LLM][Gemini] ListModels model not found:", modelId, "status:", status);
+        } else {
+          console.warn("[LLM][Gemini] ListModels model failed:", modelId, "status:", status);
+        }
         if (!isGeminiModelNotFound(status, bodyText)) {
           throw e;
         }
