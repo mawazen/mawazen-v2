@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة تحكم الأونر</title>
+    <link rel="stylesheet" href="/owner/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="brand">
+          <div class="brandMark">موازين</div>
+          <div class="brandTitle">لوحة تحكم الأونر</div>
+        </div>
+        <div class="headerActions">
+          <button id="refreshBtn" class="btn">تحديث</button>
+          <button id="logoutBtn" class="btn btnSecondary">تسجيل الخروج</button>
+        </div>
+      </header>
+
+      <section id="loginCard" class="card" style="display: none">
+        <h2 class="cardTitle">تسجيل الدخول</h2>
+        <p class="muted">أدخل كلمة مرور لوحة التحكم.</p>
+        <form id="loginForm" class="formRow">
+          <input id="password" type="password" class="input" placeholder="كلمة المرور" autocomplete="current-password" required />
+          <button type="submit" class="btn">دخول</button>
+        </form>
+        <div id="loginError" class="error" style="display: none"></div>
+      </section>
+
+      <section id="dashboard" class="grid" style="display: none">
+        <div class="card">
+          <h2 class="cardTitle">نظرة عامة</h2>
+          <div class="kpis" id="overviewKpis"></div>
+        </div>
+
+        <div class="card cardFull">
+          <div class="cardHeader">
+            <h2 class="cardTitle">المستخدمين</h2>
+            <div class="filters">
+              <input id="q" class="input" placeholder="بحث: اسم / بريد / جوال / openId" />
+              <select id="role" class="select">
+                <option value="">كل الأدوار</option>
+                <option value="admin">admin</option>
+                <option value="lawyer">lawyer</option>
+                <option value="assistant">assistant</option>
+                <option value="client">client</option>
+              </select>
+              <select id="active" class="select">
+                <option value="">الكل</option>
+                <option value="true">نشط</option>
+                <option value="false">غير نشط</option>
+              </select>
+              <button id="applyFilters" class="btn">تطبيق</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>id</th>
+                  <th>الاسم</th>
+                  <th>البريد</th>
+                  <th>الجوال</th>
+                  <th>role</th>
+                  <th>نشط</th>
+                  <th>الخطة</th>
+                  <th>المنظمة</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="usersTbody"></tbody>
+            </table>
+          </div>
+          <div id="usersError" class="error" style="display: none"></div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="muted">Owner Dashboard</div>
+      </footer>
+    </div>
+
+    <script type="module" src="/owner/owner.js"></script>
+  </body>
+</html>

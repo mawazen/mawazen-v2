@@ -4,6 +4,8 @@ import fs from "fs/promises";
 import { createServer } from "http";
 import net from "net";
 import path from "path";
+import { parse as parseCookieHeader } from "cookie";
+import { SignJWT, jwtVerify } from "jose";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
@@ -16,6 +18,8 @@ import { startLegalCrawlerScheduler } from "../legalCrawler";
 import { startDocumentRemindersScheduler } from "../documentReminders";
 import { serveStatic, setupVite } from "./vite";
 import { getFirebaseAdmin } from "./firebaseAdmin";
+import { ENV } from "./env";
+import { getSessionCookieOptions } from "./cookies";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -42,6 +46,261 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  const OWNER_DASHBOARD_COOKIE = "owner_dashboard_session";
+  const ownerDashboardSecretKey = new TextEncoder().encode(ENV.cookieSecret);
+
+  const signOwnerDashboardSession = async () => {
+    const expiresInDays = 30;
+    const expirationSeconds = Math.floor((Date.now() + expiresInDays * 24 * 60 * 60 * 1000) / 1000);
+    return new SignJWT({ t: "owner_dashboard" })
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setExpirationTime(expirationSeconds)
+      .sign(ownerDashboardSecretKey);
+  };
+
+  const verifyOwnerDashboardSession = async (cookieValue: string | undefined | null): Promise<boolean> => {
+    if (!cookieValue) return false;
+    try {
+      const { payload } = await jwtVerify(cookieValue, ownerDashboardSecretKey, {
+        algorithms: ["HS256"],
+      });
+      return (payload as any)?.t === "owner_dashboard";
+    } catch {
+      return false;
+    }
+  };
+
+  const getCookieValue = (req: express.Request, name: string): string | null => {
+    const header = req.headers.cookie;
+    if (!header) return null;
+    try {
+      const parsed = parseCookieHeader(header);
+      const v = (parsed as any)?.[name];
+      return typeof v === "string" && v.trim() ? v : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const requireOwnerDashboard = async (req: express.Request, res: express.Response): Promise<boolean> => {
+    if (!ENV.ownerOpenId || !ENV.ownerOpenId.trim()) {
+      res.status(403).json({ success: false, message: "Owner is not configured" });
+      return false;
+    }
+    const token = getCookieValue(req, OWNER_DASHBOARD_COOKIE);
+    const ok = await verifyOwnerDashboardSession(token);
+    if (!ok) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return false;
+    }
+    return true;
+  };
+
+  const ownerPublicDir = path.join(process.cwd(), "public", "owner");
+  try {
+    await fs.access(ownerPublicDir);
+
+    app.get("/owner", (_req, res) => {
+      res.redirect("/owner/index.html");
+    });
+    app.use("/owner", express.static(ownerPublicDir));
+  } catch {
+  }
+
+  app.post("/api/owner/login", async (req, res) => {
+    try {
+      const configuredPassword = (process.env.OWNER_DASHBOARD_PASSWORD ?? "").trim();
+      if (!configuredPassword) {
+        return res.status(403).json({ success: false, message: "Owner dashboard password is not configured" });
+      }
+
+      const password = typeof req.body?.password === "string" ? req.body.password : "";
+      if (!password || password !== configuredPassword) {
+        return res.status(401).json({ success: false, message: "Invalid password" });
+      }
+
+      const token = await signOwnerDashboardSession();
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(OWNER_DASHBOARD_COOKIE, token, {
+        ...cookieOptions,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      });
+      return res.json({ success: true });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: "Login failed" });
+    }
+  });
+
+  app.get("/api/owner/status", async (req, res) => {
+    const isOwner = await verifyOwnerDashboardSession(getCookieValue(req, OWNER_DASHBOARD_COOKIE));
+    return res.json({ isOwner });
+  });
+
+  app.post("/api/owner/logout", async (req, res) => {
+    const cookieOptions = getSessionCookieOptions(req);
+    res.clearCookie(OWNER_DASHBOARD_COOKIE, { ...cookieOptions, maxAge: -1 });
+    return res.json({ success: true });
+  });
+
+  app.get("/api/owner/overview", async (req, res) => {
+    if (!(await requireOwnerDashboard(req, res))) return;
+
+    const [users, organizations] = await Promise.all([db.getAllUsers(), db.getAllOrganizations()]);
+    const totalUsers = users.length;
+    const activeUsers = users.filter((u: any) => u.isActive).length;
+    const totalOrganizations = organizations.length;
+
+    const byPlan = {
+      individual: 0,
+      law_firm: 0,
+      enterprise: 0,
+    } as Record<"individual" | "law_firm" | "enterprise", number>;
+
+    for (const u of users as any[]) {
+      const plan = (u.subscriptionPlan ?? "individual") as "individual" | "law_firm" | "enterprise";
+      byPlan[plan] = (byPlan[plan] ?? 0) + 1;
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        totalUsers,
+        activeUsers,
+        totalOrganizations,
+        usersByPlan: byPlan,
+      },
+    });
+  });
+
+  app.get("/api/owner/stats", async (req, res) => {
+    if (!(await requireOwnerDashboard(req, res))) return;
+
+    const rangeRaw = typeof req.query?.range === "string" ? req.query.range : "";
+    const range = ["week", "month", "quarter", "year"].includes(rangeRaw) ? (rangeRaw as any) : undefined;
+
+    const [users, organizations, caseStats, invoiceStats, reportsStats, dashboardStats] = await Promise.all([
+      db.getAllUsers(),
+      db.getAllOrganizations(),
+      db.getCaseStats(),
+      db.getInvoiceStats(),
+      db.getReportsStats(range),
+      db.getDashboardStats(),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        users: {
+          total: (users as any[]).length,
+          active: (users as any[]).filter((u: any) => u.isActive).length,
+        },
+        organizations: {
+          total: (organizations as any[]).length,
+        },
+        cases: caseStats,
+        invoices: invoiceStats,
+        reports: reportsStats,
+        dashboard: dashboardStats,
+      },
+    });
+  });
+
+  app.get("/api/owner/users", async (req, res) => {
+    if (!(await requireOwnerDashboard(req, res))) return;
+
+    const [users, organizations] = await Promise.all([db.getAllUsers(), db.getAllOrganizations()]);
+    const orgById = new Map<number, any>((organizations as any[]).map((o: any) => [Number(o.id), o]));
+
+    const query = typeof req.query?.query === "string" ? req.query.query.trim().toLowerCase() : "";
+    const role = typeof req.query?.role === "string" ? req.query.role : "";
+    const isActiveRaw = typeof req.query?.isActive === "string" ? req.query.isActive : "";
+    const isActive = isActiveRaw === "true" ? true : isActiveRaw === "false" ? false : null;
+
+    let list = users as any[];
+    if (role && ["admin", "lawyer", "assistant", "client"].includes(role)) {
+      list = list.filter((u) => u.role === role);
+    }
+    if (typeof isActive === "boolean") {
+      list = list.filter((u) => Boolean(u.isActive) === isActive);
+    }
+    if (query) {
+      list = list.filter((u) => {
+        const name = String(u.name ?? "").toLowerCase();
+        const email = String(u.email ?? "").toLowerCase();
+        const phone = String(u.phone ?? "").toLowerCase();
+        const openId = String(u.openId ?? "").toLowerCase();
+        return name.includes(query) || email.includes(query) || phone.includes(query) || openId.includes(query);
+      });
+    }
+
+    const data = list.map((u) => {
+      const orgId = u.organizationId ? Number(u.organizationId) : null;
+      const org = orgId ? orgById.get(orgId) : null;
+      return {
+        ...u,
+        organization: org ? { id: Number(org.id), name: org.name, subscriptionPlan: org.subscriptionPlan, seatLimit: org.seatLimit } : null,
+      };
+    });
+
+    return res.json({ success: true, data });
+  });
+
+  app.post("/api/owner/users/:userId/active", async (req, res) => {
+    if (!(await requireOwnerDashboard(req, res))) return;
+    const userId = Number(req.params.userId);
+    const isActive = Boolean(req.body?.isActive);
+    if (!Number.isFinite(userId) || userId <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid userId" });
+    }
+    await db.setUserActive(userId, isActive);
+    return res.json({ success: true });
+  });
+
+  app.post("/api/owner/users/:userId/plan", async (req, res) => {
+    if (!(await requireOwnerDashboard(req, res))) return;
+
+    const userId = Number(req.params.userId);
+    const plan = typeof req.body?.plan === "string" ? req.body.plan : "";
+    const isActive = typeof req.body?.isActive === "boolean" ? req.body.isActive : undefined;
+
+    if (!Number.isFinite(userId) || userId <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid userId" });
+    }
+    if (!plan || !["individual", "law_firm", "enterprise"].includes(plan)) {
+      return res.status(400).json({ success: false, message: "Invalid plan" });
+    }
+
+    const user = await db.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const seatLimit = plan === "law_firm" ? 5 : plan === "enterprise" ? 15 : 1;
+    const organizationId = await db.ensureUserHasOrganization({
+      openId: user.openId,
+      defaultOrganizationName: user.name ?? null,
+    });
+
+    await db.setOrganizationSubscriptionPlan({
+      organizationId,
+      subscriptionPlan: plan as any,
+      seatLimit,
+    });
+
+    await db.setUserSubscriptionPlan({
+      userId: user.id,
+      subscriptionPlan: plan as any,
+      accountType: plan as any,
+      seatLimit,
+    });
+
+    if (typeof isActive === "boolean") {
+      await db.setUserActive(user.id, isActive);
+    }
+
+    return res.json({ success: true });
+  });
 
   const uploadsDir = path.join(process.cwd(), "uploads");
   await fs.mkdir(uploadsDir, { recursive: true });
