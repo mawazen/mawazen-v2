@@ -249,32 +249,45 @@ const pricingTeaser = [
   },
  ];
 
- const homeGalleryImages = [
+ // ====== روابط صور عرض الشرائح في الصفحة الرئيسية ======
+// غير الروابط أدناه فقط! لا تغير شيئاً آخر
+// استبدل كل رابط برابط الصورة التي تريدها
+// الأبعاد الموصى بها: 1200x600 للعرض الأفقي
+const homeGalleryImages = [
   {
-    src: "https://picsum.photos/seed/saudi-law1/1200/600.jpg",
-    alt: "مكتب محاماة سعودي احترافي",
+    src: "https://tse4.mm.bing.net/th/id/OIP.QEOCXmb5NZQntCvNiJwQNAHaD4?rs=1&pid=ImgDetMain&o=7&rm=3",
+    alt: "مطرقة العدالة السعودية",
   },
   {
-    src: "https://picsum.photos/seed/saudi-court2/1200/600.jpg",
-    alt: "قاعة محكمة في المملكة",
+    src: "https://img.freepik.com/premium-photo/saudi-arabia-flag-judge-hammer-with-gold-grain-rice_39768-1147.jpg?w=740",
+    alt: "مطرقة قاضٍ سعودي مع علم المملكة",
   },
   {
-    src: "https://picsum.photos/seed/legal-docs3/1200/600.jpg",
-    alt: "مستندات قانونية سعودية",
+    src: "https://prestige.com.sg/wp-content/uploads/2021/01/prestige-green-muslim-judgement-1170x658.jpg",
+    alt: "العدالة الإسلامية الخضراء",
   },
   {
-    src: "https://picsum.photos/seed/riyadh-office4/1200/600.jpg",
-    alt: "مكتب محاماة في الرياض",
+    src: "https://woodruffsawyer.com/sites/default/files/migrated/GettyImages-1293402642.jpg",
+    alt: "مكتب محاماة احترافي",
   },
   {
-    src: "https://picsum.photos/seed/legal-library5/1200/600.jpg",
-    alt: "مكتبة قانونية متخصصة",
+    src: "https://tse4.mm.bing.net/th/id/OIP.TfHYjbCGNS3W1FXH0hpmvwHaEJ?rs=1&pid=ImgDetMain&o=7&rm=3",
+    alt: "قاعة محكمة سعودية",
   },
   {
-    src: "https://picsum.photos/seed/business-meeting6/1200/600.jpg",
-    alt: "اجتماع عمل قانوني",
+    src: "https://setupinbahrain.com/wp-content/uploads/2025/01/Investor-visa-and-residency-2025-feated-image-1024x536.jpg",
+    alt: "الاستثمار والإقامة في الخليج",
   },
- ];
+  {
+    src: "https://wrksolutions.com/images/Employers/Landing%20Pages/legal-image.jpg",
+    alt: "صور قانونية احترافية",
+  },
+  {
+    src: "https://th.bing.com/th/id/R.45f05d190e9a2a7c61bb951ed8a17a20?rik=sgctzdE%2b%2fCXN9w&riu=http%3a%2f%2fwww.ineqad.com%2fwp-content%2fuploads%2f2022%2f05%2fnewssection1.jpg&ehk=8N6exdRJV2wYNl2lB02piPZa9hk13XeFWcuDesw7SCE%3d&risl=&pid=ImgRaw&r=0",
+    alt: "القضاء السعودي",
+  },
+];
+// ====== نهاية روابط الصور ======
 
 export default function Home() {
   const { user, loading } = useAuth();
