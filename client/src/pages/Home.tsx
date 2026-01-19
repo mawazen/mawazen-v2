@@ -241,6 +241,25 @@ const pricingTeaser = [
   },
 ];
 
+ const homeGalleryImages = [
+   {
+     src: "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=70",
+     alt: "اجتماع عمل قانوني وتوقيع اتفاقية",
+   },
+   {
+     src: "https://images.unsplash.com/photo-1450101215322-bf5cd27642fc?auto=format&fit=crop&w=1200&q=70",
+     alt: "مستندات قانونية وتوقيع عقد",
+   },
+   {
+     src: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=70",
+     alt: "ميزان العدالة يعبر عن الثقة والاحترافية",
+   },
+   {
+     src: "https://images.unsplash.com/photo-1593113598332-cd59a93a2428?auto=format&fit=crop&w=1200&q=70",
+     alt: "أدوات عمل قانوني ومكتب منظم",
+   },
+ ];
+
 export default function Home() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -463,6 +482,54 @@ export default function Home() {
                 {/* Decorative Elements */}
                 <div className="absolute -top-4 -right-4 w-24 h-24 bg-gold/10 rounded-full blur-2xl" />
                 <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-gold/5 rounded-full blur-3xl" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 bg-background">
+        <div className="container">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-4 text-center lg:text-right">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/20 mb-4">
+                <Scale className="h-4 w-4 text-gold" />
+                <span className="text-sm text-gold">واجهة احترافية</span>
+              </div>
+              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">نظرة سريعة على تجربة موازين</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                صور تعكس هوية قانونية حديثة: تنظيم، ثقة، واحتراف — لتكون الصفحة الرئيسية أكثر حيوية وإقناعًا.
+              </p>
+            </div>
+
+            <div className="lg:col-span-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {homeGalleryImages.map((img, idx) => (
+                  <motion.div
+                    key={img.src}
+                    initial={{ opacity: 0, y: reducedMotion ? 0 : 12, scale: reducedMotion ? 1 : 0.98 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    viewport={{ once: true, amount: 0.35 }}
+                    transition={{
+                      duration: reducedMotion ? 0 : 0.6,
+                      delay: reducedMotion ? 0 : 0.04 * idx,
+                      ease: easePremium,
+                    }}
+                    className="group relative overflow-hidden rounded-2xl border border-border/50 bg-secondary/20"
+                  >
+                    <div className="aspect-[4/5]">
+                      <img
+                        src={img.src}
+                        alt={img.alt}
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+                      />
+                    </div>
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/5 to-transparent opacity-80" />
+                  </motion.div>
+                ))}
               </div>
             </div>
           </div>
