@@ -239,25 +239,49 @@ const pricingTeaser = [
     description: "للجهات الكبيرة التي تحتاج تخصيص أعلى وتوسع.",
     bullets: ["توسّع ومرونة", "حوكمة وصلاحيات", "دعم وإعداد"],
   },
-];
+ ];
 
  const homeGalleryImages = [
-   {
-     src: "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=1200&q=70",
-     alt: "اجتماع عمل قانوني وتوقيع اتفاقية",
-   },
-   {
-     src: "https://images.unsplash.com/photo-1450101215322-bf5cd27642fc?auto=format&fit=crop&w=1200&q=70",
-     alt: "مستندات قانونية وتوقيع عقد",
-   },
-   {
-     src: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=70",
-     alt: "ميزان العدالة يعبر عن الثقة والاحترافية",
-   },
-   {
-     src: "https://images.unsplash.com/photo-1593113598332-cd59a93a2428?auto=format&fit=crop&w=1200&q=70",
-     alt: "أدوات عمل قانوني ومكتب منظم",
-   },
+  {
+    src: "https://source.unsplash.com/lEu6RTAajvk/1200x1400",
+    alt: "مطرقة القاضي تعبر عن الحسم والعدالة",
+  },
+  {
+    src: "https://source.unsplash.com/VpqI6WX6sEs/1200x1400",
+    alt: "قلم ومستندات قانونية داخل مكتب",
+  },
+  {
+    src: "https://source.unsplash.com/aAZqXTcMn2A/1200x1400",
+    alt: "ميزان العدالة وكتاب قانون",
+  },
+  {
+    src: "https://source.unsplash.com/ioRcKUIiIdw/1200x1400",
+    alt: "كتب قانون مصطفة على رف",
+  },
+  {
+    src: "https://source.unsplash.com/EYCAOzQWfYA/1200x1400",
+    alt: "مكتبة قانونية تعكس العمق المعرفي",
+  },
+  {
+    src: "https://source.unsplash.com/iPheGw7_UaI/1200x1400",
+    alt: "توقيع عقد داخل اجتماع عمل",
+  },
+  {
+    src: "https://source.unsplash.com/U69WqLoFGD4/1200x1400",
+    alt: "كتاب قانون على مكتب خشبي",
+  },
+  {
+    src: "https://source.unsplash.com/3Vdf7wIJ7ds/1200x1400",
+    alt: "محامٍ في مكتب عمل احترافي",
+  },
+  {
+    src: "https://source.unsplash.com/NB1dUts3ROU/1200x1400",
+    alt: "مطرقة قاضٍ فوق كتاب",
+  },
+  {
+    src: "https://source.unsplash.com/T1BGrF77qZE/1200x1400",
+    alt: "تمثال العدالة يرمز للثقة والإنصاف",
+  },
  ];
 
 export default function Home() {
@@ -503,7 +527,7 @@ export default function Home() {
             </div>
 
             <div className="lg:col-span-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {homeGalleryImages.map((img, idx) => (
                   <motion.div
                     key={img.src}
