@@ -3,10 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import { useLocation } from "wouter";
 import { cubicBezier, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
-  Scale,
   Brain,
   FileText,
   Users,
@@ -290,6 +298,35 @@ export default function Home() {
   const reducedMotion = useReducedMotion();
   const easePremium = cubicBezier(0.22, 1, 0.36, 1);
 
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    const onSelect = () => {
+      setCarouselIndex(carouselApi.selectedScrollSnap());
+    };
+
+    onSelect();
+    carouselApi.on("select", onSelect);
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi]);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    if (reducedMotion) return;
+
+    const id = window.setInterval(() => {
+      carouselApi.scrollNext();
+    }, 5200);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [carouselApi, reducedMotion]);
+
   const fadeUpInitial = { opacity: 0, y: reducedMotion ? 0 : 18 };
   const fadeUpAnimate = { opacity: 1, y: 0 };
   const fadeUpTransition = {
@@ -514,49 +551,60 @@ export default function Home() {
 
       <section className="py-12 bg-background">
         <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-4 text-center lg:text-right">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/20 mb-4">
-                <Scale className="h-4 w-4 text-gold" />
-                <span className="text-sm text-gold">واجهة احترافية</span>
-              </div>
-              <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-3">نظرة سريعة على تجربة موازين</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                صور تعكس هوية قانونية حديثة: تنظيم، ثقة، واحتراف — لتكون الصفحة الرئيسية أكثر حيوية وإقناعًا.
-              </p>
-            </div>
-
-            <div className="lg:col-span-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {homeGalleryImages.map((img, idx) => (
-                  <motion.div
-                    key={img.src}
-                    initial={{ opacity: 0, y: reducedMotion ? 0 : 12, scale: reducedMotion ? 1 : 0.98 }}
-                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                    viewport={{ once: true, amount: 0.35 }}
-                    transition={{
-                      duration: reducedMotion ? 0 : 0.6,
-                      delay: reducedMotion ? 0 : 0.04 * idx,
-                      ease: easePremium,
-                    }}
-                    className="group relative overflow-hidden rounded-2xl border border-border/50 bg-secondary/20"
-                  >
-                    <div className="aspect-[4/5]">
-                      <img
-                        src={img.src}
-                        alt={img.alt}
-                        loading="lazy"
-                        decoding="async"
-                        referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-                      />
+          <motion.div
+            initial={{ opacity: 0, y: reducedMotion ? 0 : 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{
+              duration: reducedMotion ? 0 : 0.7,
+              ease: easePremium,
+            }}
+          >
+            <Carousel
+              setApi={(api) => setCarouselApi(api)}
+              opts={{ loop: true }}
+              className="w-full"
+            >
+              <CarouselContent className="ml-0">
+                {homeGalleryImages.map((img) => (
+                  <CarouselItem key={img.src} className="pl-0">
+                    <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-secondary/20">
+                      <div className="aspect-[21/9] sm:aspect-[16/7] lg:aspect-[16/6]">
+                        <img
+                          src={img.src}
+                          alt={img.alt}
+                          loading="lazy"
+                          decoding="async"
+                          referrerPolicy="no-referrer"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
                     </div>
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/5 to-transparent opacity-80" />
-                  </motion.div>
+                  </CarouselItem>
                 ))}
-              </div>
+              </CarouselContent>
+
+              <CarouselPrevious className="left-4 bg-background/70 backdrop-blur hover:bg-background" />
+              <CarouselNext className="right-4 bg-background/70 backdrop-blur hover:bg-background" />
+            </Carousel>
+
+            <div className="mt-4 flex items-center justify-center gap-2">
+              {homeGalleryImages.map((img, idx) => (
+                <button
+                  key={img.src}
+                  type="button"
+                  aria-label={`انتقل للشريحة ${idx + 1}`}
+                  onClick={() => carouselApi?.scrollTo(idx)}
+                  className={
+                    idx === carouselIndex
+                      ? "h-2.5 w-2.5 rounded-full bg-gold"
+                      : "h-2.5 w-2.5 rounded-full bg-foreground/20 hover:bg-foreground/35"
+                  }
+                />
+              ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
