@@ -295,6 +295,8 @@ export default function Home() {
   const reducedMotion = useReducedMotion();
   const easePremium = cubicBezier(0.22, 1, 0.36, 1);
 
+  console.log("Home Gallery Images:", homeGalleryImages); // للتحقق من الصور
+
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
