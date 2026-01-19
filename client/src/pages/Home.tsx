@@ -251,44 +251,36 @@ const pricingTeaser = [
 
  const homeGalleryImages = [
   {
-    src: "https://source.unsplash.com/lEu6RTAajvk/1200x1400",
-    alt: "مطرقة القاضي تعبر عن الحسم والعدالة",
+    src: "https://source.unsplash.com/gavel-justice-saudi/1200x1400",
+    alt: "مطرقة العدالة في محكمة سعودية",
   },
   {
-    src: "https://source.unsplash.com/VpqI6WX6sEs/1200x1400",
-    alt: "قلم ومستندات قانونية داخل مكتب",
+    src: "https://source.unsplash.com/saudi-arabia-courthouse/1200x1400",
+    alt: "مبنى محكمة في المملكة العربية السعودية",
   },
   {
-    src: "https://source.unsplash.com/aAZqXTcMn2A/1200x1400",
-    alt: "ميزان العدالة وكتاب قانون",
+    src: "https://source.unsplash.com/islamic-legal-documents/1200x1400",
+    alt: "مستندات قانونية شرعية سعودية",
   },
   {
-    src: "https://source.unsplash.com/ioRcKUIiIdw/1200x1400",
-    alt: "كتب قانون مصطفة على رف",
+    src: "https://source.unsplash.com/riyadh-skyline-law-office/1200x1400",
+    alt: "مكتب محاماة مع إطلالة على الرياض",
   },
   {
-    src: "https://source.unsplash.com/EYCAOzQWfYA/1200x1400",
-    alt: "مكتبة قانونية تعكس العمق المعرفي",
+    src: "https://source.unsplash.com/saudi-legal-library/1200x1400",
+    alt: "مكتبة قانونية سعودية متخصصة",
   },
   {
-    src: "https://source.unsplash.com/iPheGw7_UaI/1200x1400",
-    alt: "توقيع عقد داخل اجتماع عمل",
+    src: "https://source.unsplash.com/business-meeting-saudi/1200x1400",
+    alt: "اجتماع عمل مع محامين سعوديين",
   },
   {
-    src: "https://source.unsplash.com/U69WqLoFGD4/1200x1400",
-    alt: "كتاب قانون على مكتب خشبي",
+    src: "https://source.unsplash.com/king-abdullah-financial-district/1200x1400",
+    alt: "حي الملك عبدالله المالي - الرياض",
   },
   {
-    src: "https://source.unsplash.com/3Vdf7wIJ7ds/1200x1400",
-    alt: "محامٍ في مكتب عمل احترافي",
-  },
-  {
-    src: "https://source.unsplash.com/NB1dUts3ROU/1200x1400",
-    alt: "مطرقة قاضٍ فوق كتاب",
-  },
-  {
-    src: "https://source.unsplash.com/T1BGrF77qZE/1200x1400",
-    alt: "تمثال العدالة يرمز للثقة والإنصاف",
+    src: "https://source.unsplash.com/sharia-law-books/1200x1400",
+    alt: "كتب الشريعة والقانون السعودي",
   },
  ];
 
