@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development NODE_OPTIONS=--use-system-ca tsx watch server/_core/index.ts",
-    "build:server": "esbuild server/_core/index.ts server/scripts/importDataDumpV2.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "build": "vite build && esbuild server/_core/index.ts server/scripts/importDataDumpV2.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build:server": "esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js && esbuild server/scripts/importDataDumpV2.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/importDataDumpV2.js",
+    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js && esbuild server/scripts/importDataDumpV2.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/importDataDumpV2.js",
     "postinstall": "npm run build:server",
     "prestart": "npm run build:server",
     "start": "npm run build:server && drizzle-kit push && node dist/importDataDumpV2.js data_dump_v2.sql && cross-env NODE_ENV=production NODE_OPTIONS=--use-system-ca node dist/index.js",
