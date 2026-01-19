@@ -296,6 +296,7 @@ export default function Home() {
   const easePremium = cubicBezier(0.22, 1, 0.36, 1);
 
   console.log("Home Gallery Images:", homeGalleryImages); // للتحقق من الصور
+  console.log("First image src:", homeGalleryImages[0]?.src); // للتحقق من أول صورة
 
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -548,6 +549,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Gallery Carousel Section */}
       <section className="py-12 bg-background">
         <div className="container">
           <motion.div
@@ -559,48 +561,44 @@ export default function Home() {
               ease: easePremium,
             }}
           >
-            <Carousel
-              setApi={(api) => setCarouselApi(api)}
-              opts={{ loop: true }}
-              className="w-full"
-            >
-              <CarouselContent className="ml-0">
-                {homeGalleryImages.map((img) => (
-                  <CarouselItem key={img.src} className="pl-0">
-                    <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-secondary/20">
-                      <div className="aspect-[21/9] sm:aspect-[16/7] lg:aspect-[16/6]">
-                        <img
-                          src={img.src}
-                          alt={img.alt}
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+            <div className="relative w-full">
+              {/* Main Carousel */}
+              <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-secondary/20">
+                <div className="aspect-[21/9] sm:aspect-[16/7] lg:aspect-[16/6]">
+                  <img
+                    src={homeGalleryImages[0]?.src || "https://picsum.photos/seed/default/1200/600.jpg"}
+                    alt={homeGalleryImages[0]?.alt || "صورة افتراضية"}
+                    className="main-carousel-image h-full w-full object-cover"
+                  />
+                </div>
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+              </div>
+              
+              {/* Thumbnail Navigation */}
+              <div className="mt-6 grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                {homeGalleryImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const mainImage = document.querySelector('.main-carousel-image') as HTMLImageElement;
+                      if (mainImage) {
+                        mainImage.src = img.src;
+                        mainImage.alt = img.alt;
+                      }
+                    }}
+                    className="relative overflow-hidden rounded-lg border border-border/30 hover:border-gold/50 transition-colors"
+                  >
+                    <div className="aspect-[16/9]">
+                      <img
+                        src={img.src}
+                        alt={img.alt}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
-                  </CarouselItem>
+                  </button>
                 ))}
-              </CarouselContent>
-
-              <CarouselPrevious className="left-4 bg-background/70 backdrop-blur hover:bg-background" />
-              <CarouselNext className="right-4 bg-background/70 backdrop-blur hover:bg-background" />
-            </Carousel>
-
-            <div className="mt-4 flex items-center justify-center gap-2">
-              {homeGalleryImages.map((img, idx) => (
-                <button
-                  key={img.src}
-                  type="button"
-                  aria-label={`انتقل للشريحة ${idx + 1}`}
-                  onClick={() => carouselApi?.scrollTo(idx)}
-                  className={
-                    idx === carouselIndex
-                      ? "h-2.5 w-2.5 rounded-full bg-gold"
-                      : "h-2.5 w-2.5 rounded-full bg-foreground/20 hover:bg-foreground/35"
-                  }
-                />
-              ))}
+              </div>
             </div>
           </motion.div>
         </div>
