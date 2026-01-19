@@ -251,35 +251,35 @@ const pricingTeaser = [
 
  const homeGalleryImages = [
   {
-    src: "https://source.unsplash.com/gavel-justice-saudi/1200x1400",
+    src: "https://images.unsplash.com/photo-1589829545856-d3051e1ea496?w=1200&h=1400&fit=crop",
     alt: "مطرقة العدالة في محكمة سعودية",
   },
   {
-    src: "https://source.unsplash.com/saudi-arabia-courthouse/1200x1400",
-    alt: "مبنى محكمة في المملكة العربية السعودية",
+    src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=1400&fit=crop",
+    alt: "مكتب محاماة احترافي",
   },
   {
-    src: "https://source.unsplash.com/islamic-legal-documents/1200x1400",
+    src: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=1200&h=1400&fit=crop",
     alt: "مستندات قانونية شرعية سعودية",
   },
   {
-    src: "https://source.unsplash.com/riyadh-skyline-law-office/1200x1400",
+    src: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=1400&fit=crop",
     alt: "مكتب محاماة مع إطلالة على الرياض",
   },
   {
-    src: "https://source.unsplash.com/saudi-legal-library/1200x1400",
+    src: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200&h=1400&fit=crop",
     alt: "مكتبة قانونية سعودية متخصصة",
   },
   {
-    src: "https://source.unsplash.com/business-meeting-saudi/1200x1400",
+    src: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=1400&fit=crop",
     alt: "اجتماع عمل مع محامين سعوديين",
   },
   {
-    src: "https://source.unsplash.com/king-abdullah-financial-district/1200x1400",
-    alt: "حي الملك عبدالله المالي - الرياض",
+    src: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=1400&fit=crop",
+    alt: "مبنى حكومي سعودي",
   },
   {
-    src: "https://source.unsplash.com/sharia-law-books/1200x1400",
+    src: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=1200&h=1400&fit=crop",
     alt: "كتب الشريعة والقانون السعودي",
   },
  ];
