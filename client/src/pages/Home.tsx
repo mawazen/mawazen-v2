@@ -251,36 +251,28 @@ const pricingTeaser = [
 
  const homeGalleryImages = [
   {
-    src: "https://images.unsplash.com/photo-1589829545856-d3051e1ea496?w=1200&h=1400&fit=crop",
-    alt: "مطرقة العدالة في محكمة سعودية",
+    src: "https://picsum.photos/seed/saudi-law1/1200/600.jpg",
+    alt: "مكتب محاماة سعودي احترافي",
   },
   {
-    src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=1400&fit=crop",
-    alt: "مكتب محاماة احترافي",
+    src: "https://picsum.photos/seed/saudi-court2/1200/600.jpg",
+    alt: "قاعة محكمة في المملكة",
   },
   {
-    src: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=1200&h=1400&fit=crop",
-    alt: "مستندات قانونية شرعية سعودية",
+    src: "https://picsum.photos/seed/legal-docs3/1200/600.jpg",
+    alt: "مستندات قانونية سعودية",
   },
   {
-    src: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=1400&fit=crop",
-    alt: "مكتب محاماة مع إطلالة على الرياض",
+    src: "https://picsum.photos/seed/riyadh-office4/1200/600.jpg",
+    alt: "مكتب محاماة في الرياض",
   },
   {
-    src: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200&h=1400&fit=crop",
-    alt: "مكتبة قانونية سعودية متخصصة",
+    src: "https://picsum.photos/seed/legal-library5/1200/600.jpg",
+    alt: "مكتبة قانونية متخصصة",
   },
   {
-    src: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=1400&fit=crop",
-    alt: "اجتماع عمل مع محامين سعوديين",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=1400&fit=crop",
-    alt: "مبنى حكومي سعودي",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1589998059171-988d887df646?w=1200&h=1400&fit=crop",
-    alt: "كتب الشريعة والقانون السعودي",
+    src: "https://picsum.photos/seed/business-meeting6/1200/600.jpg",
+    alt: "اجتماع عمل قانوني",
   },
  ];
 
@@ -567,7 +559,6 @@ export default function Home() {
                           alt={img.alt}
                           loading="lazy"
                           decoding="async"
-                          referrerPolicy="no-referrer"
                           className="h-full w-full object-cover"
                         />
                       </div>
