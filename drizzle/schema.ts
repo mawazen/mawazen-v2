@@ -29,7 +29,7 @@ export const users = mysqlTable("users", {
   avatarUrl: text("avatarUrl"),
   specialty: varchar("specialty", { length: 255 }),
   barNumber: varchar("barNumber", { length: 100 }),
-  referralCode: varchar("referralCode", { length: 24 }).unique(),
+  referralCode: varchar("referralCode", { length: 24 }),
   subscriptionEndsAt: timestamp("subscriptionEndsAt"),
   isActive: boolean("isActive").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

@@ -303,15 +303,15 @@ async function ensureSchemaInitialized(db: ReturnType<typeof drizzle>) {
       `);
       const referralRows = (referralColCheck as any)?.[0] ?? (referralColCheck as any)?.rows ?? referralColCheck;
       const referralCntRaw = Array.isArray(referralRows) ? referralRows[0]?.cnt : (referralRows as any)?.cnt;
-      const referralCnt = typeof referralCntRaw === "number" ? referralCntRaw : Number(referralCntRaw ?? 0);
+      const referralCnt = Number(referralCntRaw ?? 0);
       if (!Number.isFinite(referralCnt) || referralCnt <= 0) {
         await db.execute(sql`
           ALTER TABLE users
-          ADD COLUMN referralCode VARCHAR(24) NULL UNIQUE
+          ADD COLUMN referralCode VARCHAR(24) NULL
         `);
       }
 
-      const endsAtColCheck: any = await db.execute(sql`
+      const endsAtColCheck = await db.execute(sql`
         SELECT COUNT(*) AS cnt
         FROM information_schema.COLUMNS
         WHERE TABLE_SCHEMA = DATABASE()
