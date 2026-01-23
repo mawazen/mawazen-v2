@@ -1,8 +1,13 @@
 {
   "name": "mawazin-legal-assistant",
+  "description": "Mawazen Legal Assistant",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "author": {
+    "name": "Mawazen",
+    "email": "support@mawazenco.com"
+  },
   "scripts": {
     "dev": "cross-env NODE_ENV=development NODE_OPTIONS=--use-system-ca tsx watch server/_core/index.ts",
     "build:server": "esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js && esbuild server/scripts/importDataDumpV2.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/importDataDumpV2.js",
@@ -12,8 +17,8 @@
     "start": "npm run build:server && drizzle-kit push && node dist/importDataDumpV2.js data_dump_v2.sql && cross-env NODE_ENV=production NODE_OPTIONS=--use-system-ca node dist/index.js",
     "desktop:dev": "cross-env MAWAZEN_DESKTOP_URL=http://localhost:5173 electron desktop/main.cjs",
     "desktop:dev:prod": "electron desktop/main.cjs",
-    "desktop:dist:win": "electron-builder --win --x64",
-    "desktop:dist:linux": "electron-builder --linux --x64",
+    "desktop:dist:win": "electron-builder --publish=never --win --x64",
+    "desktop:dist:linux": "electron-builder --publish=never --linux --x64",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
@@ -140,6 +145,7 @@
         "AppImage",
         "deb"
       ],
+      "maintainer": "Mawazen <support@mawazenco.com>",
       "category": "Office"
     }
   },
