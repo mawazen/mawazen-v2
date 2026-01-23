@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Scale,
+  Copy,
   ArrowUpLeft,
   ArrowDownLeft,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 function StatCard({
   title,
@@ -132,6 +134,10 @@ export default function Dashboard() {
   const { data: recentCases, isLoading: casesLoading } =
     trpc.dashboard.recentCases.useQuery();
 
+  const { data: subscription, isLoading: subscriptionLoading } = trpc.subscriptions.me.useQuery(undefined, {
+    staleTime: 30_000,
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -153,6 +159,44 @@ export default function Dashboard() {
             المساعد الذكي
           </Button>
         </div>
+
+        <Card className="card-gold">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">رمز الإحالة الخاص بك</p>
+                {subscriptionLoading ? (
+                  <Skeleton className="h-6 w-32" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground font-mono">
+                    {subscription?.referralCode ?? "—"}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  شارك الرمز مع شخص آخر. عند اشتراكه السنوي باستخدامه تحصل على شهر مجاني.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!subscription?.referralCode}
+                onClick={async () => {
+                  const code = subscription?.referralCode;
+                  if (!code) return;
+                  try {
+                    await navigator.clipboard.writeText(code);
+                    toast.success("تم نسخ رمز الإحالة");
+                  } catch {
+                    toast.error("تعذر نسخ الرمز");
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4 ml-2" />
+                نسخ
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
