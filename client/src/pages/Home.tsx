@@ -38,7 +38,10 @@ import {
   Quote,
 } from "lucide-react";
 
-const DESKTOP_RELEASES_URL = "https://github.com/mawazen/mawazen-v2/releases/latest";
+const DESKTOP_WINDOWS_DOWNLOAD_URL =
+  "https://github.com/mawazen/mawazen-v2/releases/latest/download/Mawazen-Windows-Setup.exe";
+const DESKTOP_LINUX_APPIMAGE_DOWNLOAD_URL =
+  "https://github.com/mawazen/mawazen-v2/releases/latest/download/Mawazen-Linux.AppImage";
 
 const features = [
   {
@@ -457,7 +460,7 @@ export default function Home() {
                   className="text-lg px-8 py-6 border-gold/30 hover:border-gold/50 hover:bg-gold/5"
                   asChild
                 >
-                  <a href={DESKTOP_RELEASES_URL} target="_blank" rel="noreferrer">
+                  <a href={DESKTOP_WINDOWS_DOWNLOAD_URL} download>
                     تحميل نسخة ويندوز
                   </a>
                 </Button>
@@ -466,7 +469,7 @@ export default function Home() {
                   className="text-lg px-8 py-6 border-gold/30 hover:border-gold/50 hover:bg-gold/5"
                   asChild
                 >
-                  <a href={DESKTOP_RELEASES_URL} target="_blank" rel="noreferrer">
+                  <a href={DESKTOP_LINUX_APPIMAGE_DOWNLOAD_URL} download>
                     تحميل نسخة لينكس/أوبونتو
                   </a>
                 </Button>

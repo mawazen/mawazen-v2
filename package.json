@@ -138,13 +138,15 @@
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "artifactName": "Mawazen-Windows-Setup.${ext}"
     },
     "linux": {
       "target": [
         "AppImage",
         "deb"
       ],
+      "artifactName": "Mawazen-Linux.${ext}",
       "maintainer": "Mawazen <support@mawazenco.com>",
       "category": "Office"
     }
