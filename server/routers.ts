@@ -61,7 +61,11 @@ async function assertToolAccess(params: {
 }) {
   const { ctx, tool } = params;
 
-  if (ctx.user && ctx.user.isActive === false) {
+  const endsAtRaw = (ctx.user as any)?.subscriptionEndsAt;
+  const endsAt = endsAtRaw ? new Date(endsAtRaw) : null;
+  const isExpired = Boolean(endsAt && Number.isFinite(endsAt.getTime()) && endsAt.getTime() <= Date.now());
+
+  if (ctx.user && (ctx.user.isActive === false || isExpired)) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message:
@@ -971,8 +975,15 @@ export const appRouter = router({
         inheritanceEstimate: await db.getToolUsageCount({ organizationId, tool: "inheritanceEstimate" }),
       };
 
+      const endsAtRaw = (ctx.user as any)?.subscriptionEndsAt;
+      const endsAt = endsAtRaw ? new Date(endsAtRaw) : null;
+      const isExpired = Boolean(endsAt && Number.isFinite(endsAt.getTime()) && endsAt.getTime() <= Date.now());
+      const isActive = Boolean(ctx.user.isActive) && !isExpired;
+
       return {
-        isActive: ctx.user.isActive,
+        isActive,
+        subscriptionEndsAt: endsAt,
+        referralCode: (ctx.user as any)?.referralCode ?? null,
         organization: {
           id: organizationId,
           plan,
@@ -1066,6 +1077,8 @@ export const appRouter = router({
         z.object({
           plan: z.enum(["individual", "law_firm", "enterprise"]),
           paymentId: z.string().min(10).max(128),
+          promoCode: z.string().max(64).optional().nullable(),
+          referralCode: z.string().max(24).optional().nullable(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -1150,6 +1163,12 @@ export const appRouter = router({
           });
         }
 
+        const paymentRecorded = await db.createSubscriptionPayment({
+          userId: ctx.user.id,
+          paymentId: payment.id,
+          plan: input.plan,
+        } as any);
+
         const seatLimit = input.plan === "enterprise" ? 15 : input.plan === "law_firm" ? 5 : 1;
 
         const organizationId = await db.ensureUserHasOrganization({
@@ -1171,10 +1190,48 @@ export const appRouter = router({
           seatLimit,
         });
 
+        if (paymentRecorded) {
+          await db.extendUserSubscription({ userId: ctx.user.id, extendDays: 365 });
+
+          const configuredPromoRaw = await db.getAppSetting("promoCode");
+          const configuredPromo = typeof configuredPromoRaw === "string" ? configuredPromoRaw.trim().toUpperCase() : "";
+          const requestedPromo = (input.promoCode ?? "").trim().toUpperCase();
+
+          if (requestedPromo && configuredPromo && requestedPromo === configuredPromo) {
+            const alreadyUsedPromo = await db.hasPromoRedemptionForUser(ctx.user.id);
+            if (!alreadyUsedPromo) {
+              await db.createPromoRedemption({
+                userId: ctx.user.id,
+                paymentId: payment.id,
+                promoCode: requestedPromo,
+              } as any);
+              await db.extendUserSubscription({ userId: ctx.user.id, extendDays: 30 });
+            }
+          }
+
+          const requestedReferral = (input.referralCode ?? "").trim().toUpperCase();
+          if (requestedReferral) {
+            const referrer = await db.getUserByReferralCode(requestedReferral);
+            const alreadyUsedReferral = await db.hasReferralRedemptionForReferredUser(ctx.user.id);
+            if (referrer && referrer.id && Number(referrer.id) !== Number(ctx.user.id) && !alreadyUsedReferral) {
+              await db.createReferralRedemption({
+                referrerUserId: Number(referrer.id),
+                referredUserId: ctx.user.id,
+                paymentId: payment.id,
+                referralCode: requestedReferral,
+              } as any);
+              await db.extendUserSubscription({ userId: Number(referrer.id), extendDays: 30 });
+            }
+          }
+        }
+
         return {
           success: true as const,
           plan: input.plan,
           paymentId: payment.id,
+          applied: {
+            paymentRecorded,
+          },
         };
       }),
   }),
@@ -2638,6 +2695,24 @@ export const appRouter = router({
         totalOrganizations,
         usersByPlan: byPlan,
       } as const;
+    }),
+
+    promoCode: router({
+      get: ownerProcedure.query(async () => {
+        const value = await db.getAppSetting("promoCode");
+        return { promoCode: typeof value === "string" ? value : null } as const;
+      }),
+
+      set: ownerProcedure
+        .input(z.object({ promoCode: z.string().max(64).optional().nullable() }))
+        .mutation(async ({ input }) => {
+          const next = typeof input.promoCode === "string" ? input.promoCode.trim().toUpperCase() : "";
+          await db.setAppSetting({
+            key: "promoCode",
+            value: next ? next : null,
+          } as any);
+          return { success: true as const, promoCode: next ? next : null };
+        }),
     }),
 
     stats: ownerProcedure

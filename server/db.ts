@@ -1,10 +1,19 @@
 import { eq, desc, and, like, or, sql, gte, lte, count, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import crypto from "crypto";
 import {
   organizations,
   InsertOrganization,
   InsertUser,
   users,
+  appSettings,
+  InsertAppSetting,
+  referralRedemptions,
+  InsertReferralRedemption,
+  promoRedemptions,
+  InsertPromoRedemption,
+  subscriptionPayments,
+  InsertSubscriptionPayment,
   clients,
   cases,
   hearings,
@@ -81,6 +90,10 @@ const inMemoryToolUsage = new Map<string, any>();
 const inMemoryLegalDocuments = new Map<number, any>();
 const inMemoryLegalChunks = new Map<number, any>();
 const inMemoryLegalRuns = new Map<number, any>();
+const inMemoryAppSettings = new Map<string, any>();
+const inMemoryReferralRedemptions = new Map<number, any>();
+const inMemoryPromoRedemptions = new Map<number, any>();
+const inMemorySubscriptionPayments = new Map<number, any>();
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -90,12 +103,161 @@ export async function getDb() {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
     }
-
   }
   if (_db) {
     await ensureSchemaInitialized(_db);
   }
   return _db;
+}
+
+export async function getUserByReferralCode(referralCode: string) {
+  const code = (referralCode ?? "").trim().toUpperCase();
+  if (!code) return null;
+  const db = await getDb();
+  if (!db) {
+    for (const u of inMemoryUsers.values()) {
+      if (String(u?.referralCode ?? "").trim().toUpperCase() === code) return u;
+    }
+    return null;
+  }
+  const rows = await db.select().from(users).where(eq(users.referralCode, code as any)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getAppSetting(key: string) {
+  const k = (key ?? "").trim();
+  if (!k) return null;
+  const db = await getDb();
+  if (!db) {
+    const row = inMemoryAppSettings.get(k);
+    return row?.value ?? null;
+  }
+  const rows = await db.select().from(appSettings).where(eq(appSettings.key, k as any)).limit(1);
+  return (rows[0] as any)?.value ?? null;
+}
+
+export async function setAppSetting(setting: InsertAppSetting) {
+  const k = (setting.key ?? "").trim();
+  const v = setting.value ?? null;
+  if (!k) throw new Error("Invalid setting key");
+  const db = await getDb();
+  if (!db) {
+    inMemoryAppSettings.set(k, { key: k, value: v, updatedAt: new Date(), createdAt: new Date() });
+    return;
+  }
+  await db.insert(appSettings).values({ key: k, value: v } as any).onDuplicateKeyUpdate({
+    set: { value: v } as any,
+  });
+}
+
+export async function createSubscriptionPayment(row: InsertSubscriptionPayment): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    const existing = Array.from(inMemorySubscriptionPayments.values()).find((p) => p.paymentId === row.paymentId);
+    if (existing) return false;
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    inMemorySubscriptionPayments.set(id, { id, ...row, createdAt: new Date() });
+    return true;
+  }
+
+  try {
+    await db.insert(subscriptionPayments).values(row as any);
+    return true;
+  } catch (e: any) {
+    const msg = String(e?.message ?? "");
+    if (msg.toLowerCase().includes("duplicate") || msg.toLowerCase().includes("unique")) return false;
+    throw e;
+  }
+}
+
+export async function hasPromoRedemptionForUser(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    return Array.from(inMemoryPromoRedemptions.values()).some((r) => Number(r.userId) === Number(userId));
+  }
+  const rows = await db
+    .select({ id: promoRedemptions.id })
+    .from(promoRedemptions)
+    .where(eq(promoRedemptions.userId, userId as any))
+    .limit(1);
+  return rows.length > 0;
+}
+
+export async function createPromoRedemption(row: InsertPromoRedemption) {
+  const db = await getDb();
+  if (!db) {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    inMemoryPromoRedemptions.set(id, { id, ...row, createdAt: new Date() });
+    return id;
+  }
+  const res = await db.insert(promoRedemptions).values(row as any);
+  return res[0].insertId;
+}
+
+export async function hasReferralRedemptionForReferredUser(referredUserId: number) {
+  const db = await getDb();
+  if (!db) {
+    return Array.from(inMemoryReferralRedemptions.values()).some(
+      (r) => Number(r.referredUserId) === Number(referredUserId)
+    );
+  }
+  const rows = await db
+    .select({ id: referralRedemptions.id })
+    .from(referralRedemptions)
+    .where(eq(referralRedemptions.referredUserId, referredUserId as any))
+    .limit(1);
+  return rows.length > 0;
+}
+
+export async function createReferralRedemption(row: InsertReferralRedemption) {
+  const db = await getDb();
+  if (!db) {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    inMemoryReferralRedemptions.set(id, { id, ...row, createdAt: new Date() });
+    return id;
+  }
+  const res = await db.insert(referralRedemptions).values(row as any);
+  return res[0].insertId;
+}
+
+export function addDays(date: Date, days: number) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+export async function extendUserSubscription(params: { userId: number; extendDays: number }) {
+  const db = await getDb();
+  const now = new Date();
+
+  if (!db) {
+    for (const [openId, u] of inMemoryUsers.entries()) {
+      if (u?.id === params.userId) {
+        const base = u.subscriptionEndsAt ? new Date(u.subscriptionEndsAt) : now;
+        const base2 = base.getTime() > now.getTime() ? base : now;
+        inMemoryUsers.set(openId, {
+          ...u,
+          subscriptionEndsAt: addDays(base2, params.extendDays),
+          isActive: true,
+          updatedAt: new Date(),
+        });
+        return;
+      }
+    }
+    throw new Error("User not found");
+  }
+
+  const current = await db
+    .select({ id: users.id, subscriptionEndsAt: (users as any).subscriptionEndsAt })
+    .from(users)
+    .where(eq(users.id, params.userId as any))
+    .limit(1);
+  const cur = (current[0] as any)?.subscriptionEndsAt ? new Date((current[0] as any).subscriptionEndsAt) : now;
+  const base = cur.getTime() > now.getTime() ? cur : now;
+  const next = addDays(base, params.extendDays);
+
+  await db
+    .update(users)
+    .set({ subscriptionEndsAt: next as any, isActive: true } as any)
+    .where(eq(users.id, params.userId as any));
 }
 
 async function ensureSchemaInitialized(db: ReturnType<typeof drizzle>) {
@@ -131,6 +293,80 @@ async function ensureSchemaInitialized(db: ReturnType<typeof drizzle>) {
           ADD COLUMN organizationId INT NULL
         `);
       }
+
+      const referralColCheck: any = await db.execute(sql`
+        SELECT COUNT(*) AS cnt
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'users'
+          AND COLUMN_NAME = 'referralCode'
+      `);
+      const referralRows = (referralColCheck as any)?.[0] ?? (referralColCheck as any)?.rows ?? referralColCheck;
+      const referralCntRaw = Array.isArray(referralRows) ? referralRows[0]?.cnt : (referralRows as any)?.cnt;
+      const referralCnt = typeof referralCntRaw === "number" ? referralCntRaw : Number(referralCntRaw ?? 0);
+      if (!Number.isFinite(referralCnt) || referralCnt <= 0) {
+        await db.execute(sql`
+          ALTER TABLE users
+          ADD COLUMN referralCode VARCHAR(24) NULL UNIQUE
+        `);
+      }
+
+      const endsAtColCheck: any = await db.execute(sql`
+        SELECT COUNT(*) AS cnt
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'users'
+          AND COLUMN_NAME = 'subscriptionEndsAt'
+      `);
+      const endsAtRows = (endsAtColCheck as any)?.[0] ?? (endsAtColCheck as any)?.rows ?? endsAtColCheck;
+      const endsAtCntRaw = Array.isArray(endsAtRows) ? endsAtRows[0]?.cnt : (endsAtRows as any)?.cnt;
+      const endsAtCnt = typeof endsAtCntRaw === "number" ? endsAtCntRaw : Number(endsAtCntRaw ?? 0);
+      if (!Number.isFinite(endsAtCnt) || endsAtCnt <= 0) {
+        await db.execute(sql`
+          ALTER TABLE users
+          ADD COLUMN subscriptionEndsAt TIMESTAMP NULL
+        `);
+      }
+
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS appSettings (
+          \`key\` VARCHAR(64) PRIMARY KEY,
+          value TEXT NULL,
+          updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS referralRedemptions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          referrerUserId INT NOT NULL,
+          referredUserId INT NOT NULL,
+          paymentId VARCHAR(128) NOT NULL UNIQUE,
+          referralCode VARCHAR(24) NOT NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS promoRedemptions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          userId INT NOT NULL,
+          paymentId VARCHAR(128) NOT NULL UNIQUE,
+          promoCode VARCHAR(64) NOT NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS subscriptionPayments (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          userId INT NOT NULL,
+          paymentId VARCHAR(128) NOT NULL UNIQUE,
+          plan ENUM('individual','law_firm','enterprise') NOT NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
 
       await db.execute(sql`
         CREATE TABLE IF NOT EXISTS serviceCatalog (
@@ -1162,9 +1398,24 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
     // Use in-memory storage for local development
     const existingUser = inMemoryUsers.get(user.openId);
+    const ensureReferralCode = () => {
+      const existing = existingUser?.referralCode;
+      if (typeof existing === "string" && existing.trim()) return existing;
+      const buf = crypto.randomBytes(8);
+      const code = buf
+        .toString("base64")
+        .replaceAll("+", "A")
+        .replaceAll("/", "B")
+        .replaceAll("=", "C")
+        .toUpperCase()
+        .slice(0, 10);
+      return code;
+    };
+    const referralCode = user.referralCode ?? ensureReferralCode();
     const updatedUser = {
       ...existingUser,
       ...user,
+      referralCode,
       id: existingUser?.id || Date.now(),
       createdAt: existingUser?.createdAt || new Date(),
       lastSignedIn: user.lastSignedIn || new Date(),
@@ -1178,6 +1429,46 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       openId: user.openId,
     };
     const updateSet: Record<string, unknown> = {};
+
+    const normalizeReferralCode = (v: unknown) => {
+      if (v === undefined) return undefined;
+      if (v === null) return null;
+      if (typeof v !== "string") return String(v);
+      const t = v.trim();
+      return t ? t.toUpperCase() : null;
+    };
+
+    const ensureReferralCode = async () => {
+      const existing = await db
+        .select({ referralCode: users.referralCode })
+        .from(users)
+        .where(eq(users.openId, user.openId))
+        .limit(1);
+
+      const existingCode = existing[0]?.referralCode;
+      if (typeof existingCode === "string" && existingCode.trim()) return existingCode;
+
+      for (let i = 0; i < 10; i++) {
+        const buf = crypto.randomBytes(8);
+        const code = buf
+          .toString("base64")
+          .replaceAll("+", "A")
+          .replaceAll("/", "B")
+          .replaceAll("=", "C")
+          .toUpperCase()
+          .slice(0, 10);
+
+        const dup = await db
+          .select({ openId: users.openId })
+          .from(users)
+          .where(eq(users.referralCode, code as any))
+          .limit(1);
+
+        if (dup.length === 0) return code;
+      }
+
+      throw new Error("FAILED_TO_GENERATE_REFERRAL_CODE");
+    };
 
     const textFields = ["name", "email", "loginMethod", "phone", "avatarUrl", "specialty", "barNumber"] as const;
     type TextField = (typeof textFields)[number];
@@ -1206,6 +1497,21 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       const normalized = user.organizationId ?? null;
       values.organizationId = normalized as any;
       updateSet.organizationId = normalized;
+    }
+
+    if (user.subscriptionEndsAt !== undefined) {
+      const normalized = user.subscriptionEndsAt ?? null;
+      (values as any).subscriptionEndsAt = normalized as any;
+      updateSet.subscriptionEndsAt = normalized;
+    }
+
+    const desiredReferralCode = normalizeReferralCode((user as any).referralCode);
+    const finalReferralCode = desiredReferralCode ?? (await ensureReferralCode());
+    (values as any).referralCode = finalReferralCode as any;
+    if (desiredReferralCode !== undefined) {
+      updateSet.referralCode = desiredReferralCode;
+    } else {
+      updateSet.referralCode = finalReferralCode;
     }
 
     if (user.accountType !== undefined) {

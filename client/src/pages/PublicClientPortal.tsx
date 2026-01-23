@@ -12,6 +12,7 @@ import {
   Receipt,
   Shield,
   Wallet,
+  Printer,
 } from "lucide-react";
 import { useMemo } from "react";
 import { useRoute } from "wouter";
@@ -72,6 +73,15 @@ export default function PublicClientPortal() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="border-gold/30 hover:border-gold/50"
+                onClick={() => window.print()}
+                data-print-hide
+              >
+                <Printer className="h-4 w-4 ml-2" />
+                طباعة
+              </Button>
               <Shield className="h-6 w-6 text-gold opacity-70" />
             </div>
           </div>

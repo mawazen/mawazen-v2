@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
+  Printer,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -46,12 +47,28 @@ export default function ClientPortal() {
       {/* Header */}
       <div className="bg-secondary/50 border-b border-border/50 py-8">
         <div className="container">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            مرحباً {user?.name || "العميل"}
-          </h1>
-          <p className="text-muted-foreground">
-            بوابة العميل - متابعة قضاياك والفواتير
-          </p>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                مرحباً {user?.name || "العميل"}
+              </h1>
+              <p className="text-muted-foreground">
+                بوابة العميل - متابعة قضاياك والفواتير
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2" data-print-hide>
+              <Button
+                variant="outline"
+                className="border-gold/30 hover:border-gold/50"
+                onClick={() => window.print()}
+                data-print-hide
+              >
+                <Printer className="h-4 w-4 ml-2" />
+                طباعة
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

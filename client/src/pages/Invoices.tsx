@@ -34,6 +34,7 @@ import {
   AlertCircle,
   CheckCircle2,
   CreditCard,
+  Printer,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -145,13 +146,24 @@ export default function Invoices() {
             </p>
           </div>
 
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="btn-gold">
-                <Plus className="h-4 w-4 ml-2" />
-                فاتورة جديدة
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2" data-print-hide>
+            <Button
+              variant="outline"
+              className="border-gold/30 hover:border-gold/50"
+              onClick={() => window.print()}
+              data-print-hide
+            >
+              <Printer className="h-4 w-4 ml-2" />
+              طباعة
+            </Button>
+
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button className="btn-gold">
+                  <Plus className="h-4 w-4 ml-2" />
+                  فاتورة جديدة
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>إنشاء فاتورة جديدة</DialogTitle>
@@ -263,8 +275,9 @@ export default function Invoices() {
                   {createInvoice.isPending ? "جاري الإنشاء..." : "إنشاء الفاتورة"}
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Stats */}

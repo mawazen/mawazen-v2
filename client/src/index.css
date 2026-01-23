@@ -709,3 +709,18 @@ input[type="email"] {
   direction: ltr;
   text-align: right;
 }
+
+@media print {
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+}

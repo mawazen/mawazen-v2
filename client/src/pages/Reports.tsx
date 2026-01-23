@@ -11,6 +11,7 @@ import {
   Users,
   FileText,
   DollarSign,
+  Printer,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useState } from "react";
@@ -102,14 +103,28 @@ export default function Reports() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <BarChart3 className="h-8 w-8 text-gold" />
-            التقارير والتحليلات
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            تقارير شاملة عن أداء مكتبك القانوني
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-gold" />
+              التقارير والتحليلات
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              تقارير شاملة عن أداء مكتبك القانوني
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2" data-print-hide>
+            <Button
+              variant="outline"
+              className="border-gold/30 hover:border-gold/50"
+              onClick={() => window.print()}
+              data-print-hide
+            >
+              <Printer className="h-4 w-4 ml-2" />
+              طباعة
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

@@ -225,7 +225,7 @@ function DashboardLayoutContent({
 
   return (
     <>
-      <div className="relative" ref={sidebarRef}>
+      <div className="relative" ref={sidebarRef} data-print-hide>
         <Sidebar
           collapsible="icon"
           className="border-l-0 border-r border-border/50"
@@ -343,7 +343,7 @@ function DashboardLayoutContent({
 
       <SidebarInset className="bg-background">
         {/* Top Header Bar */}
-        <div className="flex border-b border-border/50 h-16 items-center justify-between bg-card/50 px-4 backdrop-blur-sm sticky top-0 z-40">
+        <div className="flex border-b border-border/50 h-16 items-center justify-between bg-card/50 px-4 backdrop-blur-sm sticky top-0 z-40" data-print-hide>
           <div className="flex items-center gap-3">
             {isMobile && (
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />

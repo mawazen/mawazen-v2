@@ -29,6 +29,8 @@ export const users = mysqlTable("users", {
   avatarUrl: text("avatarUrl"),
   specialty: varchar("specialty", { length: 255 }),
   barNumber: varchar("barNumber", { length: 100 }),
+  referralCode: varchar("referralCode", { length: 24 }).unique(),
+  subscriptionEndsAt: timestamp("subscriptionEndsAt"),
   isActive: boolean("isActive").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -37,6 +39,47 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+export const appSettings = mysqlTable("appSettings", {
+  key: varchar("key", { length: 64 }).primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AppSetting = typeof appSettings.$inferSelect;
+export type InsertAppSetting = typeof appSettings.$inferInsert;
+export const referralRedemptions = mysqlTable("referralRedemptions", {
+  id: int("id").autoincrement().primaryKey(),
+  referrerUserId: int("referrerUserId").notNull(),
+  referredUserId: int("referredUserId").notNull(),
+  paymentId: varchar("paymentId", { length: 128 }).notNull().unique(),
+  referralCode: varchar("referralCode", { length: 24 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReferralRedemption = typeof referralRedemptions.$inferSelect;
+export type InsertReferralRedemption = typeof referralRedemptions.$inferInsert;
+export const promoRedemptions = mysqlTable("promoRedemptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  paymentId: varchar("paymentId", { length: 128 }).notNull().unique(),
+  promoCode: varchar("promoCode", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PromoRedemption = typeof promoRedemptions.$inferSelect;
+export type InsertPromoRedemption = typeof promoRedemptions.$inferInsert;
+
+export const subscriptionPayments = mysqlTable("subscriptionPayments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  paymentId: varchar("paymentId", { length: 128 }).notNull().unique(),
+  plan: mysqlEnum("plan", ["individual", "law_firm", "enterprise"]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SubscriptionPayment = typeof subscriptionPayments.$inferSelect;
+export type InsertSubscriptionPayment = typeof subscriptionPayments.$inferInsert;
 
 // ==================== CLIENTS ====================
 export const clients = mysqlTable("clients", {

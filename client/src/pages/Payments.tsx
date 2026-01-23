@@ -103,6 +103,8 @@ export default function Payments() {
     "card" | "applepay" | "tabby" | "tamara" | "cod"
   >("card");
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanId | null>(() => {
     return getPlanFromUrl();
   });
@@ -144,6 +146,8 @@ export default function Payments() {
     const status = qs.get("status");
     const planFromUrl = getPlanFromUrl();
     const planToActivate = planFromUrl ?? selectedPlan;
+    const promoFromUrl = qs.get("promo");
+    const referralFromUrl = qs.get("ref");
     if (!paymentId || !status) return;
     if (!planToActivate) return;
 
@@ -152,7 +156,12 @@ export default function Payments() {
       return;
     }
 
-    activatePaid.mutate({ plan: planToActivate, paymentId });
+    activatePaid.mutate({
+      plan: planToActivate,
+      paymentId,
+      promoCode: promoFromUrl ? promoFromUrl : null,
+      referralCode: referralFromUrl ? referralFromUrl : null,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlan]);
 
@@ -171,9 +180,11 @@ export default function Payments() {
     moyasarContainerRef.current.innerHTML = "";
 
     const amountHalalas = selectedPlanDetails.price * 100;
-    const callbackUrl = `${window.location.origin}/payments?plan=${encodeURIComponent(
-      selectedPlanDetails.id
-    )}`;
+    const callbackQs = new URLSearchParams();
+    callbackQs.set("plan", selectedPlanDetails.id);
+    if (promoCode.trim()) callbackQs.set("promo", promoCode.trim());
+    if (referralCode.trim()) callbackQs.set("ref", referralCode.trim());
+    const callbackUrl = `${window.location.origin}/payments?${callbackQs.toString()}`;
 
     window.Moyasar.init({
       element: moyasarContainerRef.current,
@@ -418,6 +429,24 @@ export default function Payments() {
                   <Input
                     value={paymentAmount}
                     readOnly
+                    className="bg-secondary/50 border-border/50"
+                  />
+                </div>
+                <div>
+                  <Label className="text-foreground mb-2 block">Promo Code (اختياري)</Label>
+                  <Input
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="PROMO2026"
+                    className="bg-secondary/50 border-border/50"
+                  />
+                </div>
+                <div>
+                  <Label className="text-foreground mb-2 block">Referral Code (اختياري)</Label>
+                  <Input
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    placeholder="ABCDEFG123"
                     className="bg-secondary/50 border-border/50"
                   />
                 </div>

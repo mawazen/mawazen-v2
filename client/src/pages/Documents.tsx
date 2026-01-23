@@ -36,6 +36,7 @@ import {
   FolderOpen,
   Upload,
   Calendar,
+  Printer,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -281,13 +282,24 @@ export default function Documents() {
             </p>
           </div>
 
-          <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-            <DialogTrigger asChild>
-              <Button className="btn-gold">
-                <Upload className="h-4 w-4 ml-2" />
-                رفع مستند
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2" data-print-hide>
+            <Button
+              variant="outline"
+              className="border-gold/30 hover:border-gold/50"
+              onClick={() => window.print()}
+              data-print-hide
+            >
+              <Printer className="h-4 w-4 ml-2" />
+              طباعة
+            </Button>
+
+            <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+              <DialogTrigger asChild>
+                <Button className="btn-gold">
+                  <Upload className="h-4 w-4 ml-2" />
+                  رفع مستند
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>رفع مستند جديد</DialogTitle>
@@ -474,8 +486,9 @@ export default function Documents() {
                   رفع المستند
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Dialog open={isUseTemplateOpen} onOpenChange={setIsUseTemplateOpen}>

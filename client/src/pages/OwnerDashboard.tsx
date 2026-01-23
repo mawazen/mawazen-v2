@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
 import { Crown, RefreshCw, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function OwnerDashboard() {
   const [, setLocation] = useLocation();
   const [range, setRange] = useState<"week" | "month" | "quarter" | "year">("month");
   const [query, setQuery] = useState("");
+  const [promoCodeInput, setPromoCodeInput] = useState("");
 
   const isOwnerQuery = trpc.auth.isOwner.useQuery(undefined, {
     retry: false,
@@ -42,6 +43,19 @@ export default function OwnerDashboard() {
     }
   );
 
+  const promoCodeQuery = trpc.owner.promoCode.get.useQuery(undefined, {
+    enabled: isOwner,
+    retry: false,
+  });
+
+  const promoCodeSet = trpc.owner.promoCode.set.useMutation({
+    onSuccess: async () => {
+      await promoCodeQuery.refetch();
+    },
+  });
+
+  const promoCodeValue = promoCodeQuery.data?.promoCode ?? null;
+
   const usersByPlan = overviewQuery.data?.usersByPlan;
 
   const rows = useMemo(() => {
@@ -50,6 +64,12 @@ export default function OwnerDashboard() {
   }, [usersQuery.data]);
 
   const stats = statsQuery.data;
+
+  useEffect(() => {
+    if (promoCodeInput !== "") return;
+    const v = promoCodeQuery.data?.promoCode;
+    if (typeof v === "string") setPromoCodeInput(v);
+  }, [promoCodeQuery.data, promoCodeInput]);
 
   if (isOwnerQuery.isLoading) {
     return (
@@ -180,6 +200,37 @@ export default function OwnerDashboard() {
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
               منشأة: {usersByPlan?.enterprise ?? 0}
             </Badge>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gold">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-gold" />
+              Promo Code
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              الكود الحالي: <span className="font-mono">{promoCodeValue ?? "—"}</span>
+            </div>
+            <div className="flex flex-col gap-2 md:flex-row md:items-center">
+              <Input
+                value={promoCodeInput}
+                onChange={(e) => setPromoCodeInput(e.target.value)}
+                placeholder="PROMO2026"
+                className="max-w-sm"
+              />
+              <Button
+                className="btn-gold"
+                disabled={promoCodeSet.isPending}
+                onClick={() => {
+                  promoCodeSet.mutate({ promoCode: promoCodeInput.trim() ? promoCodeInput.trim() : null });
+                }}
+              >
+                حفظ
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
