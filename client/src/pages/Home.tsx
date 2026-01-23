@@ -38,6 +38,8 @@ import {
   Quote,
 } from "lucide-react";
 
+const DESKTOP_RELEASES_URL = "https://github.com/mawazen/mawazen-v2/releases/latest";
+
 const features = [
   {
     icon: Brain,
@@ -449,6 +451,24 @@ export default function Home() {
                   onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   اكتشف المزيد
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-lg px-8 py-6 border-gold/30 hover:border-gold/50 hover:bg-gold/5"
+                  asChild
+                >
+                  <a href={DESKTOP_RELEASES_URL} target="_blank" rel="noreferrer">
+                    تحميل نسخة ويندوز
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-lg px-8 py-6 border-gold/30 hover:border-gold/50 hover:bg-gold/5"
+                  asChild
+                >
+                  <a href={DESKTOP_RELEASES_URL} target="_blank" rel="noreferrer">
+                    تحميل نسخة لينكس/أوبونتو
+                  </a>
                 </Button>
               </motion.div>
 

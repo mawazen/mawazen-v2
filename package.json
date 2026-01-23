@@ -10,6 +10,10 @@
     "postinstall": "npm run build:server",
     "prestart": "npm run build:server",
     "start": "npm run build:server && drizzle-kit push && node dist/importDataDumpV2.js data_dump_v2.sql && cross-env NODE_ENV=production NODE_OPTIONS=--use-system-ca node dist/index.js",
+    "desktop:dev": "cross-env MAWAZEN_DESKTOP_URL=http://localhost:5173 electron desktop/main.cjs",
+    "desktop:dev:prod": "electron desktop/main.cjs",
+    "desktop:dist:win": "electron-builder --win --x64",
+    "desktop:dist:linux": "electron-builder --linux --x64",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
@@ -100,6 +104,8 @@
     "autoprefixer": "^10.4.20",
     "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.4",
+    "electron": "^33.4.0",
+    "electron-builder": "^25.1.8",
     "esbuild": "^0.25.0",
     "pnpm": "^10.15.1",
     "postcss": "^8.4.47",
@@ -113,6 +119,30 @@
     "vitest": "^2.1.4"
   },
   "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af",
+  "main": "desktop/main.cjs",
+  "build": {
+    "appId": "com.mawazen.desktop",
+    "productName": "Mawazen",
+    "directories": {
+      "output": "desktop-dist"
+    },
+    "files": [
+      "desktop/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Office"
+    }
+  },
   "pnpm": {
     "patchedDependencies": {
       "wouter@3.7.1": "patches/wouter@3.7.1.patch"
