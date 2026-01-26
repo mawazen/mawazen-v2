@@ -9,7 +9,12 @@ type ThemePalette =
   | "burgundy"
   | "navy"
   | "sky"
-  | "example";
+  | "example"
+  | "beige_brown"
+  | "maroon_cream"
+  | "olive_greige"
+  | "grey_sky"
+  | "navy_white";
 
 const THEME_PALETTES: ThemePalette[] = [
   "gold",
@@ -19,6 +24,11 @@ const THEME_PALETTES: ThemePalette[] = [
   "navy",
   "sky",
   "example",
+  "beige_brown",
+  "maroon_cream",
+  "olive_greige",
+  "grey_sky",
+  "navy_white",
 ];
 
 const isThemeMode = (value: string | null): value is ThemeMode =>
@@ -31,7 +41,12 @@ const isThemePalette = (value: string | null): value is ThemePalette =>
   value === "burgundy" ||
   value === "navy" ||
   value === "sky" ||
-  value === "example";
+  value === "example" ||
+  value === "beige_brown" ||
+  value === "maroon_cream" ||
+  value === "olive_greige" ||
+  value === "grey_sky" ||
+  value === "navy_white";
 
 interface ThemeContextType {
   theme: ThemeMode;

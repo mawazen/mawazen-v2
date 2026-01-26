@@ -252,6 +252,101 @@
   --btn-text: #0a0a1a;
 }
 
+:root[data-theme="beige_brown"] {
+  --gold: #4b2e23;
+  --gold-light: #cbb89b;
+  --gold-dark: color-mix(in oklab, #4b2e23 80%, black);
+  --primary: var(--gold);
+  --primary-foreground: #f7f0e6;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: #cbb89b;
+  --chart-2: #4b2e23;
+  --chart-3: color-mix(in oklab, #4b2e23 55%, #cbb89b);
+  --chart-4: color-mix(in oklab, #4b2e23 70%, #003049);
+  --chart-5: #003049;
+
+  --btn-start: #4b2e23;
+  --btn-end: #cbb89b;
+  --btn-text: #f7f0e6;
+}
+
+:root[data-theme="maroon_cream"] {
+  --gold: #5a1a24;
+  --gold-light: #e8d8c6;
+  --gold-dark: color-mix(in oklab, #5a1a24 82%, black);
+  --primary: var(--gold);
+  --primary-foreground: #fff8f0;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: #e8d8c6;
+  --chart-2: #5a1a24;
+  --chart-3: color-mix(in oklab, #5a1a24 55%, #e8d8c6);
+  --chart-4: color-mix(in oklab, #5a1a24 70%, #003049);
+  --chart-5: #003049;
+
+  --btn-start: #5a1a24;
+  --btn-end: #c66a7b;
+  --btn-text: #fff8f0;
+}
+
+:root[data-theme="olive_greige"] {
+  --gold: #5a5a3a;
+  --gold-light: #b7a89a;
+  --gold-dark: color-mix(in oklab, #5a5a3a 82%, black);
+  --primary: var(--gold);
+  --primary-foreground: #f6f1ea;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: #b7a89a;
+  --chart-2: #5a5a3a;
+  --chart-3: color-mix(in oklab, #5a5a3a 55%, #b7a89a);
+  --chart-4: color-mix(in oklab, #5a5a3a 70%, #003049);
+  --chart-5: #003049;
+
+  --btn-start: #5a5a3a;
+  --btn-end: #b7a89a;
+  --btn-text: #f6f1ea;
+}
+
+:root[data-theme="grey_sky"] {
+  --gold: #78a6d8;
+  --gold-light: #9aa0a6;
+  --gold-dark: color-mix(in oklab, #78a6d8 70%, #003049);
+  --primary: var(--gold);
+  --primary-foreground: #0b1b2b;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: #9aa0a6;
+  --chart-2: #78a6d8;
+  --chart-3: #003049;
+  --chart-4: color-mix(in oklab, #78a6d8 55%, #9aa0a6);
+  --chart-5: #fdf0d5;
+
+  --btn-start: #78a6d8;
+  --btn-end: #9aa0a6;
+  --btn-text: #0b1b2b;
+}
+
+:root[data-theme="navy_white"] {
+  --gold: #0b1b3b;
+  --gold-light: #ffffff;
+  --gold-dark: color-mix(in oklab, #0b1b3b 82%, black);
+  --primary: var(--gold);
+  --primary-foreground: #ffffff;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --chart-1: #ffffff;
+  --chart-2: #0b1b3b;
+  --chart-3: #78a6d8;
+  --chart-4: #9aa0a6;
+  --chart-5: #fdf0d5;
+
+  --btn-start: #0b1b3b;
+  --btn-end: #1c3c6e;
+  --btn-text: #ffffff;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -353,6 +448,46 @@
   --glass-blur: 28px;
 }
 
+:root.dark[data-theme="beige_brown"] {
+  --glass-bg: rgba(18, 10, 7, 0.66);
+  --glass-border: rgba(203, 184, 155, 0.14);
+  --glass-shadow: 0 22px 70px rgba(0, 0, 0, 0.58);
+  --glass-inner: inset 0 1px 0 rgba(247, 240, 230, 0.08);
+  --glass-blur: 28px;
+}
+
+:root.dark[data-theme="maroon_cream"] {
+  --glass-bg: rgba(20, 8, 12, 0.68);
+  --glass-border: rgba(232, 216, 198, 0.16);
+  --glass-shadow: 0 22px 70px rgba(0, 0, 0, 0.60);
+  --glass-inner: inset 0 1px 0 rgba(255, 248, 240, 0.08);
+  --glass-blur: 28px;
+}
+
+:root.dark[data-theme="olive_greige"] {
+  --glass-bg: rgba(12, 12, 8, 0.66);
+  --glass-border: rgba(183, 168, 154, 0.16);
+  --glass-shadow: 0 22px 70px rgba(0, 0, 0, 0.58);
+  --glass-inner: inset 0 1px 0 rgba(246, 241, 234, 0.08);
+  --glass-blur: 28px;
+}
+
+:root.dark[data-theme="grey_sky"] {
+  --glass-bg: rgba(10, 16, 22, 0.66);
+  --glass-border: rgba(120, 166, 216, 0.18);
+  --glass-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-blur: 28px;
+}
+
+:root.dark[data-theme="navy_white"] {
+  --glass-bg: rgba(2, 10, 24, 0.70);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 22px 70px rgba(0, 0, 0, 0.58);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-blur: 28px;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -415,6 +550,41 @@
       radial-gradient(circle at 18% 28%, rgba(102, 155, 188, 0.16) 0%, transparent 55%),
       radial-gradient(circle at 82% 70%, rgba(253, 240, 213, 0.10) 0%, transparent 55%),
       radial-gradient(circle at 52% 52%, rgba(0, 48, 73, 0.16) 0%, transparent 60%);
+  }
+
+  html.dark[data-theme="beige_brown"] body::before {
+    background:
+      radial-gradient(circle at 18% 28%, rgba(203, 184, 155, 0.12) 0%, transparent 55%),
+      radial-gradient(circle at 82% 70%, rgba(75, 46, 35, 0.22) 0%, transparent 55%),
+      radial-gradient(circle at 52% 52%, rgba(247, 240, 230, 0.05) 0%, transparent 60%);
+  }
+
+  html.dark[data-theme="maroon_cream"] body::before {
+    background:
+      radial-gradient(circle at 18% 28%, rgba(232, 216, 198, 0.10) 0%, transparent 55%),
+      radial-gradient(circle at 82% 70%, rgba(90, 26, 36, 0.22) 0%, transparent 55%),
+      radial-gradient(circle at 52% 52%, rgba(198, 106, 123, 0.12) 0%, transparent 60%);
+  }
+
+  html.dark[data-theme="olive_greige"] body::before {
+    background:
+      radial-gradient(circle at 18% 28%, rgba(183, 168, 154, 0.12) 0%, transparent 55%),
+      radial-gradient(circle at 82% 70%, rgba(90, 90, 58, 0.22) 0%, transparent 55%),
+      radial-gradient(circle at 52% 52%, rgba(246, 241, 234, 0.05) 0%, transparent 60%);
+  }
+
+  html.dark[data-theme="grey_sky"] body::before {
+    background:
+      radial-gradient(circle at 18% 28%, rgba(120, 166, 216, 0.14) 0%, transparent 55%),
+      radial-gradient(circle at 82% 70%, rgba(154, 160, 166, 0.14) 0%, transparent 55%),
+      radial-gradient(circle at 52% 52%, rgba(0, 48, 73, 0.16) 0%, transparent 60%);
+  }
+
+  html.dark[data-theme="navy_white"] body::before {
+    background:
+      radial-gradient(circle at 18% 28%, rgba(255, 255, 255, 0.08) 0%, transparent 55%),
+      radial-gradient(circle at 82% 70%, rgba(11, 27, 59, 0.26) 0%, transparent 55%),
+      radial-gradient(circle at 52% 52%, rgba(120, 166, 216, 0.12) 0%, transparent 60%);
   }
 
   html.dark[data-theme="example"] body::before {
