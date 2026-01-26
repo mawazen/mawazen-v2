@@ -1092,13 +1092,15 @@
     }
   }
   
-  /* Gold gradient text - Premium golden appearance */
+  /* Gold gradient text - Premium golden appearance with enhanced effects */
   .text-gold-gradient {
     background: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #AA8C2C 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: 700;
+    text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+    animation: shimmer-wave 3.5s linear infinite;
   }
   
   /* Gold border glow effect */
@@ -1125,6 +1127,7 @@
     isolation: isolate;
     transition: transform 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 420ms ease;
     will-change: transform, box-shadow;
+    animation: float-smooth 4s ease-in-out infinite;
   }
 
   .card-gold:hover {
@@ -1150,6 +1153,7 @@
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
+    animation: pulse-glow 3s ease-in-out infinite;
   }
 
   .btn-gold::before {
@@ -1158,11 +1162,17 @@
     inset: 0;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
   }
 
   .btn-gold:hover {
     transform: translateY(-6px) scale(1.06);
     box-shadow: 0 18px 48px rgba(212, 175, 55, 0.55);
+  }
+
+  .btn-gold:hover::before {
+    opacity: 1;
   }
 
   .btn-gold:active {
@@ -1259,10 +1269,37 @@
     opacity: 1;
     transform: translate3d(18px, -18px, 0);
   }
+
+  /* Enhanced gradient backgrounds for premium look */
+  .gradient-premium-gold {
+    background: linear-gradient(135deg, #FFD700 0%, #D4AF37 25%, #FFE082 50%, #D4AF37 75%, #FFF8DC 100%);
+    background-size: 200% auto;
+  }
+
+  .gradient-premium-dark {
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 25%, #16213e 50%, #1a1a2e 75%, #0f0f1a 100%);
+  }
+
+  .gradient-sunset {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%);
+  }
+
+  .gradient-midnight {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a2847 50%, #2d5a7b 100%);
+  }
+
+  .gradient-emerald {
+    background: linear-gradient(135deg, #6B7A5A 0%, #A8B895 50%, #8BA96A 100%);
+  }
+
+  .gradient-rose {
+    background: linear-gradient(135deg, #8B4A5A 0%, #D4949A 50%, #B87A8A 100%);
+  }
   
-  /* Animated gold shimmer */
+  /* Animated gold shimmer with premium effect */
   @keyframes gold-shimmer {
     0% { background-position: -200% center; }
+    50% { text-shadow: 0 0 20px rgba(212, 175, 55, 0.5), 0 0 40px rgba(255, 215, 0, 0.3); }
     100% { background-position: 200% center; }
   }
   
@@ -1316,6 +1353,56 @@
   @keyframes backgroundDrift {
     0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
     50% { transform: translate3d(3%, -3%, 0) scale(1.03); }
+  }
+
+  /* Enhanced premium animations */
+  @keyframes float-smooth {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-8px) scale(1.02); }
+  }
+
+  @keyframes shimmer-wave {
+    0% { background-position: -200% center; }
+    50% { text-shadow: 0 0 30px rgba(212, 175, 55, 0.6), 0 0 60px rgba(255, 215, 0, 0.4); }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.8); }
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes slide-in-left {
+    from { opacity: 0; transform: translateX(-100px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Apply animations to premium elements */
+  .card-gold {
+    animation: float-smooth 4s ease-in-out infinite;
+  }
+
+  .btn-gold {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .text-gold-gradient {
+    animation: shimmer-wave 3.5s linear infinite;
   }
 }
 

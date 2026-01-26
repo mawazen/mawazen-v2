@@ -189,8 +189,8 @@ export default function Calendar() {
                 جلسة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
+            <DialogContent className="sm:max-w-lg" dir="rtl">
+              <DialogHeader className="text-right">
                 <DialogTitle>إضافة جلسة جديدة</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
@@ -202,7 +202,7 @@ export default function Calendar() {
                       setFormData({ ...formData, caseId: parseInt(v) })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger dir="rtl">
                       <SelectValue placeholder="اختر القضية" />
                     </SelectTrigger>
                     <SelectContent>
@@ -260,7 +260,7 @@ export default function Calendar() {
                         setFormData({ ...formData, type: v })
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger dir="rtl">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
