@@ -156,7 +156,7 @@ export default function Clients() {
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="btn-gold">
-                <Plus className="h-4 w-4 ml-2" />
+                <Plus className="h-4 w-4 rtl:mr-2 ml-2" />
                 عميل جديد
               </Button>
             </DialogTrigger>
@@ -391,7 +391,7 @@ export default function Clients() {
                               setLocation(`/clients/${client.id}`);
                             }}
                           >
-                            <Eye className="h-4 w-4 ml-2" />
+                            <Eye className="h-4 w-4 rtl:mr-2 ml-2" />
                             عرض التفاصيل
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -403,7 +403,7 @@ export default function Clients() {
                               }
                             }}
                           >
-                            <Trash2 className="h-4 w-4 ml-2" />
+                            <Trash2 className="h-4 w-4 rtl:mr-2 ml-2" />
                             حذف
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -461,7 +461,7 @@ export default function Clients() {
                   ابدأ بإضافة عميل جديد
                 </p>
                 <Button className="btn-gold" onClick={() => setIsCreateOpen(true)}>
-                  <Plus className="h-4 w-4 ml-2" />
+                  <Plus className="h-4 w-4 rtl:mr-2 ml-2" />
                   إضافة عميل
                 </Button>
               </CardContent>

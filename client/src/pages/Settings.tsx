@@ -299,7 +299,7 @@ export default function Settings() {
         {/* Save Button */}
         <div className="flex justify-end">
           <Button className="btn-gold" onClick={handleSave}>
-            <Save className="h-4 w-4 ml-2" />
+            <Save className="h-4 w-4 rtl:mr-2 ml-2" />
             حفظ الإعدادات
           </Button>
         </div>

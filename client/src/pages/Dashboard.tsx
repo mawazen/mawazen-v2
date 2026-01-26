@@ -155,7 +155,7 @@ export default function Dashboard() {
             className="btn-gold"
             onClick={() => setLocation("/ai-assistant")}
           >
-            <Scale className="h-4 w-4 ml-2" />
+            <Scale className="h-4 w-4 rtl:mr-2 ml-2" />
             المساعد الذكي
           </Button>
         </div>
@@ -191,7 +191,7 @@ export default function Dashboard() {
                   }
                 }}
               >
-                <Copy className="h-4 w-4 ml-2" />
+                <Copy className="h-4 w-4 rtl:mr-2 ml-2" />
                 نسخ
               </Button>
             </div>

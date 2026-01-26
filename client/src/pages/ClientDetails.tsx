@@ -107,7 +107,7 @@ export default function ClientDetails() {
         <div className="space-y-4">
           <Button variant="outline" onClick={() => setLocation("/clients")}
           >
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4 rtl:mr-2 ml-2" />
             الرجوع
           </Button>
           <Card className="card-gold">
@@ -130,7 +130,7 @@ export default function ClientDetails() {
           </div>
           <Button variant="outline" onClick={() => setLocation("/clients")}
           >
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4 rtl:mr-2 ml-2" />
             الرجوع
           </Button>
         </div>
@@ -166,7 +166,7 @@ export default function ClientDetails() {
                       toast.success("تم نسخ رابط البوابة");
                     }}
                   >
-                    <Copy className="h-4 w-4 ml-2" />
+                    <Copy className="h-4 w-4 rtl:mr-2 ml-2" />
                     نسخ
                   </Button>
                   <Button
@@ -177,7 +177,7 @@ export default function ClientDetails() {
                       await portalDisable.mutateAsync({ clientId });
                     }}
                   >
-                    <ShieldOff className="h-4 w-4 ml-2" />
+                    <ShieldOff className="h-4 w-4 rtl:mr-2 ml-2" />
                     تعطيل
                   </Button>
                 </div>

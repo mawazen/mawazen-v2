@@ -64,7 +64,7 @@ export default function ClientPortal() {
                 onClick={() => window.print()}
                 data-print-hide
               >
-                <Printer className="h-4 w-4 ml-2" />
+                <Printer className="h-4 w-4 rtl:mr-2 ml-2" />
                 طباعة
               </Button>
             </div>
@@ -271,7 +271,7 @@ export default function ClientPortal() {
                           size="sm"
                           onClick={() => toast.info("تحميل الفاتورة قيد التطوير")}
                         >
-                          <Download className="h-4 w-4 ml-2" />
+                          <Download className="h-4 w-4 rtl:mr-2 ml-2" />
                           تحميل
                         </Button>
                       </div>

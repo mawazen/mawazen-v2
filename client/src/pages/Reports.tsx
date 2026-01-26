@@ -121,7 +121,7 @@ export default function Reports() {
               onClick={() => window.print()}
               data-print-hide
             >
-              <Printer className="h-4 w-4 ml-2" />
+              <Printer className="h-4 w-4 rtl:mr-2 ml-2" />
               طباعة
             </Button>
           </div>
@@ -148,7 +148,7 @@ export default function Reports() {
                 </select>
               </div>
               <Button className="bg-gold hover:bg-gold-light text-black font-semibold">
-                <Filter className="h-4 w-4 ml-2" />
+                <Filter className="h-4 w-4 rtl:mr-2 ml-2" />
                 تطبيق الفلاتر
               </Button>
             </div>

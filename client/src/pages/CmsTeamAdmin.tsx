@@ -80,7 +80,7 @@ export default function CmsTeamAdmin() {
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button className="btn-gold">
-                <Plus className="h-4 w-4 ml-2" />
+                <Plus className="h-4 w-4 rtl:mr-2 ml-2" />
                 إضافة عضو
               </Button>
             </DialogTrigger>

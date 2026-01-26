@@ -111,7 +111,7 @@ export default function Team() {
             className="btn-gold"
             onClick={() => setIsAddOpen(true)}
           >
-            <UserPlus className="h-4 w-4 ml-2" />
+            <UserPlus className="h-4 w-4 rtl:mr-2 ml-2" />
             دعوة عضو
           </Button>
         </div>
@@ -340,7 +340,7 @@ export default function Team() {
                                 toast.info("ميزة تعديل الصلاحيات قيد التطوير")
                               }
                             >
-                              <Shield className="h-4 w-4 ml-2" />
+                              <Shield className="h-4 w-4 rtl:mr-2 ml-2" />
                               تعديل الصلاحيات
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -348,7 +348,7 @@ export default function Team() {
                                 toast.info("ميزة عرض النشاط قيد التطوير")
                               }
                             >
-                              <Briefcase className="h-4 w-4 ml-2" />
+                              <Briefcase className="h-4 w-4 rtl:mr-2 ml-2" />
                               عرض النشاط
                             </DropdownMenuItem>
                           </DropdownMenuContent>

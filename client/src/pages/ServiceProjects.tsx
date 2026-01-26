@@ -198,7 +198,7 @@ export default function ServiceProjects() {
           >
             <DialogTrigger asChild>
               <Button className="btn-gold">
-                <Plus className="h-4 w-4 ml-2" />
+                <Plus className="h-4 w-4 rtl:mr-2 ml-2" />
                 مشروع جديد
               </Button>
             </DialogTrigger>
@@ -516,7 +516,7 @@ export default function ServiceProjects() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setSelectedProjectId(p.id)}>
-                            <Wallet className="h-4 w-4 ml-2" />
+                            <Wallet className="h-4 w-4 rtl:mr-2 ml-2" />
                             المصروفات
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => updateProject.mutate({ id: p.id, status: "in_progress" } as any)}>
@@ -539,7 +539,7 @@ export default function ServiceProjects() {
                               }
                             }}
                           >
-                            <Trash2 className="h-4 w-4 ml-2" />
+                            <Trash2 className="h-4 w-4 rtl:mr-2 ml-2" />
                             حذف
                           </DropdownMenuItem>
                         </DropdownMenuContent>

@@ -80,7 +80,7 @@ export default function CaseDetails() {
         <div className="space-y-4">
           <Button variant="outline" onClick={() => setLocation("/cases")}
           >
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4 rtl:mr-2 ml-2" />
             الرجوع
           </Button>
           <Card className="card-gold">
@@ -103,7 +103,7 @@ export default function CaseDetails() {
           </div>
           <Button variant="outline" onClick={() => setLocation("/cases")}
           >
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-4 w-4 rtl:mr-2 ml-2" />
             الرجوع
           </Button>
         </div>

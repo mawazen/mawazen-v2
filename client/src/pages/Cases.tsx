@@ -172,7 +172,7 @@ export default function Cases() {
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button className="btn-gold">
-                <Plus className="h-4 w-4 ml-2" />
+                <Plus className="h-4 w-4 rtl:mr-2 ml-2" />
                 قضية جديدة
               </Button>
             </DialogTrigger>
@@ -441,7 +441,7 @@ export default function Cases() {
                             setLocation(`/cases/${caseItem.id}`);
                           }}
                         >
-                          <Eye className="h-4 w-4 ml-2" />
+                          <Eye className="h-4 w-4 rtl:mr-2 ml-2" />
                           عرض التفاصيل
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -450,7 +450,7 @@ export default function Cases() {
                             setLocation(`/ai-assistant?caseId=${caseItem.id}`);
                           }}
                         >
-                          <Briefcase className="h-4 w-4 ml-2" />
+                          <Briefcase className="h-4 w-4 rtl:mr-2 ml-2" />
                           تحليل بالذكاء الاصطناعي
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -462,7 +462,7 @@ export default function Cases() {
                             }
                           }}
                         >
-                          <Trash2 className="h-4 w-4 ml-2" />
+                          <Trash2 className="h-4 w-4 rtl:mr-2 ml-2" />
                           حذف
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -482,7 +482,7 @@ export default function Cases() {
                   ابدأ بإضافة قضية جديدة لإدارتها
                 </p>
                 <Button className="btn-gold" onClick={() => setIsCreateOpen(true)}>
-                  <Plus className="h-4 w-4 ml-2" />
+                  <Plus className="h-4 w-4 rtl:mr-2 ml-2" />
                   إضافة قضية
                 </Button>
               </CardContent>

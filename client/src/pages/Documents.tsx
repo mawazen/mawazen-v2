@@ -289,14 +289,14 @@ export default function Documents() {
               onClick={() => window.print()}
               data-print-hide
             >
-              <Printer className="h-4 w-4 ml-2" />
+              <Printer className="h-4 w-4 rtl:mr-2 ml-2" />
               طباعة
             </Button>
 
             <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
               <DialogTrigger asChild>
                 <Button className="btn-gold">
-                  <Upload className="h-4 w-4 ml-2" />
+                  <Upload className="h-4 w-4 rtl:mr-2 ml-2" />
                   رفع مستند
                 </Button>
               </DialogTrigger>
@@ -823,7 +823,7 @@ export default function Documents() {
                                     }
                                   }}
                                 >
-                                  <Trash2 className="h-4 w-4 ml-2" />
+                                  <Trash2 className="h-4 w-4 rtl:mr-2 ml-2" />
                                   حذف
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -841,7 +841,7 @@ export default function Documents() {
                     <h3 className="text-lg font-medium text-foreground mb-2">لا توجد مستندات</h3>
                     <p className="text-muted-foreground text-center mb-4">ابدأ برفع مستنداتك القانونية</p>
                     <Button className="btn-gold" onClick={() => setIsUploadOpen(true)}>
-                      <Upload className="h-4 w-4 ml-2" />
+                      <Upload className="h-4 w-4 rtl:mr-2 ml-2" />
                       رفع مستند
                     </Button>
                   </CardContent>
@@ -923,7 +923,7 @@ export default function Documents() {
                                   }
                                 }}
                               >
-                                <Trash2 className="h-4 w-4 ml-2" />
+                                <Trash2 className="h-4 w-4 rtl:mr-2 ml-2" />
                                 حذف
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -946,7 +946,7 @@ export default function Documents() {
                         setIsTemplateUpload(true);
                       }}
                     >
-                      <Upload className="h-4 w-4 ml-2" />
+                      <Upload className="h-4 w-4 rtl:mr-2 ml-2" />
                       إضافة قالب
                     </Button>
                   </CardContent>

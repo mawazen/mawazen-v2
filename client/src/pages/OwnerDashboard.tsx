@@ -139,7 +139,7 @@ export default function OwnerDashboard() {
                 usersQuery.refetch();
               }}
             >
-              <RefreshCw className="h-4 w-4 ml-2" />
+              <RefreshCw className="h-4 w-4 rtl:mr-2 ml-2" />
               تحديث
             </Button>
           </div>

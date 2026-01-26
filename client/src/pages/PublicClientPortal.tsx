@@ -79,7 +79,7 @@ export default function PublicClientPortal() {
                 onClick={() => window.print()}
                 data-print-hide
               >
-                <Printer className="h-4 w-4 ml-2" />
+                <Printer className="h-4 w-4 rtl:mr-2 ml-2" />
                 طباعة
               </Button>
               <Shield className="h-6 w-6 text-gold opacity-70" />
