@@ -189,7 +189,7 @@ export default function Calendar() {
                 جلسة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg [direction:rtl] text-right">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader className="text-right flex flex-col items-end">
                 <DialogTitle>إضافة جلسة جديدة</DialogTitle>
               </DialogHeader>

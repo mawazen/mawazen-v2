@@ -1441,15 +1441,6 @@ textarea::placeholder {
   unicode-bidi: plaintext;
 }
 
-/* Dialog Centering & RTL Support */
-[role="dialog"] {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 50 !important;
-}
-
 /* Professional Select/Dropdown Styling */
 [role="listbox"],
 [role="option"],
