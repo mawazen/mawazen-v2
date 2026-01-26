@@ -272,10 +272,17 @@
 
   --background: #4b2e23;
   --foreground: #f7f0e6;
-  --card: color-mix(in oklab, #cbb89b 88%, white);
-  --card-foreground: #4b2e23;
-  --popover: var(--card);
-  --popover-foreground: #4b2e23;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #cbb89b 76%, white);
   --secondary-foreground: #4b2e23;
   --muted: color-mix(in oklab, #cbb89b 68%, #4b2e23);
@@ -311,10 +318,17 @@
 
   --background: #5a1a24;
   --foreground: #fff8f0;
-  --card: color-mix(in oklab, #e8d8c6 88%, white);
-  --card-foreground: #5a1a24;
-  --popover: var(--card);
-  --popover-foreground: #5a1a24;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #e8d8c6 76%, white);
   --secondary-foreground: #5a1a24;
   --muted: color-mix(in oklab, #e8d8c6 66%, #5a1a24);
@@ -350,10 +364,17 @@
 
   --background: #5a5a3a;
   --foreground: #f6f1ea;
-  --card: color-mix(in oklab, #b7a89a 88%, white);
-  --card-foreground: #5a5a3a;
-  --popover: var(--card);
-  --popover-foreground: #5a5a3a;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #b7a89a 76%, white);
   --secondary-foreground: #5a5a3a;
   --muted: color-mix(in oklab, #b7a89a 66%, #5a5a3a);
@@ -389,10 +410,17 @@
 
   --background: #9aa0a6;
   --foreground: #f6f7f8;
-  --card: color-mix(in oklab, #9aa0a6 55%, white);
-  --card-foreground: color-mix(in oklab, #0b1b2b 82%, #9aa0a6);
-  --popover: var(--card);
-  --popover-foreground: var(--card-foreground);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-2: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.28);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 24px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #9aa0a6 48%, white);
   --secondary-foreground: var(--card-foreground);
   --muted: color-mix(in oklab, #9aa0a6 42%, white);
@@ -428,10 +456,17 @@
 
   --background: #0b1b3b;
   --foreground: #ffffff;
-  --card: color-mix(in oklab, #ffffff 92%, #78a6d8);
-  --card-foreground: #0b1b3b;
-  --popover: var(--card);
-  --popover-foreground: #0b1b3b;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.38);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #ffffff 86%, #78a6d8);
   --secondary-foreground: #0b1b3b;
   --muted: color-mix(in oklab, #ffffff 82%, #78a6d8);
@@ -551,10 +586,17 @@
 :root.dark[data-theme="beige_brown"] {
   --background: #4b2e23;
   --foreground: #f7f0e6;
-  --card: color-mix(in oklab, #cbb89b 88%, white);
-  --card-foreground: #4b2e23;
-  --popover: var(--card);
-  --popover-foreground: #4b2e23;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #cbb89b 76%, white);
   --secondary-foreground: #4b2e23;
   --muted: color-mix(in oklab, #cbb89b 68%, #4b2e23);
@@ -579,10 +621,17 @@
 :root.dark[data-theme="maroon_cream"] {
   --background: #5a1a24;
   --foreground: #fff8f0;
-  --card: color-mix(in oklab, #e8d8c6 88%, white);
-  --card-foreground: #5a1a24;
-  --popover: var(--card);
-  --popover-foreground: #5a1a24;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #e8d8c6 76%, white);
   --secondary-foreground: #5a1a24;
   --muted: color-mix(in oklab, #e8d8c6 66%, #5a1a24);
@@ -607,10 +656,17 @@
 :root.dark[data-theme="olive_greige"] {
   --background: #5a5a3a;
   --foreground: #f6f1ea;
-  --card: color-mix(in oklab, #b7a89a 88%, white);
-  --card-foreground: #5a5a3a;
-  --popover: var(--card);
-  --popover-foreground: #5a5a3a;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #b7a89a 76%, white);
   --secondary-foreground: #5a5a3a;
   --muted: color-mix(in oklab, #b7a89a 66%, #5a5a3a);
@@ -635,10 +691,17 @@
 :root.dark[data-theme="grey_sky"] {
   --background: #9aa0a6;
   --foreground: #f6f7f8;
-  --card: color-mix(in oklab, #9aa0a6 55%, white);
-  --card-foreground: color-mix(in oklab, #0b1b2b 82%, #9aa0a6);
-  --popover: var(--card);
-  --popover-foreground: var(--card-foreground);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-2: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.28);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 24px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #9aa0a6 48%, white);
   --secondary-foreground: var(--card-foreground);
   --muted: color-mix(in oklab, #9aa0a6 42%, white);
@@ -663,10 +726,17 @@
 :root.dark[data-theme="navy_white"] {
   --background: #0b1b3b;
   --foreground: #ffffff;
-  --card: color-mix(in oklab, #ffffff 92%, #78a6d8);
-  --card-foreground: #0b1b3b;
-  --popover: var(--card);
-  --popover-foreground: #0b1b3b;
+  --glass-bg: rgba(255, 255, 255, 0.10);
+  --glass-bg-2: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 26px 80px rgba(0, 0, 0, 0.38);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --glass-blur: 26px;
+
+  --card: var(--glass-bg);
+  --card-foreground: var(--foreground);
+  --popover: var(--glass-bg);
+  --popover-foreground: var(--foreground);
   --secondary: color-mix(in oklab, #ffffff 86%, #78a6d8);
   --secondary-foreground: #0b1b3b;
   --muted: color-mix(in oklab, #ffffff 82%, #78a6d8);
