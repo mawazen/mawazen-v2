@@ -189,23 +189,23 @@ export default function Calendar() {
                 جلسة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg" dir="rtl">
-              <DialogHeader className="text-right">
+            <DialogContent className="sm:max-w-lg direction-rtl text-right" dir="rtl">
+              <DialogHeader className="text-right flex flex-col items-end">
                 <DialogTitle>إضافة جلسة جديدة</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label>القضية *</Label>
+              <div className="space-y-4 mt-4 text-right">
+                <div className="space-y-2 flex flex-col items-stretch">
+                  <Label className="text-right">القضية *</Label>
                   <Select
                     value={formData.caseId.toString()}
                     onValueChange={(v) =>
                       setFormData({ ...formData, caseId: parseInt(v) })
                     }
                   >
-                    <SelectTrigger dir="rtl">
+                    <SelectTrigger dir="rtl" className="text-right">
                       <SelectValue placeholder="اختر القضية" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent dir="rtl">
                       {cases?.map((c) => (
                         <SelectItem key={c.id} value={c.id.toString()}>
                           {c.caseNumber} - {c.title}
@@ -215,10 +215,11 @@ export default function Calendar() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>عنوان الجلسة *</Label>
+                <div className="space-y-2 flex flex-col items-stretch">
+                  <Label className="text-right">عنوان الجلسة *</Label>
                   <Input
                     placeholder="مثال: جلسة مرافعة"
+                    className="text-right"
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
@@ -227,22 +228,24 @@ export default function Calendar() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>التاريخ *</Label>
+                  <div className="space-y-2 flex flex-col items-stretch">
+                    <Label className="text-right">التاريخ *</Label>
                     <Input
                       type="date"
                       dir="ltr"
+                      className="text-right"
                       value={formData.hearingDate}
                       onChange={(e) =>
                         setFormData({ ...formData, hearingDate: e.target.value })
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>الوقت *</Label>
+                  <div className="space-y-2 flex flex-col items-stretch">
+                    <Label className="text-right">الوقت *</Label>
                     <Input
                       type="time"
                       dir="ltr"
+                      className="text-right"
                       value={formData.hearingTime}
                       onChange={(e) =>
                         setFormData({ ...formData, hearingTime: e.target.value })
@@ -252,18 +255,18 @@ export default function Calendar() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>نوع الجلسة</Label>
+                  <div className="space-y-2 flex flex-col items-stretch">
+                    <Label className="text-right">نوع الجلسة</Label>
                     <Select
                       value={formData.type}
                       onValueChange={(v: any) =>
                         setFormData({ ...formData, type: v })
                       }
                     >
-                      <SelectTrigger dir="rtl">
+                      <SelectTrigger dir="rtl" className="text-right">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent dir="rtl">
                         {Object.entries(hearingTypeLabels).map(([key, label]) => (
                           <SelectItem key={key} value={key}>
                             {label}
@@ -272,10 +275,11 @@ export default function Calendar() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>المكان</Label>
+                  <div className="space-y-2 flex flex-col items-stretch">
+                    <Label className="text-right">المكان</Label>
                     <Input
                       placeholder="المحكمة / القاعة"
+                      className="text-right"
                       value={formData.location}
                       onChange={(e) =>
                         setFormData({ ...formData, location: e.target.value })
@@ -284,10 +288,11 @@ export default function Calendar() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>ملاحظات</Label>
+                <div className="space-y-2 flex flex-col items-stretch">
+                  <Label className="text-right">ملاحظات</Label>
                   <Textarea
                     placeholder="ملاحظات إضافية..."
+                    className="text-right"
                     value={formData.notes}
                     onChange={(e) =>
                       setFormData({ ...formData, notes: e.target.value })
