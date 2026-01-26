@@ -189,7 +189,7 @@ export default function Calendar() {
                 جلسة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>إضافة جلسة جديدة</DialogTitle>
               </DialogHeader>
@@ -226,7 +226,7 @@ export default function Calendar() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>التاريخ *</Label>
                     <Input
@@ -251,7 +251,7 @@ export default function Calendar() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>نوع الجلسة</Label>
                     <Select
@@ -296,7 +296,7 @@ export default function Calendar() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -321,8 +321,8 @@ export default function Calendar() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar */}
           <Card className="card-gold lg:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <div className="flex items-center gap-4">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
+              <div className="flex items-center justify-between gap-2 sm:gap-4">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -491,7 +491,7 @@ export default function Calendar() {
                   .map((hearing: typeof hearings[0]) => (
                     <div
                       key={hearing.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 border border-border/50"
+                      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg bg-secondary/50 border border-border/50"
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center">
@@ -517,7 +517,7 @@ export default function Calendar() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-left">
+                      <div className="text-right sm:text-left">
                         <p className="font-medium text-gold">
                           {new Date(hearing.hearingDate).toLocaleDateString("ar-SA")}
                         </p>

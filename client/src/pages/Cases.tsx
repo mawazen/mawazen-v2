@@ -176,11 +176,11 @@ export default function Cases() {
                 قضية جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>إنشاء قضية جديدة</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div className="space-y-2">
                   <Label>رقم القضية *</Label>
                   <Input
@@ -211,7 +211,7 @@ export default function Cases() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label>عنوان القضية *</Label>
                   <Input
                     placeholder="عنوان مختصر للقضية"
@@ -281,7 +281,7 @@ export default function Cases() {
                     }
                   />
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label>الوصف</Label>
                   <Textarea
                     placeholder="وصف تفصيلي للقضية..."
@@ -293,7 +293,7 @@ export default function Cases() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
                 <Button
                   variant="outline"
                   onClick={() => setIsCreateOpen(false)}

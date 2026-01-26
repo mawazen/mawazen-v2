@@ -100,31 +100,31 @@ export default function SiteLayout({ children }: PropsWithChildren) {
       {
         key: "beige_brown",
         label: "Beige + Brown",
-        nextTheme: "dark" as const,
+        nextTheme: "light" as const,
         nextPalette: "beige_brown" as const,
       },
       {
         key: "maroon_cream",
         label: "Maroon + Cream",
-        nextTheme: "dark" as const,
+        nextTheme: "light" as const,
         nextPalette: "maroon_cream" as const,
       },
       {
         key: "olive_greige",
         label: "Olive + Greige",
-        nextTheme: "dark" as const,
+        nextTheme: "light" as const,
         nextPalette: "olive_greige" as const,
       },
       {
         key: "grey_sky",
         label: "Grey + Sky",
-        nextTheme: "dark" as const,
+        nextTheme: "light" as const,
         nextPalette: "grey_sky" as const,
       },
       {
         key: "navy_white",
         label: "Navy + White",
-        nextTheme: "dark" as const,
+        nextTheme: "light" as const,
         nextPalette: "navy_white" as const,
       },
       {
@@ -150,15 +150,15 @@ export default function SiteLayout({ children }: PropsWithChildren) {
   );
 
   const activePresetKey = useMemo(() => {
+    if (palette === "beige_brown") return "beige_brown";
+    if (palette === "maroon_cream") return "maroon_cream";
+    if (palette === "olive_greige") return "olive_greige";
+    if (palette === "grey_sky") return "grey_sky";
+    if (palette === "navy_white") return "navy_white";
     if (theme === "light" && palette === "gold") return "gold_minimal_light";
     if (theme === "dark" && palette === "example") return "example";
     if (theme === "dark" && palette === "gold_navy") return "gold_navy";
     if (theme === "dark" && palette === "gold_burgundy") return "gold_burgundy";
-    if (theme === "dark" && palette === "beige_brown") return "beige_brown";
-    if (theme === "dark" && palette === "maroon_cream") return "maroon_cream";
-    if (theme === "dark" && palette === "olive_greige") return "olive_greige";
-    if (theme === "dark" && palette === "grey_sky") return "grey_sky";
-    if (theme === "dark" && palette === "navy_white") return "navy_white";
     return "custom";
   }, [palette, theme]);
 

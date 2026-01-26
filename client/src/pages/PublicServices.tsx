@@ -91,7 +91,7 @@ export default function PublicServices() {
                           اطلب الخدمة
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-lg">
+                      <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
                           <DialogTitle>طلب خدمة</DialogTitle>
                         </DialogHeader>

@@ -180,7 +180,7 @@ export default function Tasks() {
                 مهمة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>إنشاء مهمة جديدة</DialogTitle>
               </DialogHeader>
@@ -236,7 +236,7 @@ export default function Tasks() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   إلغاء
                 </Button>

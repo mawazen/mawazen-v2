@@ -146,7 +146,7 @@ export default function Invoices() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2" data-print-hide>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2" data-print-hide>
             <Button
               variant="outline"
               className="border-gold/30 hover:border-gold/50"
@@ -164,7 +164,7 @@ export default function Invoices() {
                   فاتورة جديدة
                 </Button>
               </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>إنشاء فاتورة جديدة</DialogTitle>
               </DialogHeader>
@@ -190,7 +190,7 @@ export default function Invoices() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>المبلغ (ر.س) *</Label>
                     <Input

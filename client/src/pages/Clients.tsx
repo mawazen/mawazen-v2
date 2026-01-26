@@ -160,11 +160,11 @@ export default function Clients() {
                 عميل جديد
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>إضافة عميل جديد</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div className="space-y-2">
                   <Label>الاسم بالعربية *</Label>
                   <Input
@@ -280,7 +280,7 @@ export default function Clients() {
                     }
                   />
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label>العنوان</Label>
                   <Input
                     placeholder="العنوان التفصيلي"
@@ -290,7 +290,7 @@ export default function Clients() {
                     }
                   />
                 </div>
-                <div className="col-span-2 space-y-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label>ملاحظات</Label>
                   <Textarea
                     placeholder="ملاحظات إضافية..."
@@ -302,7 +302,7 @@ export default function Clients() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
                 <Button
                   variant="outline"
                   onClick={() => {

@@ -69,7 +69,7 @@ export default function CmsTestimonialsAdmin() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">إدارة آراء العملاء</h1>
             <p className="text-muted-foreground">الآراء الظاهرة في الموقع العام.</p>
@@ -82,7 +82,7 @@ export default function CmsTestimonialsAdmin() {
                 إضافة رأي
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>إضافة رأي عميل</DialogTitle>
               </DialogHeader>
@@ -177,7 +177,7 @@ export default function CmsTestimonialsAdmin() {
                               تعديل
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>تعديل رأي</DialogTitle>
                             </DialogHeader>

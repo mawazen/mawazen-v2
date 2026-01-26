@@ -202,7 +202,7 @@ export default function ServiceProjects() {
                 مشروع جديد
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>إنشاء مشروع خدمة</DialogTitle>
               </DialogHeader>
@@ -374,7 +374,7 @@ export default function ServiceProjects() {
         </Card>
 
         <Dialog open={selectedProjectId != null} onOpenChange={(open) => setSelectedProjectId(open ? selectedProjectId : null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>مصروفات المشروع</DialogTitle>
             </DialogHeader>

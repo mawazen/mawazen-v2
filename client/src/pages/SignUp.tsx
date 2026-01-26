@@ -359,7 +359,7 @@ export default function SignUp() {
                 <Shield className="h-4 w-4" />
                 نوع الحساب
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, accountType: "individual" })}

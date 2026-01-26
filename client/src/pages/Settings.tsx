@@ -59,7 +59,7 @@ export default function Settings() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>اسم المكتب</Label>
                     <Input placeholder="مكتب المحاماة" defaultValue="مكتب موازين للمحاماة" />
@@ -69,7 +69,7 @@ export default function Settings() {
                     <Input placeholder="رقم الترخيص" dir="ltr" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>البريد الإلكتروني</Label>
                     <Input type="email" placeholder="email@example.com" dir="ltr" />

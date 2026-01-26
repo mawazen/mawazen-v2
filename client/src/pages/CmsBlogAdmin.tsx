@@ -67,7 +67,7 @@ export default function CmsBlogAdmin() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">إدارة المدونة</h1>
             <p className="text-muted-foreground">إنشاء وتعديل المقالات.</p>
@@ -80,7 +80,7 @@ export default function CmsBlogAdmin() {
                 مقال جديد
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
                 <DialogTitle>إنشاء مقال</DialogTitle>
               </DialogHeader>
@@ -172,7 +172,7 @@ export default function CmsBlogAdmin() {
                               تعديل
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-3xl">
+                          <DialogContent className="sm:max-w-3xl">
                             <DialogHeader>
                               <DialogTitle>تعديل مقال</DialogTitle>
                             </DialogHeader>

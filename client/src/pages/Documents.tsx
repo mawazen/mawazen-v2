@@ -282,7 +282,7 @@ export default function Documents() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2" data-print-hide>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2" data-print-hide>
             <Button
               variant="outline"
               className="border-gold/30 hover:border-gold/50"
@@ -300,7 +300,7 @@ export default function Documents() {
                   رفع مستند
                 </Button>
               </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>رفع مستند جديد</DialogTitle>
               </DialogHeader>
@@ -492,7 +492,7 @@ export default function Documents() {
         </div>
 
         <Dialog open={isUseTemplateOpen} onOpenChange={setIsUseTemplateOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>إنشاء مستند من قالب</DialogTitle>
             </DialogHeader>
@@ -534,7 +534,7 @@ export default function Documents() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
               <Button variant="outline" onClick={() => setIsUseTemplateOpen(false)}>
                 إلغاء
               </Button>
@@ -562,7 +562,7 @@ export default function Documents() {
         </Dialog>
 
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>تعديل المستند</DialogTitle>
             </DialogHeader>

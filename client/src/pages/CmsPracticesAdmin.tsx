@@ -65,7 +65,7 @@ export default function CmsPracticesAdmin() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">إدارة الممارسات</h1>
             <p className="text-muted-foreground">التخصصات/الممارسات الظاهرة في الموقع العام.</p>
@@ -78,7 +78,7 @@ export default function CmsPracticesAdmin() {
                 إضافة ممارسة
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>إضافة ممارسة</DialogTitle>
               </DialogHeader>
@@ -165,7 +165,7 @@ export default function CmsPracticesAdmin() {
                               تعديل
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>تعديل ممارسة</DialogTitle>
                             </DialogHeader>

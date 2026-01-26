@@ -84,7 +84,7 @@ export default function ServiceCatalogAdmin() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">إدارة الخدمات</h1>
             <p className="text-muted-foreground">أضف وعدّل الخدمات المعروضة للعملاء.</p>
@@ -97,7 +97,7 @@ export default function ServiceCatalogAdmin() {
                 إضافة خدمة
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>إضافة خدمة</DialogTitle>
               </DialogHeader>
@@ -212,7 +212,7 @@ export default function ServiceCatalogAdmin() {
                               تعديل
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-lg">
+                          <DialogContent className="sm:max-w-lg">
                             <DialogHeader>
                               <DialogTitle>تعديل خدمة</DialogTitle>
                             </DialogHeader>

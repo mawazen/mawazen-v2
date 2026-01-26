@@ -71,7 +71,7 @@ export default function CmsTeamAdmin() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">إدارة فريق الموقع</h1>
             <p className="text-muted-foreground">فريق العمل الظاهر في الموقع العام.</p>
@@ -84,7 +84,7 @@ export default function CmsTeamAdmin() {
                 إضافة عضو
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>إضافة عضو فريق</DialogTitle>
               </DialogHeader>
@@ -180,7 +180,7 @@ export default function CmsTeamAdmin() {
                               تعديل
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>تعديل عضو</DialogTitle>
                             </DialogHeader>
