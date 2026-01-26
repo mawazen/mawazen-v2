@@ -1424,9 +1424,21 @@
 /* Number inputs should be LTR */
 input[type="number"],
 input[type="tel"],
-input[type="email"] {
-  direction: ltr;
-  text-align: right;
+input[type="email"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="url"],
+select {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: plaintext;
+}
+
+/* Ensure placeholders and values display correctly in LTR */
+input::placeholder,
+textarea::placeholder {
+  unicode-bidi: plaintext;
 }
 
 /* Dialog RTL support */
@@ -1455,6 +1467,12 @@ html[dir="rtl"] [data-slot="select-content"],
 html[dir="rtl"] [role="listbox"] {
   direction: rtl;
   text-align: right;
+  unicode-bidi: embed;
+}
+
+/* Ensure text items in select display correctly */
+[data-slot="select-content"] > * {
+  unicode-bidi: plaintext;
 }
 
 @media print {
