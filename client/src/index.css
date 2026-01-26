@@ -1441,62 +1441,33 @@ textarea::placeholder {
   unicode-bidi: plaintext;
 }
 
-/* Professional Select/Dropdown Styling */
-[role="listbox"],
-[role="option"],
-.radix-select-trigger {
-  direction: ltr !important;
-  unicode-bidi: plaintext !important;
-  border: 2px solid var(--gold, #D4AF37) !important;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(255, 215, 0, 0.05) 100%) !important;
-  border-radius: 12px !important;
-  padding: 10px 14px !important;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1) !important;
-  font-weight: 500;
+/* Dialog RTL support */
+[data-slot="dialog-content"][dir="rtl"],
+[dir="rtl"] [data-slot="dialog-content"],
+html[dir="rtl"] [data-slot="dialog-content"] {
+  direction: rtl;
+  text-align: right;
+  left: auto !important;
+  right: 50% !important;
+  transform: translateX(50%) translateY(-50%) !important;
 }
 
-.radix-select-trigger:hover {
-  border-color: #FFD700 !important;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(212, 175, 55, 0.1) 100%) !important;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2), 0 0 20px rgba(255, 215, 0, 0.1) !important;
-  transform: translateY(-2px);
+/* Dialog close button RTL */
+[data-slot="dialog-content"][dir="rtl"] [data-slot="dialog-close"],
+[dir="rtl"] [data-slot="dialog-content"] [data-slot="dialog-close"],
+html[dir="rtl"] [data-slot="dialog-content"] [data-slot="dialog-close"] {
+  right: auto !important;
+  left: 1rem !important;
 }
 
-.radix-select-trigger:focus {
-  outline: none !important;
-  border-color: #FFD700 !important;
-  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2), 0 4px 12px rgba(212, 175, 55, 0.2) !important;
-}
-
-/* Select Content Styling */
-[role="listbox"] {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
-  border: 2px solid var(--gold, #D4AF37) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.2), 0 0 32px rgba(255, 215, 0, 0.1) !important;
-}
-
-[role="option"] {
-  padding: 12px 16px !important;
-  margin: 4px 8px !important;
-  border-radius: 8px !important;
-  transition: all 0.2s ease !important;
-  cursor: pointer;
-  color: #fff;
-}
-
-[role="option"]:hover {
-  background: linear-gradient(135deg, var(--gold, #D4AF37) 0%, #FFD700 100%) !important;
-  color: #000 !important;
-  transform: translateX(-4px);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3) !important;
-}
-
-[role="option"][aria-selected="true"] {
-  background: linear-gradient(135deg, var(--gold, #D4AF37) 0%, #FFD700 100%) !important;
-  color: #000 !important;
-  font-weight: 600;
+/* Ensure SelectContent is RTL */
+[dir="rtl"] [data-slot="select-content"],
+[dir="rtl"] [role="listbox"],
+html[dir="rtl"] [data-slot="select-content"],
+html[dir="rtl"] [role="listbox"] {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: embed;
 }
 
 /* Ensure text items in select display correctly */
