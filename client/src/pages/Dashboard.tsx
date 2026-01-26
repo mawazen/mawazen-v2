@@ -144,7 +144,7 @@ export default function Dashboard() {
         {/* Welcome Section */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-gold">
               مرحباً بك في موازين
             </h1>
             <p className="text-muted-foreground mt-1">

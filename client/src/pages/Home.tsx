@@ -525,7 +525,7 @@ export default function Home() {
                       <img src="/logo.png" alt="موازين" className="h-full w-full object-cover" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-foreground">موازين</h3>
+                      <h3 className="text-2xl font-bold text-gold">موازين</h3>
                       <p className="text-sm text-gold font-medium">المساعد القانوني الذكي</p>
                     </div>
                   </div>
@@ -660,7 +660,7 @@ export default function Home() {
       <section className="py-20 section-animated">
         <div className="container">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">كيف يعمل موازين؟</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-gold mb-4">كيف يعمل موازين؟</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">رحلة واضحة من تنظيم البيانات إلى مشاركة ذكية وتجربة عميل احترافية.</p>
           </div>
 
@@ -923,7 +923,7 @@ export default function Home() {
       <section className="py-20 bg-gold/3">
         <div className="container">
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gold mb-6">
               ابدأ في استخدام موازين اليوم
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
