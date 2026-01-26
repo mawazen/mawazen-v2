@@ -189,7 +189,7 @@ export default function Calendar() {
                 جلسة جديدة
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg direction-rtl text-right" dir="rtl">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader className="text-right flex flex-col items-end">
                 <DialogTitle>إضافة جلسة جديدة</DialogTitle>
               </DialogHeader>
@@ -202,10 +202,10 @@ export default function Calendar() {
                       setFormData({ ...formData, caseId: parseInt(v) })
                     }
                   >
-                    <SelectTrigger dir="rtl" className="text-right">
+                    <SelectTrigger className="text-right [direction:ltr]">
                       <SelectValue placeholder="اختر القضية" />
                     </SelectTrigger>
-                    <SelectContent dir="rtl">
+                    <SelectContent>
                       {cases?.map((c) => (
                         <SelectItem key={c.id} value={c.id.toString()}>
                           {c.caseNumber} - {c.title}
@@ -219,7 +219,7 @@ export default function Calendar() {
                   <Label className="text-right">عنوان الجلسة *</Label>
                   <Input
                     placeholder="مثال: جلسة مرافعة"
-                    className="text-right"
+                    className="text-right [direction:ltr]"
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
@@ -232,8 +232,7 @@ export default function Calendar() {
                     <Label className="text-right">التاريخ *</Label>
                     <Input
                       type="date"
-                      dir="ltr"
-                      className="text-right"
+                      className="text-left [direction:ltr]"
                       value={formData.hearingDate}
                       onChange={(e) =>
                         setFormData({ ...formData, hearingDate: e.target.value })
@@ -244,8 +243,7 @@ export default function Calendar() {
                     <Label className="text-right">الوقت *</Label>
                     <Input
                       type="time"
-                      dir="ltr"
-                      className="text-right"
+                      className="text-left [direction:ltr]"
                       value={formData.hearingTime}
                       onChange={(e) =>
                         setFormData({ ...formData, hearingTime: e.target.value })
@@ -263,10 +261,10 @@ export default function Calendar() {
                         setFormData({ ...formData, type: v })
                       }
                     >
-                      <SelectTrigger dir="rtl" className="text-right">
+                      <SelectTrigger className="text-right [direction:ltr]">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent dir="rtl">
+                      <SelectContent>
                         {Object.entries(hearingTypeLabels).map(([key, label]) => (
                           <SelectItem key={key} value={key}>
                             {label}
@@ -279,7 +277,7 @@ export default function Calendar() {
                     <Label className="text-right">المكان</Label>
                     <Input
                       placeholder="المحكمة / القاعة"
-                      className="text-right"
+                      className="text-right [direction:ltr]"
                       value={formData.location}
                       onChange={(e) =>
                         setFormData({ ...formData, location: e.target.value })
@@ -292,7 +290,7 @@ export default function Calendar() {
                   <Label className="text-right">ملاحظات</Label>
                   <Textarea
                     placeholder="ملاحظات إضافية..."
-                    className="text-right"
+                    className="text-right [direction:ltr]"
                     value={formData.notes}
                     onChange={(e) =>
                       setFormData({ ...formData, notes: e.target.value })
