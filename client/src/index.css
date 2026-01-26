@@ -948,70 +948,6 @@
       radial-gradient(circle at 80% 70%, rgba(156, 39, 176, 0.10) 0%, transparent 50%),
       radial-gradient(circle at 50% 50%, rgba(33, 150, 243, 0.06) 0%, transparent 55%);
     z-index: -1;
-  }
-}
-
-/* Contrast improvements for dark mode */
-@layer components {
-  .dark a {
-    @apply text-gold underline;
-  }
-
-  .dark a:visited {
-    @apply text-gold-light;
-  }
-
-  .dark input[type="text"],
-  .dark input[type="email"],
-  .dark input[type="password"],
-  .dark input[type="number"],
-  .dark textarea,
-  .dark select {
-    @apply bg-slate-900 text-slate-100 border-slate-700;
-  }
-
-  .dark input::placeholder,
-  .dark textarea::placeholder {
-    @apply text-slate-500;
-    opacity: 1;
-  }
-
-  .dark [class*="badge"] {
-    @apply bg-gold/30 text-gold;
-  }
-
-  .dark button {
-    @apply bg-gold/20 text-slate-100;
-  }
-
-  .dark button:hover {
-    @apply bg-gold/35;
-  }
-
-  .dark label {
-    @apply text-slate-100;
-  }
-
-  .dark code,
-  .dark pre {
-    @apply bg-slate-900 text-gold border-slate-700;
-  }
-
-  .dark table {
-    @apply border-slate-700;
-  }
-
-  .dark thead {
-    @apply bg-gold/10;
-  }
-
-  .dark tbody tr:hover {
-    @apply bg-gold/5;
-  }
-}
-
-@layer base {
-  body::before {
     pointer-events: none;
     animation: backgroundPulse 20s ease-in-out infinite, backgroundDrift 26s ease-in-out infinite;
   }
@@ -1468,24 +1404,6 @@
   .text-gold-gradient {
     animation: shimmer-wave 3.5s linear infinite;
   }
-
-  /* Respect user's motion preference - CRITICAL ACCESSIBILITY FIX */
-  @media (prefers-reduced-motion: reduce) {
-    .card-gold,
-    .btn-gold,
-    .text-gold-gradient,
-    .glass,
-    [class*="animate-"],
-    * {
-      animation: none !important;
-      transition: none !important;
-    }
-
-    .glass:hover::after,
-    .card-gold:hover::after {
-      animation: none !important;
-    }
-  }
 }
 
 @keyframes backgroundPulse {
@@ -1501,17 +1419,6 @@
 /* LTR override for specific elements */
 [dir="ltr"] {
   direction: ltr;
-}
-
-/* RTL improvements - Add flex-row-reverse for RTL contexts */
-@supports (text-align: end) {
-  html[dir="rtl"] .flex {
-    flex-direction: row-reverse;
-  }
-
-  html[dir="rtl"] .flex-row {
-    flex-direction: row-reverse;
-  }
 }
 
 /* Number inputs should be LTR */
@@ -1533,31 +1440,6 @@ input::placeholder,
 textarea::placeholder {
   unicode-bidi: plaintext;
 }
-
-/* RTL margin fixes - ml becomes mr in RTL */
-html[dir="rtl"] .ml-1 { margin-left: 0; margin-right: 0.25rem; }
-html[dir="rtl"] .ml-2 { margin-left: 0; margin-right: 0.5rem; }
-html[dir="rtl"] .ml-3 { margin-left: 0; margin-right: 0.75rem; }
-html[dir="rtl"] .ml-4 { margin-left: 0; margin-right: 1rem; }
-html[dir="rtl"] .ml-5 { margin-left: 0; margin-right: 1.25rem; }
-html[dir="rtl"] .ml-6 { margin-left: 0; margin-right: 1.5rem; }
-
-html[dir="rtl"] .mr-1 { margin-right: 0; margin-left: 0.25rem; }
-html[dir="rtl"] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
-html[dir="rtl"] .mr-3 { margin-right: 0; margin-left: 0.75rem; }
-html[dir="rtl"] .mr-4 { margin-right: 0; margin-left: 1rem; }
-html[dir="rtl"] .mr-5 { margin-right: 0; margin-left: 1.25rem; }
-html[dir="rtl"] .mr-6 { margin-right: 0; margin-left: 1.5rem; }
-
-html[dir="rtl"] .pl-2 { padding-left: 0; padding-right: 0.5rem; }
-html[dir="rtl"] .pl-3 { padding-left: 0; padding-right: 0.75rem; }
-html[dir="rtl"] .pl-4 { padding-left: 0; padding-right: 1rem; }
-html[dir="rtl"] .pl-6 { padding-left: 0; padding-right: 1.5rem; }
-
-html[dir="rtl"] .pr-2 { padding-right: 0; padding-left: 0.5rem; }
-html[dir="rtl"] .pr-3 { padding-right: 0; padding-left: 0.75rem; }
-html[dir="rtl"] .pr-4 { padding-right: 0; padding-left: 1rem; }
-html[dir="rtl"] .pr-6 { padding-right: 0; padding-left: 1.5rem; }
 
 /* Dialog RTL support */
 [data-slot="dialog-content"][dir="rtl"],
@@ -1605,96 +1487,5 @@ html[dir="rtl"] [role="listbox"] {
 
   main {
     padding: 0 !important;
-  }
-}
-
-/* Mobile-first responsive improvements */
-@media (max-width: 640px) {
-  body {
-    font-size: 14px;
-  }
-
-  .glass {
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-  }
-
-  .card-gold,
-  .btn-gold {
-    font-size: 0.9rem;
-  }
-
-  /* Improve padding on mobile */
-  .container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  /* Better modal sizing on mobile */
-  [role="dialog"] {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-
-  /* Sidebar drawer on mobile */
-  [class*="sidebar"] {
-    position: fixed;
-    left: -100%;
-    top: 0;
-    width: 80%;
-    height: 100vh;
-    z-index: 50;
-    transition: left 300ms ease;
-  }
-
-  /* Improve button padding on mobile */
-  button {
-    padding: 0.625rem 1rem !important;
-    font-size: 0.9rem !important;
-  }
-
-  /* Improve input field sizing on mobile */
-  input,
-  textarea,
-  select {
-    font-size: 16px !important; /* Prevents zoom on iOS */
-    padding: 0.75rem !important;
-  }
-
-  /* Table horizontal scroll on mobile */
-  table {
-    display: block;
-    overflow-x: auto;
-    width: 100%;
-  }
-
-  /* Improve spacing on mobile */
-  .space-y-4 {
-    gap: 1rem !important;
-  }
-
-  .space-y-6 {
-    gap: 1.5rem !important;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  /* Tablet optimizations */
-  .container {
-    max-width: 100%;
-  }
-
-  /* Better grid for tablets */
-  [class*="grid-cols"] {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-}
-
-@media (min-width: 1025px) {
-  /* Desktop optimizations - no changes needed for most cases */
-  .glass:hover {
-    backdrop-filter: blur(32px) saturate(200%);
   }
 }
